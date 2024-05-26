@@ -172,22 +172,23 @@ class MenuController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function search($searchTerm)
+    public function search(Request $request)
     {
         $searchTerm = $request->query('q');
         \Log::info('Search Term: ' . $searchTerm); // Log the search term
-    
+
         $posts = Menu::where('name_menu', 'LIKE', '%' . $searchTerm . '%')->get();
         \Log::info('Search Results: ', $posts->toArray()); // Log the search results
-    
+
         if ($posts->isEmpty()) {
             \Log::info('No Menu found for: ' . $searchTerm);
-            return response()->json(['message' => 'Menu not found x search'.$searchTerm], 404);
+            return response()->json(['message' => 'Menu not found for search term: ' . $searchTerm], 404);
         }
-    
+
         \Log::info('Menu found: ' . $posts->count());
-        return new PostResource(true, 'Search Results '.$searchTerm, $posts);
+        return response()->json(['success' => true, 'message' => 'Search Results: ' . $searchTerm, 'data' => $posts]);
     }
+
 
     /**
      * Display a listing of the resource filtered by category.
