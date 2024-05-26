@@ -20,7 +20,8 @@ return new class extends Migration
             $table->integer('stock');
             $table->float('ratings');
             $table->text('description');
-            // $table->foreignID('toppingID');
+            $table->unsignedBigInteger('topping_id')->nullable();
+            $table->foreign('topping_id')->references('topping_id')->on('toppings')->onDelete('set null');
             $table->timestamps();
         });
     }
