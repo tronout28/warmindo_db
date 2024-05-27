@@ -18,10 +18,10 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->unsignedBigInteger('menuID');
             $table->foreign('menuID')->references('menuID')->on('menus')->onDelete('cascade');
-            $table->decimal('price_order', 10, 2);
+            $table->decimal('price_order');
             $table->timestamp('order_date')->useCurrent();
             $table->string('status');
-            $table->decimal('payment', 10, 2);
+            $table->decimal('payment');
             $table->boolean('refund')->default(false);
             $table->timestamps();
         });

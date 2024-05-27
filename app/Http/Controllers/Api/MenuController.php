@@ -51,11 +51,12 @@ class MenuController extends Controller
 
         //upload image
         $image = $request->file('image');
-        $image->storeAs('public/posts', $image->hashName());
+        $imageName = time() . '.' . $image->extension();
+        $image->move(public_path('menu'), $imageName);
 
         //create post
         $post = Menu::create([
-            'image'       => $image->hashName(),
+            'image'       => $imageName,
             'name_menu'   => $request->name_menu,
             'price'       => $request->price,
             'category'    => $request->category,
@@ -117,10 +118,10 @@ class MenuController extends Controller
 
             //upload image
             $image = $request->file('image');
-            $image->storeAs('public/posts', $image->hashName());
+            $image->storeAs('public/image', $image->hashName());
 
             //delete old image
-            Storage::delete('public/posts/'.basename($post->image));
+            Storage::delete('public/image/'.basename($post->image));
 
             //update post with new image
             $post->update([
@@ -157,7 +158,7 @@ class MenuController extends Controller
         $post = Menu::find($id);
 
         //delete image
-        Storage::delete('public/posts/'.basename($post->image));
+        Storage::delete('public/image/'.basename($post->image));
 
         //delete post
         $post->delete();
