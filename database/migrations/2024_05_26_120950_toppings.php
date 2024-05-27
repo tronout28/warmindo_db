@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('toppings', function (Blueprint $table) {
             $table->id('topping_id');
             $table->string('name_topping');
-            $table->decimal('price', 8, 2);
+            $table->decimal('price');
             $table->string('image');
             $table->integer('stock');
             $table->timestamps();
