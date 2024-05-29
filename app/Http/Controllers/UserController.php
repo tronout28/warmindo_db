@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -15,8 +16,15 @@ class UserController extends Controller
             'phone_number' => 'required|string|max:255|unique:users',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:8',
-            'picture_profile' => 'nullable|string|max:255',
+            'picture_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
+
+        if ($request->hasFile('picture_profile')) {
+            $imageName = time() . '.' . $request->picture_profile->extension();
+            $request->picture_profile->move(public_path('images'), $imageName);
+        } else {
+            $imageName = null;
+        }
 
         $user = User::create([
             'name' => $request->name,
@@ -24,7 +32,7 @@ class UserController extends Controller
             'phone_number' => $request->phone_number,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'picture_profile' => $request->picture_profile,
+            'picture_profile' => $imageName,
             'user_verified' => false,
         ]);
 
@@ -37,11 +45,13 @@ class UserController extends Controller
 
     public function login(Request $request) {
         $request->validate([
-            'email' => 'required|email',
+            'login' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request->login)
+                    ->orWhere('username', $request->login)
+                    ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
@@ -79,26 +89,44 @@ class UserController extends Controller
             'phone_number' => 'sometimes|required|string|max:255|unique:users,phone_number,' . $user->id,
             'email' => 'sometimes|required|email|unique:users,email,' . $user->id,
             'password' => 'sometimes|nullable|string|min:8',
-            'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'picture_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         $user->name = $request->get('name', $user->name);
         $user->username = $request->get('username', $user->username);
         $user->phone_number = $request->get('phone_number', $user->phone_number);
         $user->email = $request->get('email', $user->email);
-        $image = $request->file('profile_picture');
-        $imageName = time() . '.' . $image->extension();
-        $image->move(public_path('images'), $imageName);
-        $user->profile_picture = $imageName;
+
+        if ($request->hasFile('picture_profile')) {
+            // Delete old picture if exists
+            if ($user->picture_profile) {
+                Storage::delete('public/images/' . $user->picture_profile);
+            }
+            $imageName = time() . '.' . $request->picture_profile->extension();
+            $request->picture_profile->move(public_path('images'), $imageName);
+            $user->picture_profile = $imageName;
+        }
+
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
         }
+
         $user->save();
 
         return response()->json([
             'success' => true,
             'message' => 'User updated successfully',
             'user' => $user
+        ], 200);
+    }
+
+    public function index() {
+        $users = User::all();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User list',
+            'data' => $users
         ], 200);
     }
 }
