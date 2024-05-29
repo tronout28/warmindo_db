@@ -57,6 +57,7 @@ Route::prefix('toppings')->group(function () {
 
 
 Route::group(['prefix' => '/users'], function () {
+    Route::get('/users', [UserController::class, 'index']);
     Route::post('/register', [UserController::class, 'register']);
     Route::post('/login', [UserController::class, 'login']);
     Route::get('/details', [UserController::class, 'details'])->middleware('auth:sanctum');
