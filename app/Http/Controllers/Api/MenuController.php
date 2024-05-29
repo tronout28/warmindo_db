@@ -102,7 +102,9 @@ class MenuController extends Controller
         $validator = Validator::make($request->all(), [
             'name_menu'   => 'required|string|max:255', // Added string and max length validation
             'price'       => 'required|numeric', // Added numeric validation
+            'category'    => 'required|string|max:255', // Added string and max length validation
             'stock'       => 'required|integer', // Added integer validation
+            'description' => 'required|string', // Added string validation
         ]);
 
         //check if validation fails
@@ -128,7 +130,9 @@ class MenuController extends Controller
                 'image'     => $image->hashName(),
                 'name_menu' => $request->name_menu,
                 'price'     => $request->price,
+                'category'  => $request->category, // Added 'category' field
                 'stock'     => $request->stock,
+                'description' => $request->description, // Added 'description' field
             ]);
 
         } else {
@@ -137,7 +141,9 @@ class MenuController extends Controller
             $post->update([
                 'name_menu' => $request->name_menu,
                 'price'     => $request->price,
+                'category'  => $request->category,
                 'stock'     => $request->stock,
+                'description' => $request->description,
             ]);
         }
 
