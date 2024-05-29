@@ -56,7 +56,7 @@ class Menu extends Model
     protected function image(): Attribute
     {
         return Attribute::make(
-            get: fn ($image) => url('/menu/' . $image),
+            get: fn ($image) => url('/images/' . $image),
         );
     }
 
