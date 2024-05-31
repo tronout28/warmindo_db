@@ -23,6 +23,8 @@ return new class extends Migration
             $table->string('status');
             $table->decimal('payment');
             $table->boolean('refund')->default(false);
+            $table->text('note')->nullable();
+            $table->enum('status', ['done', 'in progress', 'cancelled', 'ready', 'waiting to cancelled'])->change();
             $table->timestamps();
         });
     }

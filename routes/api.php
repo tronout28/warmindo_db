@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\Api\MenuController;
+use App\Http\Controllers\OtpController;
 
 Route::prefix('menus')->group(function () {
     Route::get('/', [MenuController::class, 'index']);
@@ -62,4 +63,6 @@ Route::group(['prefix' => '/users'], function () {
     Route::post('/login', [UserController::class, 'login']);
     Route::get('/details', [UserController::class, 'details'])->middleware('auth:sanctum');
     Route::post('/update', [UserController::class, 'update'])->middleware('auth:sanctum');
+    Route::post('/send-otp', [OtpController::class, 'sendOtp'])->middleware('auth:sanctum');
+    Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])->middleware('auth:sanctum');
 });

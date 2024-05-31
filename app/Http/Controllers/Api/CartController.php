@@ -9,7 +9,7 @@ class CartController extends Controller
 {
     public function index()
     {
-        $carts = Cart::with('menu')->get();
+        $cart = Cart::with('menu')->get();
 
         return response()->json([
             'success' => true,
