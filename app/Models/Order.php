@@ -19,6 +19,7 @@ class Order extends Model
         'status',
         'payment',
         'refund',
+        'note',
     ];
 
     /**
