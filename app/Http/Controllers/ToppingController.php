@@ -9,6 +9,7 @@ class ToppingController extends Controller
     public function index()
     {
         $toppings = Topping::all();
+
         return new PostResource(true, 'List Data Toppings', $toppings);
     }
 

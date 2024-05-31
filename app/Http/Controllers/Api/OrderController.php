@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-
 use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
@@ -13,14 +12,14 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'user_id'     => 'required|exists:users,id',
-            'menuID'      => 'required|exists:menus,menuID',
+            'user_id' => 'required|exists:users,id',
+            'menuID' => 'required|exists:menus,menuID',
             'price_order' => 'required|numeric',
-            'order_date'  => 'required|date',
-            'status'      => ['required', Rule::in(['done', 'in progress', 'cancelled', 'ready', 'waiting to cancelled'])],
-            'payment'     => 'required|numeric',
-            'refund'      => 'required|boolean',
-            'note'        => 'nullable|string',
+            'order_date' => 'required|date',
+            'status' => ['required', Rule::in(['done', 'in progress', 'cancelled', 'ready', 'waiting to cancelled'])],
+            'payment' => 'required|numeric',
+            'refund' => 'required|boolean',
+            'note' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -36,18 +35,18 @@ class OrderController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Order created successfully',
-            'data' => $order
+            'data' => $order,
         ], 201);
     }
 
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'user_id'     => 'required|exists:users,id',
-            'menuID'      => 'required|exists:menus,menuID',
-            'refund'      => 'required|boolean',
-            'note'        => 'nullable|string',
-            'status'      => ['required', Rule::in(['done', 'in progress', 'cancelled', 'ready', 'waiting to cancelled'])],
+            'user_id' => 'required|exists:users,id',
+            'menuID' => 'required|exists:menus,menuID',
+            'refund' => 'required|boolean',
+            'note' => 'nullable|string',
+            'status' => ['required', Rule::in(['done', 'in progress', 'cancelled', 'ready', 'waiting to cancelled'])],
         ]);
 
         if ($validator->fails()) {
@@ -64,7 +63,7 @@ class OrderController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Order updated successfully',
-            'data' => $order
+            'data' => $order,
         ], 200);
     }
 }

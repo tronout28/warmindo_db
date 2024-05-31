@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-     /**
+    /**
      * Run the migrations.
      *
      * @return void
@@ -24,7 +24,8 @@ return new class extends Migration
             $table->decimal('payment');
             $table->boolean('refund')->default(false);
             $table->text('note')->nullable();
-            $table->enum('status', ['done', 'in progress', 'cancelled', 'ready', 'waiting to cancelled'])->change();
+            $table->enum('status',
+                ['done', 'in progress', 'cancelled', 'ready', 'waiting to cancelled'])->change();
             $table->timestamps();
         });
     }
