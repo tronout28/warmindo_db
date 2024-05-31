@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Cart;
+use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
@@ -13,7 +13,7 @@ class CartController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $carts
+            'data' => $carts,
         ]);
     }
 
@@ -22,7 +22,7 @@ class CartController extends Controller
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'menuID' => 'required|exists:menus,menuID',
-            'quantity' => 'required|integer|min:1'
+            'quantity' => 'required|integer|min:1',
         ]);
 
         $cart = Cart::create([
@@ -34,19 +34,19 @@ class CartController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Item added to cart successfully',
-            'data' => $cart
+            'data' => $cart,
         ]);
     }
 
     public function update(Request $request, $id)
     {
         $request->validate([
-            'quantity' => 'required|integer|min:1'
+            'quantity' => 'required|integer|min:1',
         ]);
 
         $cart = Cart::find($id);
 
-        if (!$cart) {
+        if (! $cart) {
             return response()->json(['message' => 'Cart item not found'], 404);
         }
 
@@ -55,7 +55,7 @@ class CartController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Cart item updated successfully',
-            'data' => $cart
+            'data' => $cart,
         ]);
     }
 
@@ -63,7 +63,7 @@ class CartController extends Controller
     {
         $cart = Cart::find($id);
 
-        if (!$cart) {
+        if (! $cart) {
             return response()->json(['message' => 'Cart item not found'], 404);
         }
 
@@ -71,7 +71,7 @@ class CartController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Cart item removed successfully'
+            'message' => 'Cart item removed successfully',
         ]);
     }
 }

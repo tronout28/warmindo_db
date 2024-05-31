@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\StoreStatus;
+use Illuminate\Http\Request;
 
 class StoreStatusController extends Controller
 {
     public function index()
     {
         $storeStatuses = StoreStatus::all();
+
         return response()->json(['data' => $storeStatuses], 200);
     }
 
@@ -23,6 +24,7 @@ class StoreStatusController extends Controller
         ]);
 
         $storeStatus = StoreStatus::create($validatedData);
+
         return response()->json(['data' => $storeStatus], 201);
     }
 
@@ -53,6 +55,7 @@ class StoreStatusController extends Controller
         }
 
         $storeStatus->update($validatedData);
+
         return response()->json(['data' => $storeStatus], 200);
     }
 
@@ -65,6 +68,7 @@ class StoreStatusController extends Controller
         }
 
         $storeStatus->delete();
+
         return response()->json(['message' => 'Store status deleted'], 204);
     }
 }

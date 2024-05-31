@@ -2,16 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Menu extends Model
 {
     use HasFactory;
 
-     /**
+    /**
      * The primary key associated with the table.
      *
      * @var string
@@ -32,7 +31,6 @@ class Menu extends Model
      */
     protected $keyType = 'int';
 
-
     /**
      * fillable
      *
@@ -50,13 +48,11 @@ class Menu extends Model
 
     /**
      * image
-     *
-     * @return Attribute
      */
     protected function image(): Attribute
     {
         return Attribute::make(
-            get: fn ($image) => url('/menu/' . $image),
+            get: fn ($image) => url('/menu/'.$image),
         );
     }
 

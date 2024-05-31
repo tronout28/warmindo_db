@@ -1,15 +1,15 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\Api\MenuController;
 use App\Http\Controllers\OtpController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
 
 Route::prefix('menus')->group(function () {
     Route::get('/', [MenuController::class, 'index']);
     Route::post('/store', [MenuController::class, 'store']);
     Route::get('/search', [MenuController::class, 'search']); // Letakkan search di sini
-    Route::get('/filter/{category}', [MenuController::class, 'filterByCategory']); 
+    Route::get('/filter/{category}', [MenuController::class, 'filterByCategory']);
     Route::get('/{id}', [MenuController::class, 'show']);
     Route::patch('/{id}', [MenuController::class, 'update']);
     Route::delete('/{id}', [MenuController::class, 'destroy']);
@@ -24,7 +24,6 @@ Route::prefix('carts')->group(function () {
     Route::put('/{id}', [CartController::class, 'update']);
     Route::delete('/{id}', [CartController::class, 'destroy']);
 });
-
 
 use App\Http\Controllers\OrderController;
 
@@ -54,8 +53,6 @@ Route::prefix('toppings')->group(function () {
     Route::put('/{id}', [ToppingController::class, 'update']);
     Route::delete('/{id}', [ToppingController::class, 'destroy']);
 });
-
-
 
 Route::group(['prefix' => '/users'], function () {
     Route::get('/users', [UserController::class, 'index']);
