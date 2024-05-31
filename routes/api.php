@@ -62,4 +62,7 @@ Route::group(['prefix' => '/users'], function () {
     Route::post('/update', [UserController::class, 'update'])->middleware('auth:sanctum');
     Route::post('/send-otp', [OtpController::class, 'sendOtp'])->middleware('auth:sanctum');
     Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])->middleware('auth:sanctum');
+    Route::post('/logout', [UserController::class, 'logout'])->middleware('auth:sanctum');
+    Route::delete('/{id}', [UserController::class, 'destroy']);
+
 });

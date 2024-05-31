@@ -135,4 +135,33 @@ class UserController extends Controller
             'data' => $users,
         ], 200);
     }
+
+    public function logout()
+    {
+        $user = User::where('email', auth()->user()->email)->first();
+        $user->tokens()->delete();
+
+        return response([
+            'message' => 'Logged out',
+        ], 200);
+    }
+
+    public function destroy($id)
+    {
+        $user = User::find($id);
+
+        if ($user) {
+            $user->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User deleted successfully',
+            ], 200);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'User not found',
+        ], 404);
+    }
 }
