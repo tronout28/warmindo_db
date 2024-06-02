@@ -118,8 +118,10 @@ class MenuController extends Controller
         if ($request->hasFile('image')) {
 
             //upload image
+            //upload image
             $image = $request->file('image');
-            $image->storeAs('public/image', $image->hashName());
+            $imageName = time().'.'.$image->extension();
+            $image->move(public_path('menu'), $imageName);
 
             //delete old image
             Storage::delete('public/image/'.basename($post->image));
