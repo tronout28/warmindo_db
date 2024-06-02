@@ -64,10 +64,13 @@ class UserController extends Controller
             ], 401);
         }
 
+        $token = $user->createToken('warmindo')->plainTextToken;
+
         return response()->json([
             'success' => true,
             'message' => 'User login successfully',
             'user' => $user,
+            'token' => $token,
         ], 200);
     }
 
