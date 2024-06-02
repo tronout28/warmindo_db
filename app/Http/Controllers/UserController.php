@@ -77,7 +77,7 @@ class UserController extends Controller
     public function details()
     {
         $user = auth()->user();
-
+        $token = $user->currentAccessToken();
         return response()->json([
             'success' => true,
             'message' => 'User details',
@@ -90,6 +90,7 @@ class UserController extends Controller
     public function update(Request $request)
     {
         $user = auth()->user();
+        
 
         $request->validate([
             'name' => 'sometimes|required|string|max:255',
