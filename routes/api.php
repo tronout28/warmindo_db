@@ -59,7 +59,7 @@ Route::group(['prefix' => '/users'], function () {
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/register', [UserController::class, 'register']);
     Route::post('/login', [UserController::class, 'login']);
-    Route::get('/details', [UserController::class, 'details'])->middleware('auth:sanctum');
+    Route::get('/details/{id}', [UserController::class, 'details'])->middleware('auth:sanctum');
     Route::post('/update', [UserController::class, 'update'])->middleware('auth:sanctum');
     Route::post('/send-otp', [OtpController::class, 'sendOtp'])->middleware('auth:sanctum');
     Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])->middleware('auth:sanctum');
