@@ -27,7 +27,7 @@ class AdminController extends Controller
         $token = $user->createToken('warmindo')->plainTextToken;
 
         return response([
-            'user' => $user,
+            'admin' => $user,
             'token' => $token,
         ], 200);
     }
