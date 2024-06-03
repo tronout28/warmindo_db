@@ -10,7 +10,7 @@ Route::prefix('menus')->group(function () {
     Route::post('/store', [MenuController::class, 'store']);
     Route::get('/search', [MenuController::class, 'search']); // Letakkan search di sini
     Route::get('/filter/{category}', [MenuController::class, 'filterByCategory']);
-    Route::get('/filter/{second_category}', [MenuController::class, 'filterBySecondCategory']);
+    Route::get('/Sfilter/{second_category}', [MenuController::class, 'filterBySecondCategory']);
     Route::get('/{id}', [MenuController::class, 'show']);
     Route::patch('/{id}', [MenuController::class, 'update']);
     Route::delete('/{id}', [MenuController::class, 'destroy']);
@@ -45,7 +45,7 @@ Route::prefix('store-statuses')->group(function () {
     Route::delete('/{id}', [StoreStatusController::class, 'destroy']);
 });
 
-use App\Http\Controllers\Api\ToppingController;
+use App\Http\Controllers\ToppingController;
 
 Route::prefix('toppings')->group(function () {
     Route::get('/', [ToppingController::class, 'index']);
