@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cart;
 use Illuminate\Http\Request;
 
+
 class CartController extends Controller
 {
     public function index()
@@ -13,7 +14,7 @@ class CartController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $carts,
+            'data' => $cart,
         ]);
     }
 
