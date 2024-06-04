@@ -93,10 +93,10 @@ class UserController extends Controller
         
 
         $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'username' => 'sometimes|required|string|max:255|unique:users,username,'.$user->id,
-            'phone_number' => 'sometimes|required|string|max:255|unique:users,phone_number,'.$user->id,
-            'email' => 'sometimes|required|email|unique:users,email,'.$user->id,
+            'name' => 'sometimes|nullable|string|max:255',
+            'username' => 'sometimes|nullable|string|max:255|unique:users,username,'.$user->id,
+            'phone_number' => 'sometimes|nullable|string|max:255|unique:users,phone_number,'.$user->id,
+            'email' => 'sometimes|nullable|email|unique:users,email,'.$user->id,
             'password' => 'sometimes|nullable|string|min:8',
             'picture_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
