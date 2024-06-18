@@ -21,8 +21,9 @@ return new class extends Migration
             $table->boolean('user_verified')->default(false);
             $table->enum('role', ['admin', 'user'])->default('user');
             $table->string('phone_number')->unique();
-            $table->string('password');
+            $table->string('password')->nullable();
             $table->timestamp('phone_verified_at')->nullable();
+            $table->string('google_id')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

@@ -87,3 +87,10 @@ Route::prefix('variants')->group(function () {
     Route::delete('/{id}', [VariantController::class, 'destroy']);
 });
 
+use App\Http\Controllers\GoogleAuthController;
+
+Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('google-auth');
+Route::get('/auth/google/call-back', [GoogleAuthController::class, 'handleGoogleCallback']);
+
+
+
