@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -100,6 +101,8 @@ class UserController extends Controller
             'picture_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
+        Log::info('Update User Request: ', $request->all());
+
         $user->name = $request->get('name', $user->name);
         $user->username = $request->get('username', $user->username);
         $user->phone_number = $request->get('phone_number', $user->phone_number);
@@ -111,6 +114,7 @@ class UserController extends Controller
                 Storage::delete('public/images/'.$user->picture_profile);
             }
             $imageName = time().'.'.$request->picture_profile->extension();
+            Log::info('Uploading picture profile: '.$imageName);
             $request->picture_profile->move(public_path('images'), $imageName);
             $user->picture_profile = $imageName;
         }
@@ -120,6 +124,8 @@ class UserController extends Controller
         }
 
         $user->save();
+
+        Log::info('User updated: ', $user->toArray());
 
         return response()->json([
             'success' => true,
