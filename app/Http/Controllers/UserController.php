@@ -88,6 +88,7 @@ class UserController extends Controller
         ], 200);
     }
 
+  
     public function update(Request $request)
     {
         $user = auth()->user();
@@ -111,7 +112,10 @@ class UserController extends Controller
         if ($request->hasFile('picture_profile')) {
             // Delete old picture if exists
             if ($user->picture_profile) {
-                Storage::delete('public/images/'.$user->picture_profile);
+                $oldImagePath = public_path('images') . '/' . $user->picture_profile;
+                if (file_exists($oldImagePath)) {
+                    unlink($oldImagePath);
+                }
             }
             $imageName = time().'.'.$request->picture_profile->extension();
             Log::info('Uploading picture profile: '.$imageName);
