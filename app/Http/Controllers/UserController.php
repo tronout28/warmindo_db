@@ -90,7 +90,6 @@ class UserController extends Controller
     public function update(Request $request)
     {
         $user = auth()->user();
-        
 
         $request->validate([
             'name' => 'sometimes|nullable|string|max:255',

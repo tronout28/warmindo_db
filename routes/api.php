@@ -16,7 +16,7 @@ Route::prefix('menus')->group(function () {
     Route::delete('/{id}', [MenuController::class, 'destroy']);
 });
 
-use App\Http\Controllers\CartController;
+use App\Http\Controllers\Api\CartController;
 
 Route::prefix('carts')->group(function () {
     Route::get('/', [CartController::class, 'index']);
@@ -26,7 +26,7 @@ Route::prefix('carts')->group(function () {
     Route::delete('/{id}', [CartController::class, 'destroy']);
 });
 
-use App\Http\Controllers\OrderController;
+use App\Http\Controllers\Api\OrderController;
 
 Route::prefix('orders')->group(function () {
     Route::get('/', [OrderController::class, 'index']);
