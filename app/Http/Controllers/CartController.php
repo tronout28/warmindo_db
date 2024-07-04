@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Cart;
 use Illuminate\Http\Request;
 
-
 class CartController extends Controller
 {
     public function index()
@@ -30,6 +29,7 @@ class CartController extends Controller
             'user_id' => $request->user_id,
             'menuID' => $request->menuID,
             'quantity' => $request->quantity,
+            'date_item_menu' => now(), // tambahkan field ini jika perlu
         ]);
 
         return response()->json([

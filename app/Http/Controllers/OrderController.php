@@ -9,8 +9,21 @@ use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
 {
+
+    public function index()
+    {
+        $orders = Order::all();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'List of orders',
+            'data' => $orders
+        ], 200);
+    }
+    
     public function store(Request $request)
     {
+        
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
             'menuID' => 'required|exists:menus,menuID',
