@@ -98,7 +98,8 @@ class UserController extends Controller
             'username' => 'sometimes|nullable|string|max:255|unique:users,username,'.$user->id,
             'phone_number' => 'sometimes|nullable|string|max:255|unique:users,phone_number,'.$user->id,
             'email' => 'sometimes|nullable|email|unique:users,email,'.$user->id,
-            'password' => 'sometimes|nullable|string|min:8',
+            'current_password' => 'sometimes|nullable|string|min:8', // Tambahkan validasi untuk current_password
+            'password' => 'sometimes|nullable|string|min:8|confirmed', // Tambahkan validasi konfirmasi password baru
             'picture_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
@@ -123,7 +124,20 @@ class UserController extends Controller
             $user->picture_profile = $imageName;
         }
 
-        if ($request->filled('password')) {
+        // Validasi current_password dan perbarui password jika valid
+        if ($request->filled('current_password') || $request->filled('password')) {
+            $request->validate([
+                'current_password' => 'required|string|min:8',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
+
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Current password is incorrect',
+                ], 400);
+            }
+
             $user->password = Hash::make($request->password);
         }
 
@@ -137,6 +151,7 @@ class UserController extends Controller
             'user' => $user,
         ], 200);
     }
+
 
     public function index()
     {
