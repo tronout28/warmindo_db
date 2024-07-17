@@ -25,7 +25,7 @@ return new class extends Migration
             $table->boolean('refund')->default(false);
             $table->text('note')->nullable();
             $table->enum('status',
-                ['done', 'in progress', 'cancelled', 'ready', 'waiting to cancelled'])->change();
+                ['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal'])->change();
             $table->timestamps();
         });
     }

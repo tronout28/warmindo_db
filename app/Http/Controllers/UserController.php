@@ -97,17 +97,31 @@ class UserController extends Controller
             'name' => 'sometimes|nullable|string|max:255',
             'username' => 'sometimes|nullable|string|max:255|unique:users,username,'.$user->id,
             'phone_number' => 'sometimes|nullable|string|max:255|unique:users,phone_number,'.$user->id,
+            'otp' => 'required_if:phone_number,true|string|min:6|max:6', // Validasi OTP jika phone_number diubah
             'email' => 'sometimes|nullable|email|unique:users,email,'.$user->id,
-            'current_password' => 'sometimes|nullable|string|min:8', // Tambahkan validasi untuk current_password
-            'password' => 'sometimes|nullable|string|min:8|confirmed', // Tambahkan validasi konfirmasi password baru
+            'current_password' => 'sometimes|nullable|string|min:8', // Validasi current_password
+            'password' => 'sometimes|nullable|string|min:8|confirmed', // Validasi konfirmasi password baru
             'picture_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         Log::info('Update User Request: ', $request->all());
 
+        if ($request->filled('phone_number')) {
+            $otp = Otp::where('user_id', $user->id)->where('otp', $request->otp)->first();
+            if (!$otp || $otp->created_at->diffInMinutes(now()) > 5) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid or expired OTP',
+                ], 400);
+            }
+
+            $user->phone_number = $request->phone_number;
+            $user->phone_verified_at = Carbon::now();
+            $otp->delete();
+        }
+
         $user->name = $request->get('name', $user->name);
         $user->username = $request->get('username', $user->username);
-        $user->phone_number = $request->get('phone_number', $user->phone_number);
         $user->email = $request->get('email', $user->email);
 
         if ($request->hasFile('picture_profile')) {
