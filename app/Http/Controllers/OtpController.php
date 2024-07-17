@@ -12,7 +12,7 @@ class OtpController extends Controller
 {
     public function sendOtp()
     {
-        $user = Auth()->user();
+        $user = auth()->user();
         $phone = '+62'.substr($user->phone_number, 1);
         $otp = rand(100000, 999999);
         $otps = Otp::where('user_id', $user->id)->first();
@@ -49,7 +49,7 @@ class OtpController extends Controller
             'otp' => 'required|string|min:6|max:6',
         ]);
 
-        $user = User::where('id', Auth()->user()->id)->first();
+        $user = User::where('id', auth()->user()->id)->first();
         $otp = $request->otp;
         $otps = Otp::where('user_id', $user->id)->first();
 

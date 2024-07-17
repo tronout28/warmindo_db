@@ -29,7 +29,7 @@ class OrderController extends Controller
             'menuID' => 'required|exists:menus,menuID',
             'price_order' => 'required|numeric',
             'order_date' => 'required|date',
-            'status' => ['required', Rule::in(['done', 'in progress', 'cancelled', 'ready', 'waiting to cancelled'])],
+            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal'])],
             'payment' => 'required|numeric',
             'refund' => 'required|boolean',
             'note' => 'nullable|string',
