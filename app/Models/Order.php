@@ -37,4 +37,9 @@ class Order extends Model
     {
         return $this->belongsTo(Menu::class);
     }
+
+    public function orderDetails()
+    {
+        return $this->hasMany(OrderDetail::class);
+    }
 }
