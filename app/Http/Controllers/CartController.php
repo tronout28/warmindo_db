@@ -60,25 +60,39 @@ class CartController extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
+        // Mengambil semua data dari request
+        $data = $request->json()->all();
+    
+        // Validasi data
+        $validator = Validator::make($data, [
             'user_id' => 'required|exists:users,id',
             'quantity' => 'required|integer|min:1',
         ]);
-
-        $cart = Cart::where('user_id', $request->user_id)->find($id);
-
+    
+        // Jika validasi gagal, kembalikan respon dengan error
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+    
+        // Cari cart berdasarkan user_id dan id cart
+        $cart = Cart::where('user_id', $data['user_id'])->find($id);
+    
+        // Jika cart tidak ditemukan, kembalikan respon dengan pesan error
         if (!$cart) {
             return response()->json(['message' => 'Cart item not found'], 404);
         }
-
-        $cart->update(['quantity' => $request->quantity]);
-
+    
+        // Update quantity cart
+        $cart->update(['quantity' => $data['quantity']]);
+    
+        // Kembalikan respon sukses
         return response()->json([
             'success' => true,
             'message' => 'Cart item updated successfully',
             'data' => $cart,
         ]);
     }
+    
 
     public function destroy($id)
     {
