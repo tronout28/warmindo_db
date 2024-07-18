@@ -80,23 +80,22 @@ class CartController extends Controller
         ]);
     }
 
-    public function destroy(Request $request, $id)
+    public function destroy($id)
     {
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-        ]);
-
-        $cart = Cart::where('user_id', $request->user_id)->find($id);
+        $cart = Cart::find($id);
 
         if (!$cart) {
-            return response()->json(['message' => 'Cart item not found'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Cart not found',
+            ], 404);
         }
 
         $cart->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Cart item removed successfully',
-        ]);
+            'message' => 'Cart deleted successfully',
+        ], 200);
     }
 }
