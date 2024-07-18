@@ -7,10 +7,13 @@ use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $user = auth()->user();
-        $cart = Cart::with('menu')->where('user_id', $user->id)->get();
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $cart = Cart::with('menu')->where('user_id', $request->user_id)->get();
 
         return response()->json([
             'success' => true,
@@ -20,14 +23,13 @@ class CartController extends Controller
 
     public function store(Request $request)
     {
-        $user = auth()->user();
-
         $request->validate([
+            'user_id' => 'required|exists:users,id',
             'menuID' => 'required|exists:menus,menuID',
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $existingCart = Cart::where('user_id', $user->id)
+        $existingCart = Cart::where('user_id', $request->user_id)
             ->where('menuID', $request->menuID)
             ->first();
 
@@ -42,7 +44,7 @@ class CartController extends Controller
             ]);
         } else {
             $cart = Cart::create([
-                'user_id' => $user->id,
+                'user_id' => $request->user_id,
                 'menuID' => $request->menuID,
                 'quantity' => $request->quantity,
                 'date_item_menu' => now(), // tambahkan field ini jika perlu
@@ -58,15 +60,14 @@ class CartController extends Controller
 
     public function update(Request $request, $id)
     {
-        $user = auth()->user();
-
         $request->validate([
+            'user_id' => 'required|exists:users,id',
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $cart = Cart::where('user_id', $user->id)->find($id);
+        $cart = Cart::where('user_id', $request->user_id)->find($id);
 
-        if (! $cart) {
+        if (!$cart) {
             return response()->json(['message' => 'Cart item not found'], 404);
         }
 
@@ -79,13 +80,15 @@ class CartController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $user = auth()->user();
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
 
-        $cart = Cart::where('user_id', $user->id)->find($id);
+        $cart = Cart::where('user_id', $request->user_id)->find($id);
 
-        if (! $cart) {
+        if (!$cart) {
             return response()->json(['message' => 'Cart item not found'], 404);
         }
 
