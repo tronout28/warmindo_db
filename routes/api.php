@@ -33,6 +33,7 @@ Route::prefix('orders')->group(function () {
     Route::post('/store', [OrderController::class, 'store']);
     Route::get('/{id}', [OrderController::class, 'show']);
     Route::put('/{id}', [OrderController::class, 'update']);
+    Route::get('/statistics', [OrderController::class, 'getSalesStatistics']);
 });
 
 use App\Http\Controllers\StoreStatusController;
@@ -75,7 +76,7 @@ Route::group(['prefix' => '/admins'], function () {
     Route::post('/register', [AdminController::class, 'register']);
     Route::post('/login', [AdminController::class, 'login']);
     Route::post('/logout', [AdminController::class, 'logout'])->middleware('auth:sanctum');
-    Route::put('/users/{id}/verify', [AdminController::class, 'updateUserVerificationStatus']);
+    Route::put('/users/{id}/verify', [AdminController::class, 'verifyUser'])->middleware('auth:sanctum');
 });
 
 
