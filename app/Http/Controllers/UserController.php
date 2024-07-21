@@ -64,6 +64,19 @@ class UserController extends Controller
     public function register(Request $request)
     {
         // Custom validation logic
+       $messages = [
+            'name.required' => 'name dibutuhkan.',
+            'username.required' => 'username dibutuhkan',
+            'username.unique' => 'username sudah ada.',
+            'phone_number.required' => 'nomor hp dibutuhkan.',
+            'phone_number.unique' => 'phone number sudah ada.',
+            'email.required' => 'email dibutuhkan.',
+            'email.unique' => 'email sudah ada.',
+            'password.required' => 'password dibutuhkan.',
+            'password.min' => 'password minimal 8 karakter',
+        ];
+
+        // Custom validation logic
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users',
@@ -71,8 +84,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:8',
             'picture_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        ]);
-    
+        ], $messages);
         // Check if validation fails
         if ($validator->fails()) {
             return response()->json([
