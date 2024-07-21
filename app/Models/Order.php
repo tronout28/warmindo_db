@@ -19,6 +19,7 @@ class Order extends Model
         'status',
         'payment',
         'refund',
+        'note',
     ];
 
     /**
@@ -35,5 +36,10 @@ class Order extends Model
     public function menu()
     {
         return $this->belongsTo(Menu::class);
+    }
+
+    public function orderDetails()
+    {
+        return $this->hasMany(OrderDetail::class);
     }
 }

@@ -14,13 +14,15 @@ return new class extends Migration
             $table->string('name_menu');
             $table->decimal('price');
             $table->string('category');
+            $table->string('second_category');
             $table->integer('stock');
-            $table->float('ratings');
+            $table->float('ratings')->nullable();
             $table->text('description');
             $table->timestamps();
 
         });
     }
+
     public function down(): void
     {
         Schema::dropIfExists('menus');
