@@ -6,7 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-
+use Illuminate\Support\Facades\Validator; // Correct import
+use Symfony\Component\HttpFoundation\Response;
 class UserController extends Controller
 {
     public function register(Request $request)
