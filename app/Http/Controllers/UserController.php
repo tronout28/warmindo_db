@@ -9,6 +9,53 @@ use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
+    public function googleLogin(Request $request)
+    {
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email',
+            'google_id' => 'required|string',
+            'profile_picture' => 'nullable|string',
+            
+        ]);
+
+        $user = User::where('google_id', $validatedData['google_id'])
+                    ->orWhere('email', $validatedData['email'])
+                    ->first();
+
+        if ($user) {
+            // Update user information if needed
+            $user->update([
+                'username' => $validatedData['name'],
+                'profile_picture' => $validatedData['profile_picture'],
+                'email' => $validatedData['email'],
+                'google_id' => $validatedData['google_id'],
+                'email_verified_at' => now(),
+            ]);
+        } else {
+            // Create new user
+            $user = User::create([
+                'name' => $validatedData['name'],
+                'username' => $validatedData['name'],
+                'profile_picture' => $validatedData['profile_picture'],
+                'email' => $validatedData['email'],
+                'google_id' => $validatedData['google_id'],
+                'email_verified_at' => now(),
+                'password' => null, 
+            ]);
+        }
+
+        $token = $user->createToken('warmindo')->plainTextToken;
+    
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User logged in successfully',
+            'user' => $user,
+            'token' => $token,
+        ], 200);
+    }
+
     public function register(Request $request)
     {
         $request->validate([
