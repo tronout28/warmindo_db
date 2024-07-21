@@ -59,6 +59,7 @@ Route::group(['prefix' => '/users'], function () {
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/register', [UserController::class, 'register']);
     Route::post('/login', [UserController::class, 'login']);
+    Route::post('/google-login', [UserController::class, 'googleLogin']);
     Route::get('/details', [UserController::class, 'details'])->middleware('auth:sanctum');
     Route::post('/update', [UserController::class, 'update'])->middleware('auth:sanctum');
     Route::post('/send-otp', [OtpController::class, 'sendOtp'])->middleware('auth:sanctum');
