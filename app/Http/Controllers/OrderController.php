@@ -63,6 +63,31 @@ class OrderController extends Controller
         ], 201);
     }
 
+    public function getSalesStatistics()
+    {
+        $weeklySales = Order::where('status', 'selesai')
+            ->where('order_date', '>=', Carbon::now()->subWeek())
+            ->count();
+
+        $monthlySales = Order::where('status', 'selesai')
+            ->where('order_date', '>=', Carbon::now()->subMonth())
+            ->count();
+
+        $yearlySales = Order::where('status', 'selesai')
+            ->where('order_date', '>=', Carbon::now()->subYear())
+            ->count();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sales statistics retrieved successfully',
+            'data' => [
+                'weekly_sales' => $weeklySales,
+                'monthly_sales' => $monthlySales,
+                'yearly_sales' => $yearlySales,
+            ],
+        ], 200);
+    }
+
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
