@@ -64,6 +64,23 @@ class AdminController extends Controller
         ], 201);
     }
 
+    public function updateUserVerificationStatus(Request $request, $id)
+    {
+        $request->validate([
+            'user_verified' => 'required|boolean',
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->user_verified = $request->user_verified;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User verification status updated successfully',
+            'user' => $user,
+        ], 200);
+    }
+
     public function logout()
     {
         $user = Admin::where('email', auth()->user()->email)->first();
