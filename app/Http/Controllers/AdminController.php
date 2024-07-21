@@ -66,6 +66,8 @@ class AdminController extends Controller
 
     public function verifyUser(Request $request, $id)
     {
+        \Log::info($request->all());
+
         $request->validate([
             'user_verified' => 'required|boolean',
         ]);
