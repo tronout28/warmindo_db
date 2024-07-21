@@ -77,7 +77,7 @@ Route::group(['prefix' => '/admins'], function () {
     Route::post('/login', [AdminController::class, 'login']);
     Route::post('/logout', [AdminController::class, 'logout'])->middleware('auth:sanctum');
     Route::put('/users/{id}/verify', [AdminController::class, 'verifyUser']);
-    Route::get('/users/{id}/unverify', [AdminController::class, 'unverifyUser']);
+    Route::put('/users/{id}/unverify', [AdminController::class, 'unverifyUser']);
 });
 
 
