@@ -64,35 +64,49 @@ class AdminController extends Controller
         ], 201);
     }
 
-    public function verifyUser($id)
+    public function verifyUser($id, $shouldVerify)
     {
         $user = User::find($id);
-
+    
         if (!$user) {
             return response()->json([
                 'message' => 'User not found',
             ], 404);
         }
-        
-        $user->user_verified = true;
-        $user->save();
-
-        $user->user_verified = false;
-        $user->save();
-
-        if ($user->user_verified == false) {
-            return response()->json([
-                'message' => 'Now user is not verified',
-                'user' => $user,
-            ], 400);
-        } 
-
+    
+        // Conditionally set user_verified based on the $shouldVerify parameter
+        if ($shouldVerify) {
+            $user->user_verified = true;
+            $user->save();
+    
+            // Check the updated status
+            if ($user->user_verified === true) {
+                return response()->json([
+                    'message' => 'User verified successfully',
+                    'user' => $user,
+                ], 200);
+            }
+        } else {
+            // Set user_verified to false
+            $user->user_verified = false;
+            $user->save();
+    
+            // Check the updated status
+            if ($user->user_verified === false) {
+                return response()->json([
+                    'message' => 'Now user is not verified',
+                    'user' => $user,
+                ], 400);
+            }
+        }
+    
+        // If verification was not processed
         return response()->json([
-            'message' => 'User verified successfully',
+            'message' => 'Verification status could not be updated',
             'user' => $user,
-        ], 200);
+        ], 400);
     }
-
+    
     public function logout()
     {
         $user = Admin::where('email', auth()->user()->email)->first();
