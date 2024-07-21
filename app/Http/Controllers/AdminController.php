@@ -64,48 +64,46 @@ class AdminController extends Controller
         ], 201);
     }
 
-    public function verifyUser($id, $shouldVerify)
-    {
-        $user = User::find($id);
-    
-        if (!$user) {
-            return response()->json([
-                'message' => 'User not found',
-            ], 404);
-        }
-    
-        // Conditionally set user_verified based on the $shouldVerify parameter
-        if ($shouldVerify) {
-            $user->user_verified = true;
-            $user->save();
-    
-            // Check the updated status
-            if ($user->user_verified === true) {
-                return response()->json([
-                    'message' => 'User verified successfully',
-                    'user' => $user,
-                ], 200);
-            }
-        } else {
-            // Set user_verified to false
-            $user->user_verified = false;
-            $user->save();
-    
-            // Check the updated status
-            if ($user->user_verified === false) {
-                return response()->json([
-                    'message' => 'Now user is not verified',
-                    'user' => $user,
-                ], 400);
-            }
-        }
-    
-        // If verification was not processed
+    public function verifyUser($id)
+{
+    $user = User::find($id);
+
+    if (!$user) {
         return response()->json([
-            'message' => 'Verification status could not be updated',
-            'user' => $user,
-        ], 400);
+            'message' => 'User not found',
+        ], 404);
     }
+
+    // Example: check a condition or separate method for verification logic
+    $user->user_verified = true;
+    $user->save();
+
+    return response()->json([
+        'message' => 'User verified successfully',
+        'user' => $user,
+    ], 200);
+}
+
+public function unverifyUser($id)
+{
+    $user = User::find($id);
+
+    if (!$user) {
+        return response()->json([
+            'message' => 'User not found',
+        ], 404);
+    }
+
+    // Unverify the user
+    $user->user_verified = false;
+    $user->save();
+
+    return response()->json([
+        'message' => 'Now user is not verified',
+        'user' => $user,
+    ], 400);
+}
+
     
     public function logout()
     {
