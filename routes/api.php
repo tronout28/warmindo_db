@@ -75,6 +75,7 @@ Route::group(['prefix' => '/admins'], function () {
     Route::post('/register', [AdminController::class, 'register']);
     Route::post('/login', [AdminController::class, 'login']);
     Route::post('/logout', [AdminController::class, 'logout'])->middleware('auth:sanctum');
+    Route::put('/users/{id}/verify', [AdminController::class, 'updateUserVerificationStatus']);
 });
 
 
@@ -87,6 +88,17 @@ Route::prefix('variants')->group(function () {
     Route::patch('/{id}', [VariantController::class, 'update']);
     Route::delete('/{id}', [VariantController::class, 'destroy']);
 });
+
+use App\Http\Controllers\HistoryController;
+
+Route::prefix('history')->group(function () {
+    Route::get('/', [HistoryController::class, 'index']);
+    Route::post('/store', [HistoryController::class, 'store']);
+    Route::get('/{id}', [HistoryController::class, 'show']);
+    Route::put('/{id}', [HistoryController::class, 'update']);
+    Route::delete('/{id}', [HistoryController::class, 'destroy']);
+});
+
 
 use App\Http\Controllers\GoogleAuthController;
 
