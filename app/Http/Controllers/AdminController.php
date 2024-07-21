@@ -64,9 +64,12 @@ class AdminController extends Controller
         ], 201);
     }
 
-    
     public function verifyUser(Request $request, $id)
     {
+        $request->validate([
+            'user_verified' => 'required|boolean',
+        ]);
+
         $user = User::find($id);
 
         if (!$user) {
