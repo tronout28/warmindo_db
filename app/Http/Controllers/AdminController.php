@@ -64,14 +64,8 @@ class AdminController extends Controller
         ], 201);
     }
 
-    public function verifyUser(Request $request, $id)
+    public function verifyUser($id)
     {
-        \Log::info($request->all());
-
-        $request->validate([
-            'user_verified' => 'required|boolean',
-        ]);
-
         $user = User::find($id);
 
         if (!$user) {
@@ -79,12 +73,24 @@ class AdminController extends Controller
                 'message' => 'User not found',
             ], 404);
         }
-
-        $user->user_verified = $request->user_verified;
+        
+        $user->user_verified = true;
+        $user->user_verified = false;
         $user->save();
 
+        if ($user->user_verified == false) {
+            return response()->json([
+                'message' => 'Now user is not verified',
+            ], 400);
+        } if ($user->user_verified == true) {
+            return response()->json([
+                'message' => 'User verified successfully',
+                'user' => $user,
+            ], 200);
+        }
+
         return response()->json([
-            'message' => 'User verification status updated successfully',
+            'message' => 'User verified successfully',
             'user' => $user,
         ], 200);
     }
