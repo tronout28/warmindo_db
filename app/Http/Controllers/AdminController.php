@@ -75,19 +75,17 @@ class AdminController extends Controller
         }
         
         $user->user_verified = true;
+        $user->save();
+
         $user->user_verified = false;
         $user->save();
 
         if ($user->user_verified == false) {
             return response()->json([
                 'message' => 'Now user is not verified',
-            ], 400);
-        } if ($user->user_verified == true) {
-            return response()->json([
-                'message' => 'User verified successfully',
                 'user' => $user,
-            ], 200);
-        }
+            ], 400);
+        } 
 
         return response()->json([
             'message' => 'User verified successfully',
