@@ -7,6 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator; // Correct import
+use Symfony\Component\HttpFoundation\Response;
+
+
 
 class UserController extends Controller
 {
@@ -59,7 +63,8 @@ class UserController extends Controller
 
     public function register(Request $request)
     {
-        $request->validate([
+        // Custom validation logic
+        $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users',
             'phone_number' => 'required|string|max:255|unique:users',
@@ -67,14 +72,25 @@ class UserController extends Controller
             'password' => 'required|string|min:8',
             'picture_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
-
+    
+        // Check if validation fails
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors(),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    
+        // Handle file upload
         if ($request->hasFile('picture_profile')) {
             $imageName = time().'.'.$request->picture_profile->extension();
             $request->picture_profile->move(public_path('images'), $imageName);
         } else {
             $imageName = null;
         }
-
+    
+        // Create the user
         $user = User::create([
             'name' => $request->name,
             'username' => $request->username,
@@ -84,15 +100,22 @@ class UserController extends Controller
             'picture_profile' => $imageName,
             'user_verified' => false,
         ]);
+    
+        // Create a token for the user
         $token = $user->createToken('warmindo')->plainTextToken;
+    
+    
 
         return response()->json([
             'success' => true,
             'message' => 'User created successfully',
             'data' => $user,
             'token' => $token,
-        ], 201);
+        ], Response::HTTP_CREATED);
     }
+
+
+
 
     public function login(Request $request)
     {
