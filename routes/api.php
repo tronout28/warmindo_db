@@ -66,6 +66,7 @@ Route::group(['prefix' => '/users'], function () {
     Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])->middleware('auth:sanctum');
     Route::post('/logout', [UserController::class, 'logout'])->middleware('auth:sanctum');
     Route::delete('/{id}', [UserController::class, 'destroy']);
+    Route::post('/updatePhone', [UserController::class, 'updatePhoneNumberForGoogle'])->middleware('auth:sanctum');;
 
 });
 
