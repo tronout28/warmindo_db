@@ -9,17 +9,19 @@ class History extends Model
 {
     use HasFactory;
 
-    protected $table = 'history';
-    protected $primaryKey = 'history_id';
-
     protected $fillable = [
         'order_id',
-        'status',
-        'change_date'
+        'user_id',
+        'description',
     ];
 
     public function order()
     {
-        return $this->belongsTo(Order::class, 'order_id');
+        return $this->belongsTo(Order::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

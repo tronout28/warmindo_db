@@ -3,35 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\History;
+use App\Models\Order;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
 class HistoryController extends Controller
 {
-    public function index()
-    {
-        $history = History::with('order')->get();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'List of history',
-            'data' => $history
-        ], 200);
-    }
-
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'order_id' => 'required|exists:orders,order_id',
-            'status' => 'required|string',
-            'change_date' => 'required|date'
+        $request->validate([
+            'order_id' => 'required|exists:orders,id',
+            'user_id' => 'required|exists:users,id',
+            'description' => 'required|string',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        $history = History::create($request->all());
+        $history = History::create([
+            'order_id' => $request->order_id,
+            'user_id' => $request->user_id,
+            'description' => $request->description,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -42,7 +31,14 @@ class HistoryController extends Controller
 
     public function show($id)
     {
-        $history = History::with('order')->findOrFail($id);
+        $history = History::with('order', 'user')->find($id);
+
+        if (!$history) {
+            return response()->json([
+                'success' => false,
+                'message' => 'History not found',
+            ], 404);
+        }
 
         return response()->json([
             'success' => true,
@@ -53,18 +49,22 @@ class HistoryController extends Controller
 
     public function update(Request $request, $id)
     {
-        $validator = Validator::make($request->all(), [
-            'order_id' => 'required|exists:orders,order_id',
-            'status' => 'required|string',
-            'change_date' => 'required|date'
+        $request->validate([
+            'description' => 'required|string',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+        $history = History::find($id);
+
+        if (!$history) {
+            return response()->json([
+                'success' => false,
+                'message' => 'History not found',
+            ], 404);
         }
 
-        $history = History::findOrFail($id);
-        $history->update($request->all());
+        $history->update([
+            'description' => $request->description,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -75,12 +75,20 @@ class HistoryController extends Controller
 
     public function destroy($id)
     {
-        $history = History::findOrFail($id);
+        $history = History::find($id);
+
+        if (!$history) {
+            return response()->json([
+                'success' => false,
+                'message' => 'History not found',
+            ], 404);
+        }
+
         $history->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'History deleted successfully'
+            'message' => 'History deleted successfully',
         ], 200);
     }
 }
