@@ -13,7 +13,7 @@ class OrderController extends Controller
 {
     public function index()
     {
-        $orders = Order::with('orderDetails.menu')->get();
+        $orders = Order::with(['orderDetails.menu', 'history.user'])->get();
 
         return response()->json([
             'success' => true,
@@ -30,7 +30,6 @@ class OrderController extends Controller
             'menus.*.menuID' => 'required|exists:menus,menuID',
             'menus.*.quantity' => 'required|integer|min:1',
             'menus.*.price' => 'required|numeric',
-            'price_order' => 'required|numeric',
             'order_date' => 'required|date',
             'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal'])],
             'payment' => 'required|numeric',
@@ -46,7 +45,20 @@ class OrderController extends Controller
             return response()->json(['note' => 'Note is required when refund is true'], 422);
         }
 
-        $order = Order::create($request->only('user_id', 'price_order', 'order_date', 'status', 'payment', 'refund', 'note'));
+        $totalPrice = 0;
+        foreach ($request->menus as $menu) {
+            $totalPrice += $menu['quantity'] * $menu['price'];
+        }
+
+        $order = Order::create([
+            'user_id' => $request->user_id,
+            'price_order' => $totalPrice,
+            'order_date' => $request->order_date,
+            'status' => $request->status,
+            'payment' => $request->payment,
+            'refund' => $request->refund,
+            'note' => $request->note,
+        ]);
 
         foreach ($request->menus as $menu) {
             OrderDetail::create([
@@ -60,7 +72,7 @@ class OrderController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Order created successfully',
-            'data' => $order->load('orderDetails.menu'),
+            'data' => $order->load(['orderDetails.menu', 'history.user']),
         ], 201);
     }
 
@@ -97,12 +109,9 @@ class OrderController extends Controller
             'menus.*.menuID' => 'required|exists:menus,menuID',
             'menus.*.quantity' => 'required|integer|min:1',
             'menus.*.price' => 'required|numeric',
-            'price_order' => 'required|numeric',
-            'order_date' => 'required|date',
-            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal'])],
-            'payment' => 'required|numeric',
             'refund' => 'required|boolean',
             'note' => 'nullable|string',
+            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal'])],
         ]);
 
         if ($validator->fails()) {
@@ -129,7 +138,7 @@ class OrderController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Order updated successfully',
-            'data' => $order->load('orderDetails.menu'),
+            'data' => $order->load(['orderDetails.menu', 'history.user']),
         ], 200);
     }
 }
