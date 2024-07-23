@@ -188,7 +188,12 @@ class UserController extends Controller
         ]);
 
         Log::info('Update User Request: ', $request->all());
-
+        if($user->phone_verified_at != null){
+            return response()->json([
+                'success' => false,
+                'message' => 'Nomor Hp telah terverifikasi',
+            ], 422);
+        }
         if ($request->filled('phone_number')) {
             $otp = Otp::where('user_id', $user->id)->where('otp', $request->otp)->first();
             if (!$otp || $otp->created_at->diffInMinutes(now()) > 5) {
@@ -242,12 +247,15 @@ class UserController extends Controller
 
         Log::info('User updated: ', $user->toArray());
 
+
         return response()->json([
             'success' => true,
             'message' => 'User updated successfully',
             'user' => $user,
         ], 200);
     }
+
+  
 
     public function updatePhoneNumberForGoogle(Request $request)
     {
@@ -259,15 +267,16 @@ class UserController extends Controller
 
         Log::info('Update User Request: ', $request->all());
 
-        $user->phone_number = $request->phone_number;
-        $user->save();
-    
-
+       
+  
+    $user->phone_number = $request->phone_number;
+    $user->phone_verified_at = null;
+    $user->save();
         Log::info('User updated: ', $user->toArray());
 
         return response()->json([
             'success' => true,
-            'message' => 'User updated successfully',
+            'message' => 'Nomor Hp berhasil diganti',
             'user' => $user,
         ], 200);
     }
