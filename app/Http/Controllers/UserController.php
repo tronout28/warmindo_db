@@ -249,6 +249,28 @@ class UserController extends Controller
         ], 200);
     }
 
+    public function updatePhoneNumberForGoogle(Request $request)
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'phone_number' => 'sometimes|nullable|string|max:255|unique:users,phone_number,'.$user->id,
+        ]);
+
+        Log::info('Update User Request: ', $request->all());
+
+        $user->phone_number = $request->phone_number;
+        $user->save();
+    
+
+        Log::info('User updated: ', $user->toArray());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User updated successfully',
+            'user' => $user,
+        ], 200);
+    }
 
     public function index()
     {
