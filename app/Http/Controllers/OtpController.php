@@ -10,24 +10,20 @@ use Illuminate\Support\Facades\Http;
 
 class OtpController extends Controller
 {
-    public function sendOtp()
+    public function sendOtp(Request $request)
     {
-        $user = Auth()->user();
+        $user = auth()->user();
         $phone = '+62'.substr($user->phone_number, 1);
         $otp = rand(100000, 999999);
         $otps = Otp::where('user_id', $user->id)->first();
-
+        $expiredOtps = Otp::where('created_at', '<=', Carbon::now()->subMinutes(5))->delete();
         if ($otps != null) {
             return response([
                 'status' => 'failed',
                 'message' => 'Try Again After 5 Minutes',
             ]);
-        } elseif ($user->phone_verified_at != null) {
-            return response([
-                'status' => 'failed',
-                'message' => 'Phone Number Verified',
-            ]);
-        }
+        } 
+    
         Http::post('https://wapiiiiiii-957b9f860ed5.herokuapp.com/message/', [
             'phoneNumber' => $phone,
             'message' => 'Halo '.$user->username.', '.$otp.' adalah kode OTP Anda. Demi Keamanan jangan berikan kode ini kepada siapapun.',
@@ -49,7 +45,7 @@ class OtpController extends Controller
             'otp' => 'required|string|min:6|max:6',
         ]);
 
-        $user = User::where('id', Auth()->user()->id)->first();
+        $user = User::where('id', auth()->user()->id)->first();
         $otp = $request->otp;
         $otps = Otp::where('user_id', $user->id)->first();
 

@@ -64,6 +64,47 @@ class AdminController extends Controller
         ], 201);
     }
 
+    public function verifyUser($id)
+{
+    $user = User::find($id);
+
+    if (!$user) {
+        return response()->json([
+            'message' => 'User not found',
+        ], 404);
+    }
+
+    // Example: check a condition or separate method for verification logic
+    $user->user_verified = true;
+    $user->save();
+
+    return response()->json([
+        'message' => 'User verified successfully',
+        'user' => $user,
+    ], 200);
+}
+
+public function unverifyUser($id)
+{
+    $user = User::find($id);
+
+    if (!$user) {
+        return response()->json([
+            'message' => 'User not found',
+        ], 404);
+    }
+
+    // Unverify the user
+    $user->user_verified = false;
+    $user->save();
+
+    return response()->json([
+        'message' => 'Now user is not verified',
+        'user' => $user,
+    ], 400);
+}
+
+    
     public function logout()
     {
         $user = Admin::where('email', auth()->user()->email)->first();

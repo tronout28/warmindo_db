@@ -5,22 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Cart extends Model
+class History extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'cart_id';
-
     protected $fillable = [
+        'order_id',
         'user_id',
-        'menuID',
-        'quantity',
-        'date_item_menu',
+        'description',
     ];
 
-    public function menu()
+    public function order()
     {
-        return $this->belongsTo(Menu::class, 'menuID', 'menuID');
+        return $this->belongsTo(Order::class);
     }
 
     public function user()
