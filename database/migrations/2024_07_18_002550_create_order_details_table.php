@@ -8,29 +8,24 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('order_details', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('order_id');
-            $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
+            $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
             $table->unsignedBigInteger('menuID');
-            $table->foreign('menuID')->references('menuID')->on('menus');
+            $table->foreign('menuID')->references('menuID')->on('menus')->onDelete('cascade');
             $table->integer('quantity');
-            $table->decimal('price', 8, 2);
+            $table->decimal('price');
             $table->timestamps();
         });
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('order_details');
     }
