@@ -26,10 +26,12 @@ class OrderController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
-            'menus' => 'required|array',
-            'menus.*.menuID' => 'required|exists:menus,menuID',
-            'menus.*.quantity' => 'required|integer|min:1',
-            'menus.*.price' => 'required|numeric',
+            'menu_ids' => 'required|array',
+            'menu_ids.*' => 'required|exists:menus,menuID',
+            'quantities' => 'required|array',
+            'quantities.*' => 'required|integer|min:1',
+            'prices' => 'required|array',
+            'prices.*' => 'required|numeric',
             'order_date' => 'required|date',
             'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal'])],
             'payment' => 'required|numeric',
@@ -46,8 +48,12 @@ class OrderController extends Controller
         }
 
         $totalPrice = 0;
-        foreach ($request->menus as $menu) {
-            $totalPrice += $menu['quantity'] * $menu['price'];
+        $menuIds = $request->menu_ids;
+        $quantities = $request->quantities;
+        $prices = $request->prices;
+
+        foreach ($menuIds as $index => $menuId) {
+            $totalPrice += $quantities[$index] * $prices[$index];
         }
 
         $order = Order::create([
@@ -60,12 +66,12 @@ class OrderController extends Controller
             'note' => $request->note,
         ]);
 
-        foreach ($request->menus as $menu) {
+        foreach ($menuIds as $index => $menuId) {
             OrderDetail::create([
                 'order_id' => $order->id,
-                'menuID' => $menu['menuID'],
-                'quantity' => $menu['quantity'],
-                'price' => $menu['price'],
+                'menuID' => $menuId,
+                'quantity' => $quantities[$index],
+                'price' => $prices[$index],
             ]);
         }
 
@@ -105,10 +111,12 @@ class OrderController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
-            'menus' => 'required|array',
-            'menus.*.menuID' => 'required|exists:menus,menuID',
-            'menus.*.quantity' => 'required|integer|min:1',
-            'menus.*.price' => 'required|numeric',
+            'menu_ids' => 'required|array',
+            'menu_ids.*' => 'required|exists:menus,menuID',
+            'quantities' => 'required|array',
+            'quantities.*' => 'required|integer|min:1',
+            'prices' => 'required|array',
+            'prices.*' => 'required|numeric',
             'refund' => 'required|boolean',
             'note' => 'nullable|string',
             'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal'])],
@@ -123,15 +131,26 @@ class OrderController extends Controller
         }
 
         $order = Order::findOrFail($id);
-        $order->update($request->only('user_id', 'price_order', 'order_date', 'status', 'payment', 'refund', 'note'));
+        $order->update($request->only('user_id', 'order_date', 'status', 'payment', 'refund', 'note'));
+
+        $menuIds = $request->menu_ids;
+        $quantities = $request->quantities;
+        $prices = $request->prices;
+
+        $totalPrice = 0;
+        foreach ($menuIds as $index => $menuId) {
+            $totalPrice += $quantities[$index] * $prices[$index];
+        }
+
+        $order->update(['price_order' => $totalPrice]);
 
         $order->orderDetails()->delete();
-        foreach ($request->menus as $menu) {
+        foreach ($menuIds as $index => $menuId) {
             OrderDetail::create([
                 'order_id' => $order->id,
-                'menuID' => $menu['menuID'],
-                'quantity' => $menu['quantity'],
-                'price' => $menu['price'],
+                'menuID' => $menuId,
+                'quantity' => $quantities[$index],
+                'price' => $prices[$index],
             ]);
         }
 
