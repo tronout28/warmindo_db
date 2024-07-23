@@ -183,7 +183,7 @@ class UserController extends Controller
             'otp' => 'required_if:phone_number,true|string|min:6|max:6', // Validasi OTP jika phone_number diubah
             'email' => 'sometimes|nullable|email|unique:users,email,'.$user->id,
             'current_password' => 'sometimes|nullable|string|min:8', // Validasi current_password
-            'password' => 'sometimes|nullable|string|min:8|confirmed', // Validasi konfirmasi password baru
+            'password' => 'sometimes|nullable|string|min:8|confirmed', // Validasi konfirmasi password baru\
             'picture_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
