@@ -30,9 +30,6 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Get the menu that belongs to the order.
-     */
     public function menu()
     {
         return $this->belongsTo(Menu::class);

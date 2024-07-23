@@ -7,6 +7,7 @@ use App\Models\OrderDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Carbon\Carbon;
 
 class OrderController extends Controller
 {
@@ -96,9 +97,12 @@ class OrderController extends Controller
             'menus.*.menuID' => 'required|exists:menus,menuID',
             'menus.*.quantity' => 'required|integer|min:1',
             'menus.*.price' => 'required|numeric',
+            'price_order' => 'required|numeric',
+            'order_date' => 'required|date',
+            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal'])],
+            'payment' => 'required|numeric',
             'refund' => 'required|boolean',
             'note' => 'nullable|string',
-            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal'])],
         ]);
 
         if ($validator->fails()) {
