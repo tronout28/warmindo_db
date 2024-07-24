@@ -84,7 +84,7 @@ class UserController extends Controller
             'phone_number' => 'required|string|max:255|unique:users',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:8',
-            'picture_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ], $messages);
         // Check if validation fails
         if ($validator->fails()) {
@@ -96,9 +96,9 @@ class UserController extends Controller
         }
     
         // Handle file upload
-        if ($request->hasFile('picture_profile')) {
-            $imageName = time().'.'.$request->picture_profile->extension();
-            $request->picture_profile->move(public_path('images'), $imageName);
+        if ($request->hasFile('profile_picture')) {
+            $imageName = time() . '.' . $request->profile_picture->extension();
+            $request->profile_picture->move(public_path('images'), $imageName);
         } else {
             $imageName = null;
         }
@@ -110,7 +110,7 @@ class UserController extends Controller
             'phone_number' => $request->phone_number,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'picture_profile' => $imageName,
+            'profile_picture' => $imageName,
             'user_verified' => false,
         ]);
     
@@ -184,7 +184,7 @@ class UserController extends Controller
             'email' => 'sometimes|nullable|email|unique:users,email,'.$user->id,
             'current_password' => 'sometimes|nullable|string|min:8', // Validasi current_password
             'password' => 'sometimes|nullable|string|min:8|confirmed', // Validasi konfirmasi password baru\
-            'picture_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         Log::info('Update User Request: ', $request->all());
@@ -212,18 +212,18 @@ class UserController extends Controller
         $user->username = $request->get('username', $user->username);
         $user->email = $request->get('email', $user->email);
 
-        if ($request->hasFile('picture_profile')) {
+        if ($request->hasFile('profile_picture')) {
             // Delete old picture if exists
-            if ($user->picture_profile) {
-                $oldImagePath = public_path('images') . '/' . $user->picture_profile;
+            if ($user->profile_picture) {
+                $oldImagePath = public_path('images') . '/' . $user->profile_picture;
                 if (file_exists($oldImagePath)) {
                     unlink($oldImagePath);
                 }
             }
-            $imageName = time().'.'.$request->picture_profile->extension();
+            $imageName = time().'.'.$request->profile_picture->extension();
             Log::info('Uploading picture profile: '.$imageName);
-            $request->picture_profile->move(public_path('images'), $imageName);
-            $user->picture_profile = $imageName;
+            $request->profile_picture->move(public_path('images'), $imageName);
+            $user->profile_picture = $imageName;
         }
 
         // Validasi current_password dan perbarui password jika valid

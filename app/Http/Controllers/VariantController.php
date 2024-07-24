@@ -27,12 +27,9 @@ class VariantController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->extension();
-            $image->move(public_path('images'), $imageName);
-            $request->merge(['image' => $imageName]);
-        }
+         $image = $request->file('variant');
+         $imageName = time().'.'.$image->extension();
+         $image->move(public_path('variant'), $imageName);
 
         $variant = Variant::create($request->all());
 
@@ -64,11 +61,12 @@ class VariantController extends Controller
 
         $variant = Variant::findOrFail($id);
 
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->extension();
-            $image->move(public_path('images'), $imageName);
-            $variant->image = $imageName;
+        if ($request->hasFile('variant')) {
+            $image = $request->file('variant');
+             $imageName = time().'.'.$image->extension();
+             $image->move(public_path('variant'), $imageName);
+ 
+             Storage::delete('public/variant/'.basename($post->image));
         }
 
         $variant->update($request->all());
