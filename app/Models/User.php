@@ -52,4 +52,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Order::class);
     }
+
+    public function getProfilePictureUrlAttribute()
+    {
+        return url('storage/profile_pictures/' . $this->profile_picture);
+    }
 }
