@@ -25,6 +25,10 @@ class ToppingController extends Controller
             'stock' => 'required|integer',
         ]);
 
+         $image = $request->file('topping');
+         $imageName = time().'.'.$image->extension();
+         $image->move(public_path('topping'), $imageName);
+
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
@@ -58,7 +62,26 @@ class ToppingController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        $topping = Topping::find($id);
+        if ($request->hasFile('topping')) {
+            $image = $request->file('topping');
+            $imageName = time().'.'.$image->extension();
+            $image->move(public_path('topping'), $imageName);
+
+            Storage::delete('public/topping/'.basename($post->image));
+
+            $post->update([
+                'image' => $imageName,
+                'name_topping' => $request->name_menu,
+                'price' => $request->price,
+                'stock' => $request->stock,
+            ]);
+        } else {
+            $post->update([
+                'name_topping' => $request->name_menu,
+                'price' => $request->price,
+                'stock' => $request->stock,
+            ]);
+        }
 
         if (is_null($topping)) {
             return response()->json(['message' => 'Topping not found'], 404);
