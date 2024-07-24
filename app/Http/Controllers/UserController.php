@@ -188,13 +188,14 @@ class UserController extends Controller
         ]);
 
         Log::info('Update User Request: ', $request->all());
-        if($user->phone_verified_at != null){
-            return response()->json([
-                'success' => false,
-                'message' => 'Nomor Hp telah terverifikasi',
-            ], 422);
-        }
+ 
         if ($request->filled('phone_number')) {
+            if($user->phone_verified_at != null){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Nomor Hp telah terverifikasi',
+                ], 422);
+            }
             $otp = Otp::where('user_id', $user->id)->where('otp', $request->otp)->first();
             if (!$otp || $otp->created_at->diffInMinutes(now()) > 5) {
                 return response()->json([
