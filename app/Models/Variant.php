@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+
 
 class Variant extends Model
 {
@@ -22,6 +24,13 @@ class Variant extends Model
         'image',
         'stock_varian'
     ];
+
+    protected function image(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($image) => url('/variant/'.$image),
+        );
+    }
 
     // Kolom yang akan disembunyikan dari array atau JSON
     protected $hidden = [

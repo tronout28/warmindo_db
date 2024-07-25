@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+
 
 class Topping extends Model
 {
@@ -17,6 +19,13 @@ class Topping extends Model
         'image',
         'stock',
     ];
+
+    protected function image(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($image) => url('/topping/'.$image),
+        );
+    }
 
     public function menus()
     {
