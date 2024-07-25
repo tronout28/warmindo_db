@@ -110,7 +110,6 @@ class UserController extends Controller
             'phone_number' => $request->phone_number,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'profile_picture' => $user->profile_picture_url,
             'user_verified' => false,
         ]);
     
@@ -221,7 +220,7 @@ class UserController extends Controller
                     unlink($oldImagePath);
                 }
             }
-            $imageName = time().'.'.$request->profile_picture->extension();
+            $imageName = env('APP_URL'). time().'.'.$request->profile_picture->extension();
             Log::info('Uploading picture profile: '.$imageName);
             $request->profile_picture->move(public_path('images'), $imageName);
             $user->profile_picture = $imageName;

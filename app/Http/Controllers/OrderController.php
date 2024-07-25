@@ -26,19 +26,12 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required|exists:users,id',
-            'menu_ids' => 'required|array',
-            'menu_ids.*' => 'required|exists:menus,menuID',
-            'quantities' => 'required|array',
-            'quantities.*' => 'required|integer|min:1',
-            'prices' => 'required|array',
-            'prices.*' => 'required|numeric',
-            'order_date' => 'required|date',
+            'prices' => 'required|integer',
             'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal'])],
-            'payment' => 'required|numeric',
-            'refund' => 'required|boolean',
             'note' => 'nullable|string',
         ]);
+
+        $user = auth()->user();
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
@@ -48,46 +41,19 @@ class OrderController extends Controller
             return response()->json(['note' => 'Note is required when refund is true'], 422);
         }
 
-        $totalPrice = 0;
-        $menuIds = $request->menu_ids;
-        $quantities = $request->quantities;
-        $prices = $request->prices;
+        $order = Order::create([
+            'user_id' => $user->id,
+            'price_order' => $request->prices,
+            'status' => $request->status,
+            'note' => $request->note,
+        ]);
 
-        foreach ($menuIds as $index => $menuId) {
-            $totalPrice += $quantities[$index] * $prices[$index];
-        }
 
-        DB::beginTransaction();
-        try {
-            $order = Order::create([
-                'user_id' => $request->user_id,
-                'price_order' => $totalPrice,
-                'order_date' => $request->order_date,
-                'status' => $request->status,
-                'payment' => $request->payment,
-                'refund' => $request->refund,
-                'note' => $request->note,
-            ]);
-
-            foreach ($menuIds as $index => $menuId) {
-                OrderDetail::create([
-                    'order_id' => $order->id, // Use order_id from the newly created Order object
-                    'menuID' => $menuId,
-                    'quantity' => $quantities[$index],
-                    'price' => $prices[$index],
-                ]);
-            }
-
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollback();
-            return response()->json(['message' => $e->getMessage()], 500);
-        }
 
         return response()->json([
             'success' => true,
             'message' => 'Order created successfully',
-            'data' => $order->load(['orderDetails.menu', 'history.user']),
+            'data' => $order,
         ], 201);
     }
 
@@ -159,7 +125,7 @@ class OrderController extends Controller
             $order->orderDetails()->delete();
             foreach ($menuIds as $index => $menuId) {
                 OrderDetail::create([
-                    'order_id' => $order->id, // Use order_id from the updated Order object
+                    'order_id' => $order->id,
                     'menuID' => $menuId,
                     'quantity' => $quantities[$index],
                     'price' => $prices[$index],
