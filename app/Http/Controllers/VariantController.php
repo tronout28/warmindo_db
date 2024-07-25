@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Http\Resources\PostResource;
 use App\Models\Variant;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -29,11 +28,16 @@ class VariantController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-         $image = $request->file('variant');
-         $imageName = time().'.'.$image->extension();
-         $image->move(public_path('variant'), $imageName);
+        $data = $request->all();
 
-        $variant = Variant::create($request->all());
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->extension();
+            $image->move(public_path('variant'), $imageName);
+            $data['image'] = $imageName;
+        }
+
+        $variant = Variant::create($data);
 
         return response()->json([
             'success' => true,
@@ -62,16 +66,17 @@ class VariantController extends Controller
         }
 
         $variant = Variant::findOrFail($id);
+        $data = $request->all();
 
-        if ($request->hasFile('variant')) {
-            $image = $request->file('variant');
-             $imageName = time().'.'.$image->extension();
-             $image->move(public_path('variant'), $imageName);
- 
-             Storage::delete('public/variant/'.basename($post->image));
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->extension();
+            $image->move(public_path('variant'), $imageName);
+            Storage::delete('public/variant/' . basename($variant->image));
+            $data['image'] = $imageName;
         }
 
-        $variant->update($request->all());
+        $variant->update($data);
 
         return response()->json([
             'success' => true,
@@ -83,9 +88,9 @@ class VariantController extends Controller
     public function destroy($id)
     {
         $variant = Variant::findOrFail($id);
+        Storage::delete('public/variant/' . basename($variant->image));
         $variant->delete();
 
         return response()->json(['message' => 'Variant deleted successfully'], 204);
     }
 }
-

@@ -23,19 +23,24 @@ class ToppingController extends Controller
         $validator = Validator::make($request->all(), [
             'name_topping' => 'required|string|max:255',
             'price' => 'required|numeric',
-            'image' => 'required|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'stock' => 'required|integer',
         ]);
-
-         $image = $request->file('topping');
-         $imageName = time().'.'.$image->extension();
-         $image->move(public_path('topping'), $imageName);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        $topping = Topping::create($request->all());
+        $data = $request->all();
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->extension();
+            $image->move(public_path('topping'), $imageName);
+            $data['image'] = $imageName;
+        }
+
+        $topping = Topping::create($data);
 
         return new PostResource(true, 'Topping Berhasil Ditambahkan!', $topping);
     }
@@ -56,7 +61,7 @@ class ToppingController extends Controller
         $validator = Validator::make($request->all(), [
             'name_topping' => 'sometimes|required|string|max:255',
             'price' => 'sometimes|required|numeric',
-            'image' => 'sometimes|required|string|max:255',
+            'image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'stock' => 'sometimes|required|integer',
         ]);
 
@@ -64,32 +69,18 @@ class ToppingController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        if ($request->hasFile('topping')) {
-            $image = $request->file('topping');
-            $imageName = time().'.'.$image->extension();
+        $topping = Topping::findOrFail($id);
+        $data = $request->all();
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->extension();
             $image->move(public_path('topping'), $imageName);
-
-            Storage::delete('public/topping/'.basename($post->image));
-
-            $post->update([
-                'image' => $imageName,
-                'name_topping' => $request->name_menu,
-                'price' => $request->price,
-                'stock' => $request->stock,
-            ]);
-        } else {
-            $post->update([
-                'name_topping' => $request->name_menu,
-                'price' => $request->price,
-                'stock' => $request->stock,
-            ]);
+            Storage::delete('public/topping/' . basename($topping->image));
+            $data['image'] = $imageName;
         }
 
-        if (is_null($topping)) {
-            return response()->json(['message' => 'Topping not found'], 404);
-        }
-
-        $topping->update($request->all());
+        $topping->update($data);
 
         return new PostResource(true, 'Topping Berhasil Diubah!', $topping);
     }
@@ -102,6 +93,7 @@ class ToppingController extends Controller
             return response()->json(['message' => 'Topping not found'], 404);
         }
 
+        Storage::delete('public/topping/' . basename($topping->image));
         $topping->delete();
 
         return new PostResource(true, 'Topping Berhasil Dihapus!', null);
