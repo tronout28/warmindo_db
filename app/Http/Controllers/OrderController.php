@@ -71,7 +71,7 @@ class OrderController extends Controller
 
             foreach ($menuIds as $index => $menuId) {
                 OrderDetail::create([
-                    'order_id' => $order->id, // Menggunakan order_id dari objek Order yang baru dibuat
+                    'order_id' => $order->id, // Use order_id from the newly created Order object
                     'menuID' => $menuId,
                     'quantity' => $quantities[$index],
                     'price' => $prices[$index],
@@ -90,6 +90,7 @@ class OrderController extends Controller
             'data' => $order->load(['orderDetails.menu', 'history.user']),
         ], 201);
     }
+
 
     public function getSalesStatistics()
     {
@@ -158,7 +159,7 @@ class OrderController extends Controller
             $order->orderDetails()->delete();
             foreach ($menuIds as $index => $menuId) {
                 OrderDetail::create([
-                    'order_id' => $order->id, // Menggunakan order_id dari objek Order yang diperbarui
+                    'order_id' => $order->id, // Use order_id from the updated Order object
                     'menuID' => $menuId,
                     'quantity' => $quantities[$index],
                     'price' => $prices[$index],
@@ -178,7 +179,8 @@ class OrderController extends Controller
         ], 200);
     }
 
-    
+
+
 
     public function show($id)
     {
