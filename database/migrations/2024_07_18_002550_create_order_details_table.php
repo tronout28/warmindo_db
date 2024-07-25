@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('menuID');
             $table->foreign('menuID')->references('menuID')->on('menus')->onDelete('cascade');
             $table->integer('quantity');
-            $table->decimal('price');
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }

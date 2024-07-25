@@ -30,7 +30,7 @@ use App\Http\Controllers\OrderController;
 
 Route::prefix('orders')->group(function () {
     Route::get('/', [OrderController::class, 'index']);
-    Route::post('/store', [OrderController::class, 'store']);
+    Route::post('/store', [OrderController::class, 'store'])->middleware('auth:sanctum');
     Route::get('/{id}', [OrderController::class, 'show']);
     Route::put('/{id}', [OrderController::class, 'update']);
     Route::get('/statistics', [OrderController::class, 'getSalesStatistics']);
@@ -102,6 +102,11 @@ Route::prefix('history')->group(function () {
     Route::delete('/{id}', [HistoryController::class, 'destroy']);
 });
 
+use App\Http\Controllers\PaymentController;
+Route::group(['prefix' => '/payment', 'middleware' => 'auth:sanctum'], function() {
+    Route::post('/create', [PaymentController::class, 'createPayment']);
+    Route::get('/{id}', [PaymentController::class, 'getPaymentStatus']);
+} );
 
 use App\Http\Controllers\GoogleAuthController;
 

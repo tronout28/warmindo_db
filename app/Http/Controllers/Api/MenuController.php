@@ -127,7 +127,7 @@ class MenuController extends Controller
          \Log::info('Search Term: '.$searchTerm);
  
          $posts = Menu::where('name_menu', 'LIKE', '%'.$searchTerm.'%')->get();
-         \Log::info('Search Results: ', $posts->toArray());
+         \log::info('Search Results: ', $posts->toArray());
  
          if ($posts->isEmpty()) {
              \Log::info('No Menu found for: '.$searchTerm);

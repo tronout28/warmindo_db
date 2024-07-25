@@ -14,11 +14,9 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->decimal('price_order');
+            $table->integer('price_order');
             $table->timestamp('order_date')->useCurrent();
             $table->enum('status', ['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal']);
-            $table->decimal('payment');
-            $table->boolean('refund')->default(false);
             $table->text('note')->nullable();
             $table->timestamps();
         });
