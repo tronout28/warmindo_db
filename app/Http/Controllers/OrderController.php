@@ -68,7 +68,7 @@ class OrderController extends Controller
 
         foreach ($menuIds as $index => $menuId) {
             OrderDetail::create([
-                'order_id' => $order->id,
+                'order_id' => $order->id, // Menggunakan order_id dari objek Order yang baru dibuat
                 'menuID' => $menuId,
                 'quantity' => $quantities[$index],
                 'price' => $prices[$index],
@@ -147,7 +147,7 @@ class OrderController extends Controller
         $order->orderDetails()->delete();
         foreach ($menuIds as $index => $menuId) {
             OrderDetail::create([
-                'order_id' => $order->id,
+                'order_id' => $order->id, // Menggunakan order_id dari objek Order yang diperbarui
                 'menuID' => $menuId,
                 'quantity' => $quantities[$index],
                 'price' => $prices[$index],
@@ -158,6 +158,21 @@ class OrderController extends Controller
             'success' => true,
             'message' => 'Order updated successfully',
             'data' => $order->load(['orderDetails.menu', 'history.user']),
+        ], 200);
+    }
+
+    public function show($id)
+    {
+        $order = Order::with(['orderDetails.menu', 'history.user'])->find($id);
+
+        if (is_null($order)) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order details retrieved successfully',
+            'data' => $order,
         ], 200);
     }
 }
