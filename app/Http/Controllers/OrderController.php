@@ -179,6 +179,7 @@ class OrderController extends Controller
     }
 
     
+
     public function show($id)
     {
         $order = Order::with(['orderDetails.menu', 'history.user'])->find($id);
