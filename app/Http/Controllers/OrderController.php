@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
@@ -56,23 +57,31 @@ class OrderController extends Controller
             $totalPrice += $quantities[$index] * $prices[$index];
         }
 
-        $order = Order::create([
-            'user_id' => $request->user_id,
-            'price_order' => $totalPrice,
-            'order_date' => $request->order_date,
-            'status' => $request->status,
-            'payment' => $request->payment,
-            'refund' => $request->refund,
-            'note' => $request->note,
-        ]);
-
-        foreach ($menuIds as $index => $menuId) {
-            OrderDetail::create([
-                'order_id' => $order->id, // Menggunakan order_id dari objek Order yang baru dibuat
-                'menuID' => $menuId,
-                'quantity' => $quantities[$index],
-                'price' => $prices[$index],
+        DB::beginTransaction();
+        try {
+            $order = Order::create([
+                'user_id' => $request->user_id,
+                'price_order' => $totalPrice,
+                'order_date' => $request->order_date,
+                'status' => $request->status,
+                'payment' => $request->payment,
+                'refund' => $request->refund,
+                'note' => $request->note,
             ]);
+
+            foreach ($menuIds as $index => $menuId) {
+                OrderDetail::create([
+                    'order_id' => $order->id, // Menggunakan order_id dari objek Order yang baru dibuat
+                    'menuID' => $menuId,
+                    'quantity' => $quantities[$index],
+                    'price' => $prices[$index],
+                ]);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json(['message' => $e->getMessage()], 500);
         }
 
         return response()->json([
@@ -144,14 +153,22 @@ class OrderController extends Controller
 
         $order->update(['price_order' => $totalPrice]);
 
-        $order->orderDetails()->delete();
-        foreach ($menuIds as $index => $menuId) {
-            OrderDetail::create([
-                'order_id' => $order->id, // Menggunakan order_id dari objek Order yang diperbarui
-                'menuID' => $menuId,
-                'quantity' => $quantities[$index],
-                'price' => $prices[$index],
-            ]);
+        DB::beginTransaction();
+        try {
+            $order->orderDetails()->delete();
+            foreach ($menuIds as $index => $menuId) {
+                OrderDetail::create([
+                    'order_id' => $order->id, // Menggunakan order_id dari objek Order yang diperbarui
+                    'menuID' => $menuId,
+                    'quantity' => $quantities[$index],
+                    'price' => $prices[$index],
+                ]);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json(['message' => $e->getMessage()], 500);
         }
 
         return response()->json([
@@ -160,6 +177,8 @@ class OrderController extends Controller
             'data' => $order->load(['orderDetails.menu', 'history.user']),
         ], 200);
     }
+
+    
 
     public function show($id)
     {
