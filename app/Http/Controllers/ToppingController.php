@@ -108,6 +108,7 @@ class ToppingController extends Controller
             Storage::delete('topping/' . $topping->image);
         }
         
+        
         $topping->delete();
 
         return response()->json(['message' => 'Topping deleted successfully'], 204);
