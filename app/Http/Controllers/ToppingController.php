@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Topping;
-use App\Http\Resources\PostResource;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 
@@ -14,7 +13,7 @@ class ToppingController extends Controller
     {
         $toppings = Topping::all();
 
-        return new PostResource(true, 'List Data Toppings', $toppings);
+        return response()->json(['data' => $toppings], 200);
     }
 
     public function store(Request $request)
@@ -41,7 +40,11 @@ class ToppingController extends Controller
 
         $topping = Topping::create($data);
 
-        return new PostResource(true, 'Topping Berhasil Ditambahkan!', $topping);
+        return response()->json([
+            'success' => true,
+            'message' => 'Topping created successfully',
+            'data' => $topping
+        ], 201);
     }
 
     public function show($id)
@@ -52,7 +55,7 @@ class ToppingController extends Controller
             return response()->json(['message' => 'Topping not found'], 404);
         }
 
-        return new PostResource(true, 'Detail Data Topping', $topping);
+        return response()->json(['data' => $topping], 200);
     }
 
     public function update(Request $request, $id)
@@ -86,7 +89,11 @@ class ToppingController extends Controller
 
         $topping->update($data);
 
-        return new PostResource(true, 'Topping Berhasil Diubah!', $topping);
+        return response()->json([
+            'success' => true,
+            'message' => 'Topping updated successfully',
+            'data' => $topping
+        ], 200);
     }
 
     public function destroy($id)
@@ -103,6 +110,6 @@ class ToppingController extends Controller
         
         $topping->delete();
 
-        return new PostResource(true, 'Topping Berhasil Dihapus!', null);
+        return response()->json(['message' => 'Topping deleted successfully'], 204);
     }
 }
