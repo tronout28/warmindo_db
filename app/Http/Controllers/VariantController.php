@@ -69,10 +69,15 @@ class VariantController extends Controller
         $data = $request->all();
 
         if ($request->hasFile('image')) {
+            // Hapus gambar lama jika ada
+            if ($variant->image) {
+                Storage::delete('variant/' . $variant->image);
+            }
+
+            // Simpan gambar baru
             $image = $request->file('image');
             $imageName = time() . '.' . $image->extension();
             $image->move(public_path('variant'), $imageName);
-            Storage::delete('public/variant/' . basename($variant->image));
             $data['image'] = $imageName;
         }
 
