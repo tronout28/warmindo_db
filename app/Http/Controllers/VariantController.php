@@ -3,26 +3,25 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Topping;
-use Illuminate\Support\Facades\Validator;
+use App\Models\Variant;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
-class ToppingController extends Controller
+class VariantController extends Controller
 {
     public function index()
     {
-        $toppings = Topping::all();
-
-        return response()->json(['data' => $toppings], 200);
+        $variants = Variant::all();
+        return response()->json(['data' => $variants], 200);
     }
 
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name_topping' => 'required|string|max:255',
-            'price' => 'required|numeric',
+            'name_varian' => 'required|string|max:255',
+            'category' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'stock' => 'required|integer',
+            'stock_varian' => 'required|integer',
         ]);
 
         if ($validator->fails()) {
@@ -34,82 +33,69 @@ class ToppingController extends Controller
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $imageName = time() . '.' . $image->extension();
-            $image->move(public_path('topping'), $imageName);
+            $image->move(public_path('variant'), $imageName);
             $data['image'] = $imageName;
         }
 
-        $topping = Topping::create($data);
+        $variant = Variant::create($data);
 
         return response()->json([
             'success' => true,
-            'message' => 'Topping created successfully',
-            'data' => $topping
+            'message' => 'Variant created successfully',
+            'data' => $variant
         ], 201);
     }
 
     public function show($id)
     {
-        $topping = Topping::find($id);
-
-        if (is_null($topping)) {
-            return response()->json(['message' => 'Topping not found'], 404);
-        }
-
-        return response()->json(['data' => $topping], 200);
+        $variant = Variant::findOrFail($id);
+        return response()->json(['data' => $variant], 200);
     }
 
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'name_topping' => 'sometimes|required|string|max:255',
-            'price' => 'sometimes|required|numeric',
+            'name_varian' => 'sometimes|required|string|max:255',
+            'category' => 'sometimes|required|string|max:255',
             'image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'stock' => 'sometimes|required|integer',
+            'stock_varian' => 'sometimes|required|integer',
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        $topping = Topping::findOrFail($id);
+        $variant = Variant::findOrFail($id);
         $data = $request->all();
 
         if ($request->hasFile('image')) {
             // Hapus gambar lama jika ada
-            if ($topping->image) {
-                Storage::delete('topping/' . $topping->image);
+            if ($variant->image) {
+                Storage::delete('variant/' . $variant->image);
             }
 
             // Simpan gambar baru
             $image = $request->file('image');
             $imageName = time() . '.' . $image->extension();
-            $image->move(public_path('topping'), $imageName);
+            $image->move(public_path('variant'), $imageName);
             $data['image'] = $imageName;
         }
 
-        $topping->update($data);
+        $variant->update($data);
 
         return response()->json([
             'success' => true,
-            'message' => 'Topping updated successfully',
-            'data' => $topping
+            'message' => 'Variant updated successfully',
+            'data' => $variant
         ], 200);
     }
 
     public function destroy($id)
     {
-        $topping = Topping::find($id);
+        $variant = Variant::findOrFail($id);
+        Storage::delete('public/variant/' . basename($variant->image));
+        $variant->delete();
 
-        if (is_null($topping)) {
-            return response()->json(['message' => 'Topping not found'], 404);
-        }
-
-        if ($topping->image) {
-            Storage::delete('topping/' . $topping->image);
-        }
-        
-        $topping->delete();
-
-        return response()->json(['message' => 'Topping deleted successfully'], 204);
+        return response()->json(['message' => 'Variant deleted successfully'], 204);
     }
 }
