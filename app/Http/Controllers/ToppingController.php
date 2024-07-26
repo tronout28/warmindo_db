@@ -4,15 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Topping;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class ToppingController extends Controller
 {
     public function index()
     {
         $toppings = Topping::all();
-
         return response()->json(['data' => $toppings], 200);
     }
 
@@ -20,9 +19,9 @@ class ToppingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name_topping' => 'required|string|max:255',
-            'price' => 'required|numeric',
+            'category' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'stock' => 'required|integer',
+            'stock_topping' => 'required|integer',
         ]);
 
         if ($validator->fails()) {
@@ -49,12 +48,7 @@ class ToppingController extends Controller
 
     public function show($id)
     {
-        $topping = Topping::find($id);
-
-        if (is_null($topping)) {
-            return response()->json(['message' => 'Topping not found'], 404);
-        }
-
+        $topping = Topping::findOrFail($id);
         return response()->json(['data' => $topping], 200);
     }
 
@@ -62,9 +56,9 @@ class ToppingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name_topping' => 'sometimes|required|string|max:255',
-            'price' => 'sometimes|required|numeric',
+            'category' => 'sometimes|required|string|max:255',
             'image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'stock' => 'sometimes|required|integer',
+            'stock_topping' => 'sometimes|required|integer',
         ]);
 
         if ($validator->fails()) {
@@ -98,17 +92,8 @@ class ToppingController extends Controller
 
     public function destroy($id)
     {
-        $topping = Topping::find($id);
-
-        if (is_null($topping)) {
-            return response()->json(['message' => 'Topping not found'], 404);
-        }
-
-        if ($topping->image) {
-            Storage::delete('topping/' . $topping->image);
-        }
-        
-        
+        $topping = Topping::findOrFail($id);
+        Storage::delete('public/topping/' . basename($topping->image));
         $topping->delete();
 
         return response()->json(['message' => 'Topping deleted successfully'], 204);

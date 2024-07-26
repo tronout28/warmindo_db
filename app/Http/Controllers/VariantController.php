@@ -90,6 +90,7 @@ class VariantController extends Controller
         ], 200);
     }
 
+
     public function destroy($id)
     {
         $variant = Variant::findOrFail($id);
