@@ -8,7 +8,6 @@ use App\Http\Resources\PostResource;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 
-
 class ToppingController extends Controller
 {
     public function index()
@@ -73,10 +72,15 @@ class ToppingController extends Controller
         $data = $request->all();
 
         if ($request->hasFile('image')) {
+            // Hapus gambar lama jika ada
+            if ($topping->image) {
+                Storage::delete('topping/' . $topping->image);
+            }
+
+            // Simpan gambar baru
             $image = $request->file('image');
             $imageName = time() . '.' . $image->extension();
             $image->move(public_path('topping'), $imageName);
-            Storage::delete('public/topping/' . basename($topping->image));
             $data['image'] = $imageName;
         }
 
@@ -93,7 +97,10 @@ class ToppingController extends Controller
             return response()->json(['message' => 'Topping not found'], 404);
         }
 
-        Storage::delete('public/topping/' . basename($topping->image));
+        if ($topping->image) {
+            Storage::delete('topping/' . $topping->image);
+        }
+        
         $topping->delete();
 
         return new PostResource(true, 'Topping Berhasil Dihapus!', null);
