@@ -88,7 +88,7 @@ Route::prefix('variants')->group(function () {
     Route::get('/', [VariantController::class, 'index']);
     Route::post('/store', [VariantController::class, 'store']);
     Route::get('/{id}', [VariantController::class, 'show']);
-    Route::patch('/{id}', [VariantController::class, 'update']);
+    Route::put('/{id}', [VariantController::class, 'update']);
     Route::delete('/{id}', [VariantController::class, 'destroy']);
 });
 
