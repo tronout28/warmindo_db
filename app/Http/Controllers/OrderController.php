@@ -14,7 +14,8 @@ class OrderController extends Controller
 {
     public function index()
     {
-        $orders = Order::with(['orderDetails.menu', 'history.user'])->get();
+        $user = auth()->user();
+        $orders = Order::where('user_id', $user->id)->get();
 
         return response()->json([
             'success' => true,
@@ -47,8 +48,6 @@ class OrderController extends Controller
             'status' => $request->status,
             'note' => $request->note,
         ]);
-
-
 
         return response()->json([
             'success' => true,
@@ -83,18 +82,9 @@ class OrderController extends Controller
         ], 200);
     }
 
-    public function update(Request $request, $id)
+    public function updateStatus(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required|exists:users,id',
-            'menu_ids' => 'required|array',
-            'menu_ids.*' => 'required|exists:menus,menuID',
-            'quantities' => 'required|array',
-            'quantities.*' => 'required|integer|min:1',
-            'prices' => 'required|array',
-            'prices.*' => 'required|numeric',
-            'refund' => 'required|boolean',
-            'note' => 'nullable|string',
             'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal'])],
         ]);
 
@@ -105,38 +95,9 @@ class OrderController extends Controller
         if ($request->refund && is_null($request->note)) {
             return response()->json(['note' => 'Note is required when refund is true'], 422);
         }
-
-        $order = Order::findOrFail($id);
-        $order->update($request->only('user_id', 'order_date', 'status', 'payment', 'refund', 'note'));
-
-        $menuIds = $request->menu_ids;
-        $quantities = $request->quantities;
-        $prices = $request->prices;
-
-        $totalPrice = 0;
-        foreach ($menuIds as $index => $menuId) {
-            $totalPrice += $quantities[$index] * $prices[$index];
-        }
-
-        $order->update(['price_order' => $totalPrice]);
-
-        DB::beginTransaction();
-        try {
-            $order->orderDetails()->delete();
-            foreach ($menuIds as $index => $menuId) {
-                OrderDetail::create([
-                    'order_id' => $order->id,
-                    'menuID' => $menuId,
-                    'quantity' => $quantities[$index],
-                    'price' => $prices[$index],
-                ]);
-            }
-
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollback();
-            return response()->json(['message' => $e->getMessage()], 500);
-        }
+        $order = Order::where('id', $id)->first();
+        $order->status = $request->status;
+        $order->save();
 
         return response()->json([
             'success' => true,
@@ -144,6 +105,26 @@ class OrderController extends Controller
             'data' => $order->load(['orderDetails.menu', 'history.user']),
         ], 200);
     }
+
+    public function updatePrice(Request $request) 
+    {
+        $request->validate([
+            'order_id' => 'required|integer|exists:orders,id'
+        ]);
+
+        $order = Order::where('id', $request->order_id)->get();
+        $orderDetails = OrderDetail::where('order_id', $order->id)->get();
+        $totalPrice = $orderDetails->sum('price');
+
+        $order->price_order = $totalPrice;
+        $order->save();
+
+        return response([
+            'status' => 'success',
+            'order' => $order,
+        ]);
+    }
+    
 
 
 

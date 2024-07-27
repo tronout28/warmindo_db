@@ -11,10 +11,6 @@ class Menu extends Model
 
     use HasFactory;
 
-    protected $primaryKey = 'menuID';
-    public $incrementing = true;
-    protected $keyType = 'int';
-
     protected $fillable = [
         'image',
         'name_menu',

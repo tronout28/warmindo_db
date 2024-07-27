@@ -9,16 +9,12 @@ class Order extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'order_id';
 
     protected $fillable = [
         'user_id',
-        'menuID',
+        'menu_id',
         'price_order',
-        'order_date',
         'status',
-        'payment',
-        'refund',
         'note',
     ];
 
@@ -38,5 +34,10 @@ class Order extends Model
     public function orderDetails()
     {
         return $this->hasMany(OrderDetail::class);
+    }
+
+    public function history()
+    {
+        return $this->hasMany(History::class);
     }
 }

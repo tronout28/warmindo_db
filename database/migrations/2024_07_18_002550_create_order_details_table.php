@@ -13,12 +13,15 @@ return new class extends Migration
     {
         Schema::create('order_details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
-            $table->unsignedBigInteger('menuID');
-            $table->foreign('menuID')->references('menuID')->on('menus')->onDelete('cascade');
             $table->integer('quantity');
             $table->text('notes')->nullable();
+            $table->integer('price')->nullable();
+            $table->unsignedBigInteger('menu_id');
+            $table->unsignedBigInteger('order_id');
             $table->timestamps();
+
+            $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
+            $table->foreign('menu_id')->references('id')->on('menus')->onDelete('cascade');
         });
     }
 
@@ -27,6 +30,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('order_details', function (Blueprint $table) {
+            $table->dropForeign(['order_id']);
+            $table->dropForeign(['menu_id']);
+        });
         Schema::dropIfExists('order_details');
     }
 };
