@@ -50,8 +50,12 @@ class MenuController extends Controller
              'ratings' => $request->ratings,
              'description' => $request->description,
          ]);
- 
-         return new PostResource(true, 'Data Menu Berhasil Ditambahkan!', $post);
+         
+         return response([
+            'status' => 'success',
+            'message' => 'Data Menu Berhasil Ditambahkan!',
+            'data' => $post
+         ]);
      }
  
      public function show($id)
@@ -60,7 +64,10 @@ class MenuController extends Controller
          if (is_null($post)) {
              return response()->json(['message' => 'Menu not found'], 404);
          }
-         return new PostResource(true, 'Detail Data Menu', $post);
+         return response([
+            'status' => 'success',
+            'data' => $post
+         ]);
      }
  
      public function update(Request $request, $id)
@@ -123,20 +130,15 @@ class MenuController extends Controller
  
      public function search(Request $request)
      {
-         $searchTerm = $request->query('q');
-         \Log::info('Search Term: '.$searchTerm);
  
-         $posts = Menu::where('name_menu', 'LIKE', '%'.$searchTerm.'%')->get();
-         \log::info('Search Results: ', $posts->toArray());
+         $posts = Menu::where('name_menu', 'LIKE', '%'.$request->q.'%')->get();
  
          if ($posts->isEmpty()) {
-             \Log::info('No Menu found for: '.$searchTerm);
-             return response()->json(['message' => 'Menu not found for search term: '.$searchTerm], 404);
+             return response()->json(['message' => 'Menu not found for search term: '.$request->q], 404);
          }
+
  
-         \Log::info('Menu found: '.$posts->count());
- 
-         return response()->json(['success' => true, 'message' => 'Search Results: '.$searchTerm, 'data' => $posts]);
+         return response()->json(['success' => true, 'message' => 'Search Results: '.$request->q, 'data' => $posts]);
      }
  
      public function filterByCategory($category)

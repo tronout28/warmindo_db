@@ -10,7 +10,16 @@ class OrderDetail extends Model
     use HasFactory;
 
     protected $fillable = [
-        'order_id', 'menuID', 'quantity', 'price'
+        'order_id', 'menu_id', 'quantity', 'price'
+    ];
+
+    protected $casts = [
+        'id' => 'integer',
+        'order_id' => 'integer',
+        'menu_id' => 'integer',
+        'quantity' => 'integer',
+        'price' => 'integer',
+        'notes' => 'string',
     ];
 
     public function order()
@@ -20,6 +29,10 @@ class OrderDetail extends Model
 
     public function menu()
     {
-        return $this->belongsTo(Menu::class, 'menuID');
+        return $this->belongsTo(Menu::class);
+    }
+
+    public function toppings() {
+        return $this->hasMany(OrderDetailTopping::class);
     }
 }

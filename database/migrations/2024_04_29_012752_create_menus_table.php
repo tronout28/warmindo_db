@@ -9,10 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('menus', function (Blueprint $table) {
-            $table->id('menuID');
+            $table->id();
             $table->string('image');
             $table->string('name_menu');
-            $table->decimal('price');
+            $table->integer('price');
             $table->string('category');
             $table->string('second_category');
             $table->integer('stock');

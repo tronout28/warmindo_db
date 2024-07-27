@@ -160,6 +160,7 @@ class UserController extends Controller
     public function details()
     {
         $user = auth()->user();
+        $user = User::where('id', $user->id)->first();
         $token = $user->currentAccessToken();
         return response()->json([
             'success' => true,
@@ -220,7 +221,7 @@ class UserController extends Controller
                     unlink($oldImagePath);
                 }
             }
-            $imageName = env('APP_URL'). time().'.'.$request->profile_picture->extension();
+            $imageName = 'https://warmindo.pradiptaahmad.tech/image/'. time().'.'.$request->profile_picture->extension();
             Log::info('Uploading picture profile: '.$imageName);
             $request->profile_picture->move(public_path('images'), $imageName);
             $user->profile_picture = $imageName;
@@ -243,10 +244,6 @@ class UserController extends Controller
             $user->password = Hash::make($request->password);
         }
 
-        $user->save();
-
-        Log::info('User updated: ', $user->toArray());
-
 
         return response()->json([
             'success' => true,
@@ -260,6 +257,7 @@ class UserController extends Controller
     public function updatePhoneNumberForGoogle(Request $request)
     {
         $user = auth()->user();
+        $user = User::where('id', $user->id)->first();
 
         $request->validate([
             'phone_number' => 'sometimes|nullable|string|max:255|unique:users,phone_number,'.$user->id,

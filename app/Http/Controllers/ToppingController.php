@@ -20,8 +20,8 @@ class ToppingController extends Controller
         $validator = Validator::make($request->all(), [
             'name_topping' => 'required|string|max:255',
             'category' => 'required|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'stock_topping' => 'required|integer',
+            'menu_id' => 'required|integer|exists:menus,id',
         ]);
 
         if ($validator->fails()) {
@@ -29,13 +29,6 @@ class ToppingController extends Controller
         }
 
         $data = $request->all();
-
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->extension();
-            $image->move(public_path('topping'), $imageName);
-            $data['image'] = $imageName;
-        }
 
         $topping = Topping::create($data);
 
@@ -46,10 +39,16 @@ class ToppingController extends Controller
         ], 201);
     }
 
-    public function show($id)
+    public function show(Request $request)
     {
-        $topping = Topping::findOrFail($id);
-        return response()->json(['data' => $topping], 200);
+        $request->validate([
+            'menu_id' => 'required|integer|exists:menus,id',
+        ]);
+        $topping = Topping::where('menu_id', $request->menu_id)->get();
+        return response()->json([
+            'status' => 'success',
+            'data' => $topping
+        ], 200);
     }
 
     public function update(Request $request, $id)

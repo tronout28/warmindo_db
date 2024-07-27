@@ -11,13 +11,12 @@ class Topping extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'topping_id';
-
     protected $fillable = [
         'name_topping',
         'price',
         'image',
-        'stock',
+        'stock_topping',
+        'menu_id',
     ];
 
     protected function image(): Attribute

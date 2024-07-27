@@ -5,7 +5,7 @@ use App\Http\Controllers\OtpController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('menus')->group(function () {
+Route::group(['prefix' => 'menus'], function() {
     Route::get('/', [MenuController::class, 'index']);
     Route::post('/store', [MenuController::class, 'store']);
     Route::get('/search', [MenuController::class, 'search']); // Letakkan search di sini
@@ -28,11 +28,12 @@ Route::prefix('carts')->group(function () {
 
 use App\Http\Controllers\OrderController;
 
-Route::prefix('orders')->group(function () {
+Route::group(['prefix' => 'orders', 'middleware' => 'auth:sanctum'], function () {
     Route::get('/', [OrderController::class, 'index']);
-    Route::post('/store', [OrderController::class, 'store'])->middleware('auth:sanctum');
+    Route::post('/store', [OrderController::class, 'store']);
     Route::get('/{id}', [OrderController::class, 'show']);
-    Route::put('/{id}', [OrderController::class, 'update']);
+    Route::put('/status/{id}', [OrderController::class, 'updateStatus']);
+    Route::put('/price/{id}', [OrderController::class, 'updatePrice']);
     Route::get('/statistics', [OrderController::class, 'getSalesStatistics']);
 });
 
@@ -109,9 +110,18 @@ Route::group(['prefix' => '/payment', 'middleware' => 'auth:sanctum'], function(
 } );
 
 use App\Http\Controllers\GoogleAuthController;
+use App\Http\Controllers\OrderDetailController;
 
 Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('google-auth');
 Route::get('/auth/google/call-back', [GoogleAuthController::class, 'handleGoogleCallback']);
+
+Route::prefix('/order-details')->group(function () {
+    Route::get('/', [OrderDetailController::class, 'index']);
+    Route::post('/create', [OrderDetailController::class, 'createOrderDetail']);
+    Route::get('/get', [OrderDetailController::class, 'getOrderDetails']);
+    Route::put('/{id}', [OrderDetailController::class, 'update']);
+    Route::delete('/{id}', [OrderDetailController::class, 'destroy']);
+})->middleware('auth:sanctum');
 
 
 
