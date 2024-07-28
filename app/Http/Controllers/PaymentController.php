@@ -8,16 +8,19 @@ use App\Http\Requests\PaymentRequest;
 use App\Models\Order;
 use App\Services\XenditService;
 use App\Models\Payment;
+use App\Services\FirebaseService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 
 class PaymentController extends Controller
 {
-    protected $XenditService;
-    public function __construct(XenditService $xenditService)
+    protected $xenditService;
+    protected $firebaseService;
+    public function __construct(XenditService $xenditService, FirebaseService $firebaseService)
     {
-        $this->XenditService = $xenditService;
+        $this->xenditService = $xenditService;
+        $this->firebaseService = $firebaseService;
     }
 
     public function createPayment(Request $request)
@@ -51,7 +54,7 @@ class PaymentController extends Controller
             'amount' => $amount,
             'currency' => 'IDR',
         ];
-        $response = $this->XenditService->createInvoice($options);
+        $response = $this->xenditService->createInvoice($options);
 
         $payment = new Payment();
         $payment->status = 'pending';
@@ -65,7 +68,7 @@ class PaymentController extends Controller
         // send notification to user
         $expiredDate = Carbon::parse($response['expiry_date']);
         $description = 'Menunggu pembayaran laundry  ' . $order->no_pemesanan . ' ' . '. Bayar sebelum tamggal ' . $expiredDate->format('d F Y') . ' pukul ' . $expiredDate->format('H:i') . ' WIB';
-        // $this->firebaseService->sendNotification($payment->user->notification_token, 'Menunggu Pembayaran', 'Tenang kamu bisa membuat pembayaran lagi', '');
+        $this->firebaseService->sendNotification($payment->user->notification_token, 'Menunggu Pembayaran', 'Tenang kamu bisa membuat pembayaran lagi', '');
         return response([
             'status' => 'success',
             'message' => 'Payment created successfully',
@@ -89,7 +92,7 @@ class PaymentController extends Controller
                 'message' => 'Payment already expired',
             ], 400);
         }
-        $this->XenditService->expireInvoice($payment->invoice_id);
+        $this->xenditService->expireInvoice($payment->invoice_id);
         $payment->status = 'expired';
         $payment->save();
 
@@ -111,7 +114,7 @@ class PaymentController extends Controller
                 'message' => 'Payment not found',
             ], 404);
         }
-        $response = $this->XenditService->getInvoice($payment->invoice_id);
+        $response = $this->xenditService->getInvoice($payment->invoice_id);
 
         $payment->status = strtolower($response['status']);
         $payment->save();

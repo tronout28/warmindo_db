@@ -175,7 +175,8 @@ class UserController extends Controller
   
     public function update(Request $request)
     {
-        $user = auth()->user();
+        $auth = auth()->user();
+        $user = User::where('id', $auth->id)->first();
 
         $request->validate([
             'name' => 'sometimes|nullable|string|max:255',
@@ -244,6 +245,7 @@ class UserController extends Controller
             $user->password = Hash::make($request->password);
         }
 
+        $user->save();
 
         return response()->json([
             'success' => true,
