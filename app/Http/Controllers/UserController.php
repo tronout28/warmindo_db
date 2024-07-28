@@ -96,6 +96,7 @@ class UserController extends Controller
         }
     
         // Handle file upload
+        $imageName = "";
         if ($request->hasFile('profile_picture')) {
             $imageName = time() . '.' . $request->profile_picture->extension();
             $request->profile_picture->move(public_path('images'), $imageName);
@@ -220,7 +221,7 @@ class UserController extends Controller
                     unlink($oldImagePath);
                 }
             }
-            $imageName = 'https://warmindo.pradiptaahmad.tech/image/'. time().'.'.$request->profile_picture->extension();
+            $imageName = env('APP_URL') . time().'.'.$request->profile_picture->extension();
             Log::info('Uploading picture profile: '.$imageName);
             $request->profile_picture->move(public_path('images'), $imageName);
             $user->profile_picture = $imageName;
