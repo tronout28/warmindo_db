@@ -31,13 +31,7 @@ class UserController extends Controller
 
         if ($user) {
             // Update user information if needed
-            $user->update([
-                'username' => $validatedData['name'],
-                'profile_picture' => $validatedData['profile_picture'],
-                'email' => $validatedData['email'],
-                'google_id' => $validatedData['google_id'],
-                'email_verified_at' => now(),
-            ]);
+ 
         } else {
             // Create new user
             $user = User::create([
