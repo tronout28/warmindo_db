@@ -44,19 +44,19 @@ class StoreStatusController extends Controller
                 // Check if within operating hours
                 if ($currentTime_C >= $startTime_C && $currentTime_C <= $endTime_C) {
                     $storeStatus->is_open = false;
-                    // if ($storeStatus->temporary_closure_duration) {
-                    //     $duration = (int) $storeStatus->temporary_closure_duration;
-                    //     $closureEndTime = Carbon::parse($storeStatus->updated_at)->addMinutes($duration);
+                    if ($storeStatus->temporary_closure_duration) {
+                        $duration = (int) $storeStatus->temporary_closure_duration;
+                        $closureEndTime = Carbon::parse($storeStatus->updated_at)->addMinutes($duration);
     
-                    //     if (Carbon::now($timezone)->greaterThanOrEqualTo($closureEndTime)) {
-                    //         // Reset the closure duration and open the store
-                    //         $storeStatus->temporary_closure_duration = null;
-                    //         $storeStatus->is_open = true;
-                    //     }
-                    // } else {
-                    //     // No temporary closure, set `is_open` to true if within hours
-                    //     $storeStatus->is_open = true;
-                    // }
+                        if (Carbon::now($timezone)->greaterThanOrEqualTo($closureEndTime)) {
+                            // Reset the closure duration and open the store
+                            $storeStatus->temporary_closure_duration = 0;
+                            $storeStatus->is_open = true;
+                        }
+                    } else {
+                        // No temporary closure, set `is_open` to true if within hours
+                        $storeStatus->is_open = true;
+                    }
                 }else{
                     $storeStatus->is_open = false;
                 }
