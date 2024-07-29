@@ -4,22 +4,94 @@ namespace App\Http\Controllers;
 
 use App\Models\StoreStatus;
 use Illuminate\Http\Request;
-
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 class StoreStatusController extends Controller
 {
     public function index()
     {
+        $timezone = 'Asia/Jakarta'; 
+        $today = Carbon::now($timezone)->locale('id')->dayName;
+        $currentTime = Carbon::now($timezone)->format('H:i:s'); // Get the current time
+    
         $storeStatuses = StoreStatus::all();
-
+    
+        foreach ($storeStatuses as $storeStatus) {
+            Log::info('Current Store Status:', [
+                'id' => $storeStatus->id,
+                'is_open' => $storeStatus->is_open,
+                'start_time' => $storeStatus->start_time,
+                'end_time' => $storeStatus->end_time,
+                'temporary_closure_duration' => $storeStatus->temporary_closure_duration,
+                'current_time' => $currentTime
+            ]);
+    
+            // Default to false
+            $startTime_C = strtotime($storeStatus->start_time);
+            $endTime_C = strtotime($storeStatus->end_time);
+            $currentTime_C = strtotime($currentTime);
+            // $storeStatus->is_open = false;
+            Log::info('Current Store Status:', [
+                'id' => $storeStatus->id,
+                'is_open' => $storeStatus->is_open,
+                'start_time' => $startTime_C,
+                'end_time' => $endTime_C,
+                'temporary_closure_duration' => $storeStatus->temporary_closure_duration,
+                'current_time' => $currentTime_C
+            ]);
+            // Check if today is a valid day
+            if ($storeStatus->days && stripos($storeStatus->days, $today) !== false) {
+                // Check if within operating hours
+                if ($currentTime_C >= $startTime_C && $currentTime_C <= $endTime_C) {
+                    $storeStatus->is_open = false;
+                    // if ($storeStatus->temporary_closure_duration) {
+                    //     $duration = (int) $storeStatus->temporary_closure_duration;
+                    //     $closureEndTime = Carbon::parse($storeStatus->updated_at)->addMinutes($duration);
+    
+                    //     if (Carbon::now($timezone)->greaterThanOrEqualTo($closureEndTime)) {
+                    //         // Reset the closure duration and open the store
+                    //         $storeStatus->temporary_closure_duration = null;
+                    //         $storeStatus->is_open = true;
+                    //     }
+                    // } else {
+                    //     // No temporary closure, set `is_open` to true if within hours
+                    //     $storeStatus->is_open = true;
+                    // }
+                }else{
+                    $storeStatus->is_open = false;
+                }
+            }
+    
+            // Check if the store is still open based on time conditions
+            if ($currentTime_C >= $startTime_C && $currentTime_C <= $endTime_C) {
+                $storeStatus->is_open = false;
+            }
+    
+            Log::info('Updated Store Status:', [
+                'id' => $storeStatus->id,
+                'is_open' => $storeStatus->is_open,
+                'start_time' => $storeStatus->start_time,
+                'end_time' => $storeStatus->end_time,
+                'temporary_closure_duration' => $storeStatus->temporary_closure_duration,
+                'current_time' => $currentTime
+            ]);
+    
+            $storeStatus->save();
+        }
+    
         return response()->json(['data' => $storeStatuses], 200);
     }
-
+    
+    
+    
+    
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'is_open' => 'required|boolean',
+            'is_open' => 'nullable|boolean',
             'days' => 'nullable|string',
-            'hours' => 'nullable|string',
+            'start_time' => 'nullable|date_format:H:i:s',
+            'end_time' => 'nullable|date_format:H:i:s',
             'temporary_closure_duration' => 'nullable|string',
         ]);
 
@@ -41,10 +113,13 @@ class StoreStatusController extends Controller
 
     public function update(Request $request, $id)
     {
+        Log::info('Update Store Status Request: ', $request->all());
+
         $validatedData = $request->validate([
-            'is_open' => 'required|boolean',
+            'is_open' => 'nullable|boolean',
             'days' => 'nullable|string',
-            'hours' => 'nullable|string',
+            'start_time' => 'nullable|date_format:H:i:s',
+            'end_time' => 'nullable|date_format:H:i:s',
             'temporary_closure_duration' => 'nullable|string',
         ]);
 
