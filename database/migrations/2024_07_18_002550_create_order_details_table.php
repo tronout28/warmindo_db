@@ -17,10 +17,12 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->integer('price')->nullable();
             $table->unsignedBigInteger('menu_id');
-            $table->unsignedBigInteger('order_id');
+            $table->unsignedBigInteger('order_id')->nullable();
+            $table->unsignedBigInteger('history_id')->nullable();
             $table->timestamps();
 
-            $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
+            $table->foreign('order_id')->references('id')->on('orders')->onDelete('set null');
+            $table->foreign('history_id')->references('id')->on('history')->onDelete('set null');
             $table->foreign('menu_id')->references('id')->on('menus')->onDelete('cascade');
         });
     }

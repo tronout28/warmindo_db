@@ -25,12 +25,12 @@ class CartController extends Controller
     {
         $request->validate([
             'user_id' => 'required|exists:users,id',
-            'menuID' => 'required|exists:menus,menuID',
+            'menu_id' => 'required|exists:menus,menu_id',
             'quantity' => 'required|integer|min:1',
         ]);
 
         $existingCart = Cart::where('user_id', $request->user_id)
-            ->where('menuID', $request->menuID)
+            ->where('menu_id', $request->menu_id)
             ->first();
 
         if ($existingCart) {
@@ -45,7 +45,7 @@ class CartController extends Controller
         } else {
             $cart = Cart::create([
                 'user_id' => $request->user_id,
-                'menuID' => $request->menuID,
+                'menu_id' => $request->menu_id,
                 'quantity' => $request->quantity,
                 'date_item_menu' => now(), // tambahkan field ini jika perlu
             ]);
@@ -61,7 +61,7 @@ class CartController extends Controller
     public function update(Request $request, $id)
     {
         // Debug request data
-        \Log::info('Request data:', $request->all());
+         Cart::where('Request data:', $request->all());
 
         // Validasi input request
         $request->validate([

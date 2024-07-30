@@ -27,7 +27,6 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'prices' => 'required|integer',
             'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal'])],
             'note' => 'nullable|string',
         ]);
@@ -44,7 +43,6 @@ class OrderController extends Controller
 
         $order = Order::create([
             'user_id' => $user->id,
-            'price_order' => $request->prices,
             'status' => $request->status,
             'note' => $request->note,
         ]);

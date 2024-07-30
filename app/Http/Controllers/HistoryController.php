@@ -91,4 +91,44 @@ class HistoryController extends Controller
             'message' => 'History deleted successfully',
         ], 200);
     }
+
+    public function toHistory(Request $request) 
+    {
+        $request->validate([
+            'order_id' => 'required|integer|exists:orders,id',
+        ]);
+
+        $order = Order::where('id', $request->order_id)->first();
+        $history = History::create([
+            'user_id' => $order->user_id,
+            'price_order' => $order->price_order,
+            'status' => $order->status,
+            'note' => $order->note,
+        ]);
+
+        return response([
+            'status' => 'success',
+            'message' => 'History created successfully',
+            'data' => $history,
+        ]);
+    }
+
+    public function orderToHistory() 
+    {
+        $orders = Order::all();
+        foreach ($orders as $order) {
+            $history = History::create([
+                'user_id' => $order->user_id,
+                'price_order' => $order->price_order,
+                'status' => $order->status,
+                'note' => $order->note,
+            ]);
+        }
+
+        return response([
+            'status' => 'success',
+            'message' => 'History created successfully',
+            'data' => $history,
+        ]);
+    }
 }
