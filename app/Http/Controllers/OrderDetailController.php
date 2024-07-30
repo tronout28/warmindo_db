@@ -6,6 +6,7 @@ use App\Http\Resources\OrderDetailResource;
 use App\Models\Menu;
 use App\Models\OrderDetail;
 use App\Models\OrderDetailTopping;
+use App\Models\Topping;
 use Illuminate\Http\Request;
 
 class OrderDetailController extends Controller
@@ -28,7 +29,8 @@ class OrderDetailController extends Controller
         ]);
 
         $menu = Menu::where('id', $request->menu_id)->first();
-        $calculatePrice = $menu->price * $request->quantity;
+        $topping = Topping:: where ('id', $request ->topping_id)->first();
+        $calculatePrice = $menu->price * $topping->price * $request->quantity;
         $orderDetail->price = $calculatePrice;
         $orderDetail->save();
 

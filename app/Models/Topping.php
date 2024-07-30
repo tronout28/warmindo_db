@@ -19,12 +19,17 @@ class Topping extends Model
         'menu_id',
     ];
 
+    protected $casts = [
+        'price' => 'integer',
+    ];
+
     protected function image(): Attribute
     {
         return Attribute::make(
             get: fn ($image) => url('/topping/'.$image),
         );
     }
+
 
     public function menus()
     {
