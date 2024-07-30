@@ -13,14 +13,14 @@ class Cart extends Model
 
     protected $fillable = [
         'user_id',
-        'menuID',
+        'menu_id',
         'quantity',
         'date_item_menu',
     ];
 
     public function menu()
     {
-        return $this->belongsTo(Menu::class, 'menuID', 'menuID');
+        return $this->belongsTo(Menu::class, 'menu_id', 'menu_id');
     }
 
     public function user()
