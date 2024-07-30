@@ -101,7 +101,7 @@ public function unverifyUser($id)
     return response()->json([
         'message' => 'Now user is not verified',
         'user' => $user,
-    ], 400);
+    ], 200);
 }
 
     
