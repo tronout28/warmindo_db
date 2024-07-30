@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Models\User;
 
-
 class AdminController extends Controller
 {
     public function login(Request $request)
@@ -20,7 +19,7 @@ class AdminController extends Controller
         ]);
 
         $user = Admin::where('email', $request->email)->first();
-        if ($user == null | ! Hash::check($request->password, $user->password)) {
+        if ($user == null || !Hash::check($request->password, $user->password)) {
             return response([
                 'message' => 'Invalid credentials',
             ], 401);
@@ -43,12 +42,14 @@ class AdminController extends Controller
             'phone_number' => 'required|string',
             'password' => 'required|string|min:8',
         ]);
+
         $admin = Admin::where('email', $request->email)->first();
         if ($admin != null) {
             return response([
                 'message' => 'Email already exists',
             ], 409);
         }
+
         $admindata = [
             'name' => $request->username,
             'username' => $request->username,
@@ -66,7 +67,7 @@ class AdminController extends Controller
         ], 201);
     }
 
-    public function update (Request $request)
+    public function update(Request $request)
     {
         $request->validate([
             'name' => 'nullable|string|max:255',
@@ -84,6 +85,7 @@ class AdminController extends Controller
                 'message' => 'Email not found',
             ], 404);
         }
+
         $userdata = [
             'username' => $request->username,
             'name' => $request->name,
@@ -110,7 +112,7 @@ class AdminController extends Controller
             $user->profile_picture = $imageName;
         }
 
-        // Validasi current_password dan perbarui password jika valid
+        // Validate current_password and update password if valid
         if ($request->filled('current_password') || $request->filled('password')) {
             $request->validate([
                 'current_password' => 'required|string|min:8',
@@ -169,10 +171,9 @@ class AdminController extends Controller
         return response()->json([
             'message' => 'Now user is not verified',
             'user' => $user,
-        ], 400);
+        ], 200);
     }
 
-    
     public function logout()
     {
         $user = Admin::where('email', auth()->user()->email)->first();
