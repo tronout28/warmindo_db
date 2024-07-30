@@ -77,7 +77,9 @@ use App\Http\Controllers\AdminController;
 Route::group(['prefix' => '/admins'], function () {
     Route::post('/register', [AdminController::class, 'register']);
     Route::post('/login', [AdminController::class, 'login']);
+    Route::put('/update', [AdminController::class, 'update'])->middleware('auth:sanctum');
     Route::post('/logout', [AdminController::class, 'logout'])->middleware('auth:sanctum');
+    Route::get('/users', [AdminController::class, 'getUser']);  
     Route::put('/users/{id}/verify', [AdminController::class, 'verifyUser']);
     Route::put('/users/{id}/unverify', [AdminController::class, 'unverifyUser']);
 });
