@@ -35,6 +35,8 @@ Route::group(['prefix' => 'orders', 'middleware' => 'auth:sanctum'], function ()
     Route::put('/status/{id}', [OrderController::class, 'updateStatus']);
     Route::put('/price/{id}', [OrderController::class, 'updatePrice']);
     Route::get('/statistics', [OrderController::class, 'getSalesStatistics']);
+    Route::post('/toHistory', [OrderController::class, 'tohistory']);
+    Route::delete('/{id}', [OrderController::class, 'destroy']);
 });
 
 use App\Http\Controllers\StoreStatusController;

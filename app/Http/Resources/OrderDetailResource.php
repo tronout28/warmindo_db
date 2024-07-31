@@ -2,9 +2,8 @@
 
 namespace App\Http\Resources;
 
-use App\Models\OrderDetail;
 use App\Models\OrderDetailTopping;
-use App\Models\Topping;
+use App\Models\Menu;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -23,6 +22,7 @@ class OrderDetailResource extends JsonResource
             'price' => $this->price,
             'notes' => $this->notes,
             'menu_id' => $this->menu_id,
+            'menu' => Menu::find($this->menu_id),
             'toppings' => ToppingResource::collection(OrderDetailTopping::where('order_detail_id', $this->id)->get()),
         ];
     }

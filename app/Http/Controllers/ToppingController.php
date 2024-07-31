@@ -19,7 +19,6 @@ class ToppingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name_topping' => 'required|string|max:255',
-            'category' => 'required|string|max:255',
             'stock_topping' => 'required|integer',
             'menu_id' => 'required|integer|exists:menus,id',
         ]);
@@ -55,7 +54,6 @@ class ToppingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name_topping' => 'sometimes|required|string|max:255',
-            'category' => 'sometimes|required|string|max:255',
             'image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'stock_topping' => 'sometimes|required|integer',
         ]);

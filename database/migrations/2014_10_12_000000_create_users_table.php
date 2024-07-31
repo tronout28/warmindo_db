@@ -22,6 +22,7 @@ return new class extends Migration
             $table->enum('role', ['admin', 'user'])->default('user');
             $table->string('phone_number')->unique()->nullable();
             $table->string('password')->nullable();
+            $table->string('notification_token')->nullable();
             $table->timestamp('phone_verified_at')->nullable();
             $table->string('google_id')->nullable();
             $table->rememberToken();
