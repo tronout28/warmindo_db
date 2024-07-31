@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use App\Models\History;
 use Carbon\Carbon;
 
 class OrderController extends Controller
@@ -104,29 +105,8 @@ class OrderController extends Controller
         ], 200);
     }
 
-    public function updatePrice(Request $request) 
-    {
-        $request->validate([
-            'order_id' => 'required|integer|exists:orders,id'
-        ]);
 
-        $order = Order::where('id', $request->order_id)->get();
-        $orderDetails = OrderDetail::where('order_id', $order->id)->get();
-        $totalPrice = $orderDetails->sum('price');
-
-        $order->price_order = $totalPrice;
-        $order->save();
-
-        return response([
-            'status' => 'success',
-            'order' => $order,
-        ]);
-    }
     
-
-
-
-
     public function show($id)
     {
         $order = Order::with(['orderDetails.menu', 'history.user'])->find($id);
@@ -139,6 +119,50 @@ class OrderController extends Controller
             'success' => true,
             'message' => 'Order details retrieved successfully',
             'data' => $order,
+        ], 200);
+    }
+
+    public function tohistory($id)
+    {
+        $order = Order::where('id', $id)->first();
+        $orderDetails = OrderDetail::where('order_id', $order->id)->get();
+
+        $history = History::create([
+            'user_id' => $order->user_id,
+            'order_id' => $order->id,
+            
+        ]);
+
+        foreach ($orderDetails as $orderDetail) {
+            $orderDetail->history_id = $history->id;
+            $orderDetail->save();
+        }
+
+        // $order->status = 'selesai';
+        $order->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order moved to history successfully',
+            'data' => $order->load(['orderDetails.menu', 'history.user']),
+        ], 200);
+    }
+
+    public function destroy($id)
+    {
+        $order = Order::find($id);
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found',
+            ], 404);
+        }
+        $order->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order deleted successfully',
         ], 200);
     }
 }
