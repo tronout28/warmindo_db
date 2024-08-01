@@ -12,40 +12,86 @@ class OtpController extends Controller
 {
     public function sendOtp(Request $request)
     {
-        $user = auth()->user();
+        $user = $request->user ?: auth()->user();
         $phone = '+62'.substr($user->phone_number, 1);
         $otp = rand(100000, 999999);
         $otps = Otp::where('user_id', $user->id)->first();
         $expiredOtps = Otp::where('created_at', '<=', Carbon::now()->subMinutes(5))->delete();
+    
         if ($otps != null) {
             return response([
                 'status' => 'failed',
                 'message' => 'Try Again After 5 Minutes',
             ]);
-        } 
+        }
     
         Http::post('https://wapiiiiiii-957b9f860ed5.herokuapp.com/message/', [
             'phoneNumber' => $phone,
             'message' => 'Halo '.$user->username.', '.$otp.' adalah kode OTP Anda. Demi Keamanan jangan berikan kode ini kepada siapapun.',
         ]);
+    
         Otp::create([
             'otp' => $otp,
             'user_id' => $user->id,
         ]);
-
+    
         return response([
             'status' => 'success',
             'message' => 'OTP sent successfully',
         ], 200);
     }
+    
+    public function sendOtpwithPhoneNumber(Request $request)
+    {
+        $request->validate([
+            'phone_number' => 'required|string',
+        ]);
+        
+        $user = User::where('phone_number', $request->phone_number)->first();
+    
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nomor Hp belum terdaftar',
+            ], 404);
+        }
+       
+        $phone = '+62'.substr($user->phone_number, 1);
+        $otp = rand(100000, 999999);
+        $otps = Otp::where('user_id', $user->id)->first();
+        $expiredOtps = Otp::where('created_at', '<=', Carbon::now()->subMinutes(5))->delete();
+    
+        if ($otps != null) {
+            return response([
+                'status' => 'failed',
+                'message' => 'Try Again After 5 Minutes',
+            ]);
+        }
+    
+        Http::post('https://wapiiiiiii-957b9f860ed5.herokuapp.com/message/', [
+            'phoneNumber' => $phone,
+            'message' => 'Halo '.$user->username.', '.$otp.' adalah kode OTP Anda. Demi Keamanan jangan berikan kode ini kepada siapapun.',
+        ]);
+    
+        Otp::create([
+            'otp' => $otp,
+            'user_id' => $user->id,
+        ]);
+        $token = $user->createToken('warmindo')->plainTextToken;
+        return response([
+            'status' => 'success',
+            'message' => 'OTP sent successfully',
+            'token'=> $token,
+        ], 200);
+    }
+
 
     public function verifyOtp(Request $request)
     {
         $request->validate([
             'otp' => 'required|string|min:6|max:6',
         ]);
-
-        $user = User::where('id', auth()->user()->id)->first();
+        $user = $request->user ?: User::where('id', auth()->user()->id)->first();
         $otp = $request->otp;
         $otps = Otp::where('user_id', $user->id)->first();
 

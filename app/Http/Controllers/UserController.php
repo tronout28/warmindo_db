@@ -152,6 +152,29 @@ class UserController extends Controller
         ], 200);
     }
 
+    
+    public function forgotPassword(Request $request)
+    {
+        $user = auth()->user();
+        $user = User::where('id', $user->id)->first();
+
+        $request->validate([
+            'new_password' => 'required|string|min:8'
+        ]);
+    
+        
+        // Update password if OTP verification is successful
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+    
+        return response()->json([
+            'success' => true,
+            'message' => 'Berhasil Di reset',
+        ], 200);
+    }
+    
+
+
     public function details()
     {
         $user = auth()->user();
@@ -239,7 +262,7 @@ class UserController extends Controller
 
             $user->password = Hash::make($request->password);
         }
-
+    
         $user->save();
 
         return response()->json([
