@@ -15,50 +15,54 @@ class OrderDetailController extends Controller
     public function createOrderDetail(Request $request)
     {
         $request->validate([
-            'menu_id' => 'required|integer|exists:menus,id',
-            'quantity' => 'required|integer',
-            'order_id' => 'required|integer|exists:orders,id',
-            'notes' => 'nullable|string',
-            'toppings' => 'nullable|array',
+            'datas' => 'required|array',
+            'datas.*.quantity' => 'required|integer',
+            'datas.*.toppings' => 'nullable|array',
+            'datas.*.toppings.*.topping_id' => 'required|integer|exists:toppings,id',
+            'datas.*.toppings.*.quantity' => 'required|integer',
+            'datas.*.menu_id' => 'required|integer|exists:menus,id',
+            'datas.*.order_id' => 'required|integer|exists:orders,id',
+            'datas.*.notes' => 'nullable|string',
+        ]);
+        foreach ($request->datas as $data) {
 
-        ]);
-        $orderDetail = OrderDetail::create([
-            'quantity' => $request->quantity,
-            'menu_id' => $request->menu_id,
-            'order_id' => $request->order_id,
-            'notes' => $request->notes,
-        ]);
-        $toppingPrice = 0;
-        if ($request->toppings != null) {
-            foreach ($request->toppings as $topping) {
-                OrderDetailTopping::create([
-                    'order_detail_id' => $orderDetail->id,
-                    'topping_id' => $topping['topping_id'],
-                    'quantity' => $topping['quantity'],
-                ]);
+            $orderDetail = OrderDetail::create([
+                'quantity' => $data['quantity'],
+                'menu_id' => $data['menu_id'],
+                'order_id' => $data['order_id'],
+                'notes' => $data['notes'],
+            ]);            
+            if ($data['toppings'] != null) {
+                foreach ($data['toppings'] as $topping) {
+                    OrderDetailTopping::create([
+                        'order_detail_id' => $orderDetail->id,
+                        'topping_id' => $topping['topping_id'],
+                        'quantity' => $topping['quantity'],
+                    ]);
+                }
             }
+            $menu = Menu::where('id', $data['menu_id'])->first();
+
+            $orderTopping = OrderDetailTopping::where('order_detail_id', $orderDetail->id)->get();
+            $toppingPrice = 0;
+            if($orderTopping != null) {
+                foreach ($orderTopping as $topping) {
+                    $toppingPrice += $topping->topping->price * $topping->quantity;
+                }
+            }
+            $calculatePrice = $menu->price + $toppingPrice;
+            $orderDetail->price = $calculatePrice;
+            $orderDetail->save();
+
+            $menu->stock = $menu->stock - $data['quantity'];
+            $menu->save();
+
+            $this->updatePrice($data['order_id']);
         }
 
-        $menu = Menu::where('id', $request->menu_id)->first();
-        $topping = Topping::where ('id', $request ->topping_id)->get();
-
-        $orderTopping = OrderDetailTopping::where('order_detail_id', $orderDetail->id)->get();
-
-        if($orderTopping != null) {
-            foreach ($orderTopping as $topping) {
-                $toppingPrice += $topping->topping->price * $topping->quantity;
-            }
-        }
-        $calculatePrice = $menu->price + $toppingPrice;
-        $orderDetail->price = $calculatePrice;
-        $orderDetail->save();
-
-        $menu->stock = $menu->stock - $request->quantity;
-        $menu->save();
-
-        $this->updatePrice($request->order_id);
 
 
+        $orderDetail = OrderDetail::where('order_id', $request->datas[0]['order_id'])->get();
         return response()->json([
             'status' => 'success',
             'message' => 'Order detail created successfully',

@@ -20,11 +20,11 @@ class FirebaseService
     {
         $notification = Notification::create($title, $body, $imageUrl);
 
-        // $message = CloudMessage::withTarget('token', $deviceToken)
-        //     ->withNotification($notification);
+        $message = CloudMessage::withTarget('token', $deviceToken)
+            ->withNotification($notification);
 
-        // $notify = $this->messaging->send($message);
-        // return $notify;
+        $notify = $this->messaging->send($message);
+        return $notify;
     }
     public function sendNotificationToall($title, $body, $imageUrl)
     {

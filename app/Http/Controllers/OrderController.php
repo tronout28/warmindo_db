@@ -148,6 +148,27 @@ class OrderController extends Controller
         ], 200);
     }
 
+    public function filterbystatues (Request $request)
+    {
+        $user = auth()->user();
+        $request->validate([
+            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal'])],
+        ]);
+
+        $orders = Order::where('status', $request->status)->where('user_id', $user->id)->get();
+        if($orders == null) {
+            return response([
+                'status' => false,
+                'message' => 'Order not found'
+            ]);
+        }
+        return response()->json([
+            'success' => true,
+            'message' => 'List of orders filtered by status',
+            'data' => $orders,
+        ], 200);
+    }
+
     public function destroy($id)
     {
         $order = Order::find($id);
