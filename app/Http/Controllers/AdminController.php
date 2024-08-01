@@ -37,9 +37,9 @@ class AdminController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255',
-            'profile_picture' => 'nullable|string|max:255', 
+            'profile_picture' => 'nullable|string|max:255',
             'email' => 'required|email',
-            'phone_number' => 'required|string',
+            'phone_number' => 'nullable|string',
             'password' => 'required|string|min:8',
         ]);
 
@@ -51,53 +51,78 @@ class AdminController extends Controller
         }
 
         $admindata = [
-            'name' => $request->username,
+            'name' => $request->name,
             'username' => $request->username,
-            'profile_picture' => $request->profile_picture, 
+            'profile_picture' => $request->profile_picture,
             'email' => $request->email,
-            'phone_number' => $request->phone,
+            'phone_number' => $request->phone_number,
             'password' => Hash::make($request->password),
             'role' => 'admin',
         ];
+
         $admin = Admin::create($admindata);
         $token = $admin->createToken('warmindo')->plainTextToken;
 
-        return response(['admin' => $admin,
+        return response([
+            'admin' => $admin,
             'token' => $token,
         ], 201);
     }
 
-    public function update(Request $request)
+    public function update(Request $request, $id)
     {
+        // Validate request input
         $request->validate([
             'name' => 'nullable|string|max:255',
             'username' => 'nullable|string|max:255',
-            'email' => 'nullable|email',
+            'email' => 'nullable|email', // Email is nullable
             'profile_picture' => 'nullable|string|max:255',
-            'phone' => 'nullable|string',
+            'phone_number' => 'nullable|string',
             'password' => 'nullable|string|min:8',
-            'current_password' => 'sometimes|nullable|string|min:8', 
+            'current_password' => 'nullable|string|min:8', // Make current_password nullable
         ]);
-        
-        $user = Admin::where('email', $request->email)->first();
+    
+        // Find the admin by ID
+        $user = Admin::find($id);
+    
         if ($user == null) {
             return response([
-                'message' => 'Email not found',
+                'message' => 'Admin not found',
             ], 404);
         }
-
-        $userdata = [
-            'username' => $request->username,
-            'name' => $request->name,
-            'profile_picture' => $request->profile_picture,
-            'email' => $request->email,
-            'phone_number' => $request->phone,
-            'password' => Hash::make($request->password),
-            'role' => 'admin',
-        ];
+    
+        // Prepare the user data for update
+        $userdata = [];
+        if ($request->filled('username')) {
+            $userdata['username'] = $request->username;
+        }
+        if ($request->filled('name')) {
+            $userdata['name'] = $request->name;
+        }
+        if ($request->filled('profile_picture')) {
+            $userdata['profile_picture'] = $request->profile_picture;
+        }
+        if ($request->filled('email')) {
+            $userdata['email'] = $request->email;
+        }
+        if ($request->filled('phone_number')) {
+            $userdata['phone_number'] = $request->phone_number;
+        }
+    
+        // Validate and update password if current password is provided
+        if ($request->filled('password')) {
+            if (!$request->filled('current_password') || !Hash::check($request->current_password, $user->password)) {
+                return response([
+                    'message' => 'Current password is incorrect or not provided',
+                ], 400);
+            }
+            $userdata['password'] = Hash::make($request->password);
+        }
+    
+        // Update the user data
         $user->update($userdata);
-        $token = $user->createToken('warmindo')->plainTextToken;
-
+    
+        // Process profile picture upload if provided
         if ($request->hasFile('profile_picture')) {
             // Delete old picture if exists
             if ($user->profile_picture) {
@@ -106,34 +131,22 @@ class AdminController extends Controller
                     unlink($oldImagePath);
                 }
             }
-            $imageName = env('APP_URL') . time().'.'.$request->profile_picture->extension();
-            Admin::where('Uploading picture profile: '.$imageName);
+            // Save new profile picture
+            $imageName = time() . '.' . $request->profile_picture->extension();
             $request->profile_picture->move(public_path('images'), $imageName);
             $user->profile_picture = $imageName;
+            $user->save();
         }
-
-        // Validate current_password and update password if valid
-        if ($request->filled('current_password') || $request->filled('password')) {
-            $request->validate([
-                'current_password' => 'required|string|min:8',
-                'password' => 'required|string|min:8|confirmed',
-            ]);
-
-            if (!Hash::check($request->current_password, $user->password)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Current password is incorrect',
-                ], 400);
-            }
-
-            $user->password = Hash::make($request->password);
-        }
-
-        return response(['admin' => $user,
+    
+        // Generate a new token for the user
+        $token = $user->createToken('warmindo')->plainTextToken;
+    
+        return response([
+            'admin' => $user,
             'token' => $token,
         ], 201);
     }
-
+    
     public function verifyUser($id)
     {
         $user = User::find($id);
@@ -195,18 +208,28 @@ class AdminController extends Controller
         ], 200);
     }
 
-    public function getOrder()
+    public function getOrders()
     {
-        $admin = Auth::guard('admin')->user();
-        $order = Order::all();
+        $orders = Order::all();
 
-        return response(
-            [
-                'status' => 'success',
-                'message' => 'Order fetched by '.$admin->username,
-                'order' => $order,
-            ],
-            200
-        );
+        return response(['status' => 'success',
+            'message' => 'Orders fetched successfully',
+            'orders' => $orders,
+        ], 200);
+    }
+
+    public function getOrderDetail($id)
+    {
+        $order = Order::with(['orderDetails.menu'])->find($id);
+
+        if (is_null($order)) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order details retrieved successfully',
+            'data' => $order,
+        ], 200);
     }
 }
