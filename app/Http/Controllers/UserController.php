@@ -31,13 +31,7 @@ class UserController extends Controller
 
         if ($user) {
             // Update user information if needed
-            $user->update([
-                'username' => $validatedData['name'],
-                'profile_picture' => $validatedData['profile_picture'],
-                'email' => $validatedData['email'],
-                'google_id' => $validatedData['google_id'],
-                'email_verified_at' => now(),
-            ]);
+ 
         } else {
             // Create new user
             $user = User::create([
@@ -158,6 +152,29 @@ class UserController extends Controller
         ], 200);
     }
 
+    
+    public function forgotPassword(Request $request)
+    {
+        $user = auth()->user();
+        $user = User::where('id', $user->id)->first();
+
+        $request->validate([
+            'new_password' => 'required|string|min:8'
+        ]);
+    
+        
+        // Update password if OTP verification is successful
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+    
+        return response()->json([
+            'success' => true,
+            'message' => 'Berhasil Di reset',
+        ], 200);
+    }
+    
+
+
     public function details()
     {
         $user = auth()->user();
@@ -190,13 +207,14 @@ class UserController extends Controller
         ]);
 
         Log::info('Update User Request: ', $request->all());
-        if($user->phone_verified_at != null){
-            return response()->json([
-                'success' => false,
-                'message' => 'Nomor Hp telah terverifikasi',
-            ], 422);
-        }
+ 
         if ($request->filled('phone_number')) {
+            if($user->phone_verified_at != null){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Nomor Hp telah terverifikasi',
+                ], 422);
+            }
             $otp = Otp::where('user_id', $user->id)->where('otp', $request->otp)->first();
             if (!$otp || $otp->created_at->diffInMinutes(now()) > 5) {
                 return response()->json([
@@ -244,7 +262,7 @@ class UserController extends Controller
 
             $user->password = Hash::make($request->password);
         }
-
+    
         $user->save();
 
         return response()->json([

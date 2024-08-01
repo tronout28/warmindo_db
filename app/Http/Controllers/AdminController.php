@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Models\User;
 
-
 class AdminController extends Controller
 {
     public function login(Request $request)
@@ -20,7 +19,7 @@ class AdminController extends Controller
         ]);
 
         $user = Admin::where('email', $request->email)->first();
-        if ($user == null | ! Hash::check($request->password, $user->password)) {
+        if ($user == null || !Hash::check($request->password, $user->password)) {
             return response([
                 'message' => 'Invalid credentials',
             ], 401);
@@ -69,7 +68,6 @@ class AdminController extends Controller
             'token' => $token,
         ], 201);
     }
-
 
     public function update(Request $request, $id)
     {
@@ -186,10 +184,9 @@ class AdminController extends Controller
         return response()->json([
             'message' => 'Now user is not verified',
             'user' => $user,
-        ], 400);
+        ], 200);
     }
 
-    
     public function logout()
     {
         $user = Admin::where('email', auth()->user()->email)->first();
