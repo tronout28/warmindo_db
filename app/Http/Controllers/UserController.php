@@ -159,7 +159,7 @@ class UserController extends Controller
         $user = User::where('id', $user->id)->first();
 
         $request->validate([
-            'new_password' => 'required|string|min:8'
+            'new_password' => 'required|string|confirmed|min:8'
         ]);
     
         
