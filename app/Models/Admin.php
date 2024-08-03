@@ -29,4 +29,9 @@ class Admin extends Model
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+    
+    public function getProfilePictureUrlAttribute()
+    {
+        return url('storage/profile_pictures/' . $this->profile_picture);
+    }
 }
