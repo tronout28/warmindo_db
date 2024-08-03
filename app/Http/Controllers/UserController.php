@@ -105,6 +105,7 @@ class UserController extends Controller
             'phone_number' => $request->phone_number,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'notification_token' => $request->notification_token,
             'user_verified' => false,
         ]);
     
@@ -143,6 +144,8 @@ class UserController extends Controller
         }
 
         $token = $user->createToken('warmindo')->plainTextToken;
+        $user->notification_token = $request->notification_token;
+        $user->save();
 
         return response()->json([
             'success' => true,

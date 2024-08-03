@@ -20,7 +20,7 @@ class ToppingController extends Controller
         $validator = Validator::make($request->all(), [
             'name_topping' => 'required|string|max:255',
             'stock_topping' => 'required|integer',
-            'menu_id' => 'required|integer|exists:menus,id',
+            //  'menu_id' => 'required|integer|exists:menus,id',
         ]);
 
         if ($validator->fails()) {
@@ -40,10 +40,10 @@ class ToppingController extends Controller
 
     public function show(Request $request)
     {
-        $request->validate([
-            'menu_id' => 'required|integer|exists:menus,id',
-        ]);
-        $topping = Topping::where('menu_id', $request->menu_id)->get();
+        // $request->validate([
+        //     'menu_id' => 'required|integer|exists:menus,id',
+        // ]);
+        $topping = Topping::where('id', $request->topping_id)->first();
         return response()->json([
             'status' => 'success',
             'data' => $topping

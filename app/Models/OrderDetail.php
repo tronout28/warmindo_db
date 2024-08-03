@@ -32,6 +32,11 @@ class OrderDetail extends Model
         return $this->belongsTo(Menu::class);
     }
 
+    public function orderDetails()
+    {
+        return $this->hasMany(OrderDetail::class);
+    }
+
     public function toppings() {
         return $this->hasMany(OrderDetailTopping::class);
     }

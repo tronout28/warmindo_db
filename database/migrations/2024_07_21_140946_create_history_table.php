@@ -13,12 +13,15 @@ class CreateHistoryTable extends Migration
     {
         Schema::create('history', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
-            $table->integer('price_order')->nullable();
-            $table->enum('status', ['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal'])->default('selesai');
-            $table->text('note')->nullable();
+            $table->unsignedBigInteger('order_id');
+            $table->unsignedBigInteger('menu_id');
+            $table->integer('quantity');
+            $table->integer('price');
+            $table->text('notes')->nullable();
             $table->timestamps();
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+
+            $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
+            $table->foreign('menu_id')->references('id')->on('menus')->onDelete('cascade');
         });
     }
 
@@ -28,5 +31,11 @@ class CreateHistoryTable extends Migration
     public function down(): void
     {
         Schema::dropIfExists('history');
+
+        // Add these fields to the histories table migration if they do not exist
+    Schema::table('history', function (Blueprint $table) {
+        $table->json('order_details')->nullable();
+    });
+
     }
 }
