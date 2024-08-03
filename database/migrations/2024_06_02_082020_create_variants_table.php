@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create('variants', function (Blueprint $table) {
-            $table->id('id_varian');
+            $table->id();
             $table->string('name_varian');
             $table->string('category');
             $table->string('image')->nullable();

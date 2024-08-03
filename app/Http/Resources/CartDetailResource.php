@@ -2,12 +2,10 @@
 
 namespace App\Http\Resources;
 
-use App\Models\OrderDetailTopping;
+use App\Models\carttopping;
 use App\Models\Menu;
-use App\Models\Variant;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-
 
 class OrderDetailResource extends JsonResource
 {
@@ -25,9 +23,7 @@ class OrderDetailResource extends JsonResource
             'notes' => $this->notes,
             'menu_id' => $this->menu_id,
             'menu' => Menu::find($this->menu_id),
-            'variants_id' => $this->variants_id,
-            'variants' => Variant::find($this->variants_id),  
-            'toppings' => ToppingResource::collection(OrderDetailTopping::where('order_detail_id', $this->id)->get()),
+            'toppings' => ToppingResource::collection(carttopping::where('cart_id', $this->id)->get()),
         ];
     }
 }

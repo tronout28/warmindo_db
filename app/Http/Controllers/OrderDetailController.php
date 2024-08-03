@@ -7,7 +7,6 @@ use App\Models\Menu;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderDetailTopping;
-use App\Models\Topping;
 use Illuminate\Http\Request;
 
 class OrderDetailController extends Controller
@@ -20,6 +19,7 @@ class OrderDetailController extends Controller
             'datas.*.toppings' => 'nullable|array',
             'datas.*.toppings.*.topping_id' => 'required|integer|exists:toppings,id',
             'datas.*.toppings.*.quantity' => 'required|integer',
+            'datas.*.variant_id' => 'nullable|integer|exists:variants,id',
             'datas.*.menu_id' => 'required|integer|exists:menus,id',
             'datas.*.order_id' => 'required|integer|exists:orders,id',
             'datas.*.notes' => 'nullable|string',
@@ -30,6 +30,7 @@ class OrderDetailController extends Controller
                 'quantity' => $data['quantity'],
                 'menu_id' => $data['menu_id'],
                 'order_id' => $data['order_id'],
+                'variant_id' => $data['variant_id'],
                 'notes' => $data['notes'],
             ]);            
             if ($data['toppings'] != null) {
@@ -50,7 +51,8 @@ class OrderDetailController extends Controller
                     $toppingPrice += $topping->topping->price * $topping->quantity;
                 }
             }
-            $calculatePrice = $menu->price + $toppingPrice;
+
+            $calculatePrice = $menu->price * $menu->quantity + $toppingPrice;
             $orderDetail->price = $calculatePrice;
             $orderDetail->save();
 

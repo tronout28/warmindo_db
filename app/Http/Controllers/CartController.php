@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use Illuminate\Http\Request;
+use App\Http\Resources\CartResource;
+use App\Models\carttopping;
+use App\Models\Menu;
 
 class CartController extends Controller
 {
@@ -21,73 +24,61 @@ class CartController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function createOrderDetail(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'menu_id' => 'required|exists:menus,menu_id',
-            'quantity' => 'required|integer|min:1',
+            'datas' => 'required|array',
+            'datas.*.quantity' => 'required|integer',
+            'datas.*.toppings' => 'nullable|array',
+            'datas.*.toppings.*.topping_id' => 'required|integer|exists:toppings,id',
+            'datas.*.toppings.*.quantity' => 'required|integer',
+            'datas.*.menu_id' => 'required|integer|exists:menus,id',
+            'datas.*.notes' => 'nullable|string',
         ]);
+        foreach ($request->datas as $data) {
 
-        $existingCart = Cart::where('user_id', $request->user_id)
-            ->where('menu_id', $request->menu_id)
-            ->first();
+            $carts = Cart::create([
+                'quantity' => $data['quantity'],
+                'menu_id' => $data['menu_id'],
+                'notes' => $data['notes'],
+            ]);            
+            if ($data['toppings'] != null) {
+                foreach ($data['toppings'] as $topping) {
+                    carttopping::create([
+                        'cart_id' => $carts->id,
+                        'topping_id' => $topping['topping_id'],
+                        'quantity' => $topping['quantity'],
+                    ]);
+                }
+            }
+            $menu = Menu::where('id', $data['menu_id'])->first();
 
-        if ($existingCart) {
-            $existingCart->quantity += $request->quantity;
-            $existingCart->save();
+            $orderTopping = carttopping::where('cart_id', $carts->id)->get();
+            $toppingPrice = 0;
+            if($orderTopping != null) {
+                foreach ($orderTopping as $topping) {
+                    $toppingPrice += $topping->topping->price * $topping->quantity;
+                }
+            }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Cart item quantity updated successfully',
-                'data' => $existingCart,
-            ]);
-        } else {
-            $cart = Cart::create([
-                'user_id' => $request->user_id,
-                'menu_id' => $request->menu_id,
-                'quantity' => $request->quantity,
-                'date_item_menu' => now(), // tambahkan field ini jika perlu
-            ]);
+            $calculatePrice = $menu->price * $menu->quantity + $toppingPrice;
+            $carts->price = $calculatePrice;
+            $carts->save();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Item added to cart successfully',
-                'data' => $cart,
-            ]);
-        }
-    }
-
-    public function update(Request $request, $id)
-    {
-        // Debug request data
-         Cart::where('Request data:', $request->all());
-
-        // Validasi input request
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'quantity' => 'required|integer|min:1',
-        ]);
-
-        // Cari cart item berdasarkan user_id dan id
-        $cart = Cart::where('user_id', $request->user_id)->find($id);
-
-        // Jika cart item tidak ditemukan, kembalikan response 404
-        if (!$cart) {
-            return response()->json(['message' => 'Cart item not found'], 404);
+            $menu->stock = $menu->stock - $data['quantity'];
+            $menu->save();
         }
 
-        // Update quantity cart item
-        $cart->update(['quantity' => $request->quantity]);
-
-        // Kembalikan response berhasil
         return response()->json([
-            'success' => true,
-            'message' => 'Cart item updated successfully',
-            'data' => $cart,
-        ]);
+            'status' => 'success',
+            'message' => 'Order detail created successfully',
+            'data' => $carts
+        ], 201);
+
     }
 
+
+    
     public function destroy($id)
     {
         $cart = Cart::find($id);
