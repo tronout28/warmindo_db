@@ -9,22 +9,39 @@ class Cart extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'cart_id';
-
     protected $fillable = [
-        'user_id',
-        'menu_id',
-        'quantity',
-        'date_item_menu',
+         'menu_id', 'quantity', 'price'
     ];
+
+    protected $casts = [
+        'id' => 'integer',
+        'menu_id' => 'integer',
+        'quantity' => 'integer',
+        'price' => 'integer',
+        'notes' => 'string',
+    ];
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
 
     public function menu()
     {
-        return $this->belongsTo(Menu::class, 'menu_id', 'menu_id');
+        return $this->belongsTo(Menu::class);
     }
 
-    public function user()
+    public function CartsTopping()
     {
-        return $this->belongsTo(User::class);
+        return $this->hasMany(Cart::class);
+    }
+
+    public function orderDetails()
+    {
+        return $this->hasMany(OrderDetail::class);
+    }
+
+    public function toppings() {
+        return $this->hasMany(carttopping::class);
     }
 }

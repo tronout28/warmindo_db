@@ -79,6 +79,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:8',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'notification_token' => 'nullable|string',
         ], $messages);
         // Check if validation fails
         if ($validator->fails()) {

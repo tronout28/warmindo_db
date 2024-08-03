@@ -14,12 +14,15 @@ return new class extends Migration
     public function up()
     {
         Schema::create('carts', function (Blueprint $table) {
-            $table->id('cart_id');
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->unsignedBigInteger('menu_id');
-            $table->foreign('menu_id')->references('id')->on('menus')->onDelete('cascade');
+            $table->id();
             $table->integer('quantity');
+            $table->text('notes')->nullable();
+            $table->integer('price')->nullable();
+            $table->unsignedBigInteger('menu_id');
+            $table->unsignedBigInteger('history_id')->nullable();
             $table->timestamps();
+
+            $table->foreign('menu_id')->references('id')->on('menus')->onDelete('cascade');
         });
     }
 
@@ -30,6 +33,9 @@ return new class extends Migration
      */
     public function down()
     {
+        Schema::table('carts', function (Blueprint $table) {
+            $table->dropForeign(['menu_id']);
+        });
         Schema::dropIfExists('carts');
     }
 };
