@@ -22,7 +22,6 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('order_id')->references('id')->on('orders')->onDelete('set null');
-            $table->foreign('history_id')->references('id')->on('history')->onDelete('set null');
             $table->foreign('menu_id')->references('id')->on('menus')->onDelete('cascade');
         });
     }

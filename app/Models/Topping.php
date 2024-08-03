@@ -14,21 +14,13 @@ class Topping extends Model
     protected $fillable = [
         'name_topping',
         'price',
-        'image',
         'stock_topping',
-        'menu_id',
+        // 'menu_id',
     ];
 
     protected $casts = [
         'price' => 'integer',
     ];
-
-    protected function image(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($image) => url('/topping/'.$image),
-        );
-    }
 
 
     public function menus()

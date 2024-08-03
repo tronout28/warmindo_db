@@ -107,11 +107,10 @@ Route::prefix('variants')->group(function () {
 use App\Http\Controllers\HistoryController;
 
 Route::prefix('history')->group(function () {
-    Route::get('/', [HistoryController::class, 'index']);
-    Route::post('/store', [HistoryController::class, 'store']);
-    Route::get('/{id}', [HistoryController::class, 'show']);
-    Route::put('/{id}', [HistoryController::class, 'update']);
+    Route::get('/', [HistoryController::class, 'getHistory']);
+    Route::get('/detail/{id}', [HistoryController::class, 'show']);
     Route::delete('/{id}', [HistoryController::class, 'destroy']);
+    Route::post('/tohistory', [HistoryController::class,'orderToHistory']);
 });
 
 use App\Http\Controllers\PaymentController;

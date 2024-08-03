@@ -4,74 +4,26 @@ namespace App\Http\Controllers;
 
 use App\Models\History;
 use App\Models\Order;
+use App\Models\OrderDetail;
 use Illuminate\Http\Request;
 
 class HistoryController extends Controller
 {
-    public function store(Request $request)
-    {
-        $request->validate([
-            'order_id' => 'required|exists:orders,id',
-            'user_id' => 'required|exists:users,id',
-            'description' => 'required|string',
-        ]);
 
-        $history = History::create([
-            'order_id' => $request->order_id,
-            'user_id' => $request->user_id,
-            'description' => $request->description,
-        ]);
+    public function getHistory()
+    {
+       
+        // Fetch all history records, you can add filtering based on request parameters if needed
+        $histories = History::with('menu')->get();
 
         return response()->json([
-            'success' => true,
-            'message' => 'History created successfully',
-            'data' => $history,
-        ], 201);
-    }
-
-    public function show($id)
-    {
-        $history = History::with('order', 'user')->find($id);
-
-        if (!$history) {
-            return response()->json([
-                'success' => false,
-                'message' => 'History not found',
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'History retrieved successfully',
-            'data' => $history,
+            'status' => 'success',
+            'message' => 'History records retrieved successfully',
+            'data' => $histories
         ], 200);
+    
     }
 
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'description' => 'required|string',
-        ]);
-
-        $history = History::find($id);
-
-        if (!$history) {
-            return response()->json([
-                'success' => false,
-                'message' => 'History not found',
-            ], 404);
-        }
-
-        $history->update([
-            'description' => $request->description,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'History updated successfully',
-            'data' => $history,
-        ], 200);
-    }
 
     public function destroy($id)
     {
@@ -92,43 +44,29 @@ class HistoryController extends Controller
         ], 200);
     }
 
-    public function toHistory(Request $request) 
-    {
-        $request->validate([
-            'order_id' => 'required|integer|exists:orders,id',
-        ]);
-
-        $order = Order::where('id', $request->order_id)->first();
-        $history = History::create([
-            'user_id' => $order->user_id,
-            'price_order' => $order->price_order,
-            'status' => $order->status,
-            'note' => $order->note,
-        ]);
-
-        return response([
-            'status' => 'success',
-            'message' => 'History created successfully',
-            'data' => $history,
-        ]);
-    }
-
     public function orderToHistory() 
     {
-        $orders = Order::all();
+
+        $orders = Order::where('status', 'selesai')->orWhere('status', 'batal')->get();
         foreach ($orders as $order) {
-            $history = History::create([
-                'user_id' => $order->user_id,
-                'price_order' => $order->price_order,
-                'status' => $order->status,
-                'note' => $order->note,
-            ]);
+            $orderDetails = OrderDetail::where('order_id', $order->id)->get();
+            
+
+            foreach ($orderDetails as $orderDetail) {
+                History::create([
+                    'order_id' => $orderDetail->order_id,
+                    'menu_id' => $orderDetail->menu_id,
+                    'quantity' => $orderDetail->quantity,
+                    'price' => $orderDetail->price,
+                    'notes' => $orderDetail->notes,
+                ]);
+            }
         }
 
         return response([
             'status' => 'success',
-            'message' => 'History created successfully',
-            'data' => $history,
+            'message' => 'History created and original orders deleted successfully',
         ]);
     }
+
 }

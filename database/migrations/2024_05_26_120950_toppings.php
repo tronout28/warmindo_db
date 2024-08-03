@@ -13,10 +13,7 @@ return new class extends Migration
             $table->string('name_topping');
             $table->decimal('price');
             $table->integer('stock_topping');
-            $table->unsignedBigInteger('menu_id');
             $table->timestamps();
-
-            $table->foreign('menu_id')->references('id')->on('menus');
         });
     }
 
