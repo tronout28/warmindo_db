@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use Illuminate\Http\Request;
+use App\Models\Variant;
 use App\Http\Resources\CartResource;
 use App\Models\CartTopping;
 use App\Models\Menu;
@@ -46,7 +47,7 @@ class CartController extends Controller
             $carts = Cart::create([
                 'quantity' => $data['quantity'],
                 'menu_id' => $data['menu_id'],
-                'variant_id' => $data['variant_id'],
+                'variant_id' => $data['variant_id']?? null,
             ]);
 
             if ($data['toppings'] != null) {
