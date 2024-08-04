@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Http\Resources\CartResource;
 use App\Models\CartTopping;
 use App\Models\Menu;
+use Illuminate\Support\Facades\Auth;
+
 
 class CartController extends Controller
 {
@@ -29,9 +31,8 @@ class CartController extends Controller
         ], 200);
     }
 
-    public function createCart(Request $request)
+        public function createCart(Request $request)
     {
-        
         $request->validate([
             'datas' => 'required|array',
             'datas.*.quantity' => 'required|integer',
@@ -42,115 +43,141 @@ class CartController extends Controller
             'datas.*.variant_id' => 'nullable|integer|exists:variants,id',
         ]);
 
+        $user = Auth::user();
+
         foreach ($request->datas as $data) {
-            $carts = Cart::create([
+            $menu = Menu::where('id', $data['menu_id'])->first();
+            if (!$menu) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Menu item not found',
+                ], 404);
+            }
+
+            $cart = Cart::create([
                 'quantity' => $data['quantity'],
                 'menu_id' => $data['menu_id'],
-                'variant_id' => $data['variant_id']?? null,
+                'variant_id' => $data['variant_id'] ?? null,
+                'user_id' => $user->id,
             ]);
 
-            if ($data['toppings'] != null) {
+            $toppingPrice = 0;
+            if (isset($data['toppings'])) {
                 foreach ($data['toppings'] as $topping) {
-                    CartTopping::create([
-                        'cart_id' => $carts->id,
+                    $cartTopping = CartTopping::create([
+                        'cart_id' => $cart->id,
                         'topping_id' => $topping['topping_id'],
                         'quantity' => $topping['quantity'],
                     ]);
+                    $toppingPrice += $cartTopping->topping->price * $topping['quantity'];
                 }
             }
 
-            $menu = Menu::where('id', $data['menu_id'])->first();
+            // Calculate total price: menu price * quantity + total topping price
+            $calculatePrice = ($menu->price * $data['quantity']) + $toppingPrice;
+            $cart->price = $calculatePrice;
+            $cart->save();
 
-            $cartToppings = CartTopping::where('cart_id', $carts->id)->get();
-            $toppingPrice = 0;
-            if ($cartToppings != null) {
-                foreach ($cartToppings as $topping) {
-                    $toppingPrice += $topping->topping->price * $topping->quantity;
-                }
-            }
-
-            $calculatePrice = $menu->price * $menu->quantity + $toppingPrice;
-            $carts->price = $calculatePrice;
-            $carts->save();
-
-            $menu->stock = $menu->stock - $data['quantity'];
+            // Update menu stock
+            $menu->stock -= $data['quantity'];
             $menu->save();
         }
 
         return response()->json([
             'status' => 'success',
             'message' => 'Cart created successfully',
-            'data' => $carts,
+            'data' => $cart,
         ], 201);
     }
+
 
     public function updateCart(Request $request, $id)
     {
         $request->validate([
-            'quantity' => 'nullable|integer',
-            'toppings' => 'nullable|array',
-            'toppings.*.topping_id' => 'required_with:toppings|integer|exists:toppings,id',
-            'toppings.*.quantity' => 'required_with:toppings|integer',
-            'menu_id' => 'nullable|integer|exists:menus,id',
-            'variant_id' => 'nullable|integer|exists:variants,id',
+            'datas' => 'required|array',
+            'datas.*.quantity' => 'nullable|integer',
+            'datas.*.toppings' => 'nullable|array',
+            'datas.*.toppings.*.topping_id' => 'nullable|integer|exists:toppings,id',
+            'datas.*.toppings.*.quantity' => 'nullable|integer',
+            'datas.*.menu_id' => 'nullable|integer|exists:menus,id',
+            'datas.*.variant_id' => 'nullable|integer|exists:variants,id',
         ]);
-
+    
+        // Find the cart by ID
         $cart = Cart::find($id);
-
+    
+        // If cart not found, return error response
         if (!$cart) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cart not found',
             ], 404);
         }
-
-        if ($request->has('quantity')) {
-            $cart->quantity = $request->quantity;
-        }
-
-        if ($request->has('menu_id')) {
-            $menu = Menu::find($request->menu_id);
-            $cart->menu_id = $request->menu_id;
-            $cart->price = $menu->price * ($request->quantity ?? $cart->quantity);
-            $menu->stock -= ($request->quantity ?? $cart->quantity);
-            $menu->save();
-        }
-
-        if ($request->has('variant_id')) {
-            $cart->variant_id = $request->variant_id;
-        }
-
-        if ($request->has('toppings')) {
-            CartTopping::where('cart_id', $cart->id)->delete();
-
-            $toppingPrice = 0;
-            foreach ($request->toppings as $topping) {
-                $cartTopping = CartTopping::create([
-                    'cart_id' => $cart->id,
-                    'topping_id' => $topping['topping_id'],
-                    'quantity' => $topping['quantity'],
-                ]);
-                $toppingPrice += $cartTopping->topping->price * $topping['quantity'];
+    
+        // Loop through each data set in the datas array
+        foreach ($request->datas as $data) {
+            // Update cart quantity if provided
+            if (isset($data['quantity'])) {
+                $cart->quantity = $data['quantity'];
             }
-
-            $menu = $menu ?? Menu::find($cart->menu_id);
-            $cart->price = $menu->price * $cart->quantity + $toppingPrice;
+    
+            // Update cart menu_id and recalculate price if menu_id provided
+            if (isset($data['menu_id'])) {
+                $menu = Menu::find($data['menu_id']);
+                $cart->menu_id = $data['menu_id'];
+                $cart->price = $menu->price * ($data['quantity'] ?? $cart->quantity);
+                $menu->stock -= ($data['quantity'] ?? $cart->quantity);
+                $menu->save();
+            }
+    
+            // Update cart variant_id if provided
+            if (isset($data['variant_id'])) {
+                $cart->variant_id = $data['variant_id'];
+            }
+    
+            // Handle toppings if provided
+            if (isset($data['toppings'])) {
+                // Delete existing cart toppings
+                CartTopping::where('cart_id', $cart->id)->delete();
+    
+                $toppingPrice = 0;
+                // Add new cart toppings
+                foreach ($data['toppings'] as $topping) {
+                    $cartTopping = CartTopping::create([
+                        'cart_id' => $cart->id,
+                        'topping_id' => $topping['topping_id'],
+                        'quantity' => $topping['quantity'],
+                    ]);
+                    $toppingPrice += $cartTopping->topping->price * $topping['quantity'];
+                }
+    
+                // Recalculate total price with toppings
+                $menu = $menu ?? Menu::find($cart->menu_id);
+                $cart->price = $menu->price * $cart->quantity + $toppingPrice;
+            }
+    
+            // Save the cart changes
+            $cart->save();
         }
-
-        $cart->save();
-
+    
+        // Return success response with updated cart data
         return response()->json([
             'success' => true,
             'message' => 'Cart updated successfully',
             'data' => new CartResource($cart),
         ], 200);
     }
+    
 
     
 
     public function getCart()
     {
-        $cart = Cart::with(['menu', 'cartToppings.topping','variant'])->get();
+        $user = Auth::user();
+
+        $cart = Cart::with(['menu', 'cartToppings.topping', 'variant'])
+            ->where('user_id', $user->id)
+            ->get();
 
         if ($cart->isEmpty()) {
             return response()->json([

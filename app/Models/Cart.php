@@ -12,7 +12,7 @@ class Cart extends Model
     protected $table = 'carts';
 
     protected $fillable = [
-         'menu_id', 'quantity', 'price', 'variant_id'
+         'menu_id', 'quantity', 'price', 'variant_id', 'user_id'
     ];
 
     protected $casts = [
@@ -21,11 +21,17 @@ class Cart extends Model
         'quantity' => 'integer',
         'price' => 'integer',
         'variant_id' => 'integer',
+        'user_id' => 'integer',
     ];
 
     public function menu()
     {
         return $this->belongsTo(Menu::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function cartToppings()

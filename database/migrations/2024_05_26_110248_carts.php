@@ -19,9 +19,11 @@ return new class extends Migration
             $table->integer('price')->nullable();
             $table->unsignedBigInteger('menu_id');
             $table->unsignedBigInteger('variant_id')->nullable();
+            $table->unsignedBigInteger('user_id');
             $table->timestamps();
 
             $table->foreign('menu_id')->references('id')->on('menus')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
