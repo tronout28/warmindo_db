@@ -22,7 +22,7 @@ class OrderDetailTopping extends Model
     {
         return $this->hasMany(OrderDetail::class);
     }
-
+    
     public function orderDetail()
     {
         return $this->belongsTo(OrderDetail::class);

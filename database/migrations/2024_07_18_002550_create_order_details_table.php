@@ -18,7 +18,7 @@ return new class extends Migration
             $table->integer('price')->nullable();
             $table->unsignedBigInteger('menu_id');
             $table->unsignedBigInteger('order_id')->nullable();
-            $table->unsignedBigInteger('history_id')->nullable();
+            $table->unsignedBigInteger('variant_id')->nullable();
             $table->timestamps();
 
             $table->foreign('order_id')->references('id')->on('orders')->onDelete('set null');

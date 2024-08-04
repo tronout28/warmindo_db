@@ -16,10 +16,9 @@ return new class extends Migration
         Schema::create('carts', function (Blueprint $table) {
             $table->id();
             $table->integer('quantity');
-            $table->text('notes')->nullable();
             $table->integer('price')->nullable();
             $table->unsignedBigInteger('menu_id');
-            $table->unsignedBigInteger('history_id')->nullable();
+            $table->unsignedBigInteger('variant_id')->nullable();
             $table->timestamps();
 
             $table->foreign('menu_id')->references('id')->on('menus')->onDelete('cascade');

@@ -1,100 +1,33 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Resources;
 
-use App\Http\Resources\OrderDetailResource;
-use App\Models\Menu;
-use App\Models\Order;
-use App\Models\OrderDetail;
 use App\Models\OrderDetailTopping;
+use App\Models\Menu;
+use App\Models\Variant;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
-class OrderDetailController extends Controller
+
+class OrderDetailResource extends JsonResource
 {
-    public function createOrderDetail(Request $request)
+    /**
+     * Transform the resource into an array.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
     {
-        $request->validate([
-            'datas' => 'required|array',
-            'datas.*.quantity' => 'required|integer',
-            'datas.*.toppings' => 'nullable|array',
-            'datas.*.toppings.*.topping_id' => 'required|integer|exists:toppings,id',
-            'datas.*.toppings.*.quantity' => 'required|integer',
-            'datas.*.variant_id' => 'nullable|integer|exists:variants,id',
-            'datas.*.menu_id' => 'required|integer|exists:menus,id',
-            'datas.*.order_id' => 'required|integer|exists:orders,id',
-            'datas.*.notes' => 'nullable|string',
-        ]);
-        foreach ($request->datas as $data) {
-
-            $orderDetail = OrderDetail::create([
-                'quantity' => $data['quantity'],
-                'menu_id' => $data['menu_id'],
-                'order_id' => $data['order_id'],
-                'variant_id' => $data['variant_id'],
-                'notes' => $data['notes'],
-            ]);            
-            if ($data['toppings'] != null) {
-                foreach ($data['toppings'] as $topping) {
-                    OrderDetailTopping::create([
-                        'order_detail_id' => $orderDetail->id,
-                        'topping_id' => $topping['topping_id'],
-                        'quantity' => $topping['quantity'],
-                    ]);
-                }
-            }
-            $menu = Menu::where('id', $data['menu_id'])->first();
-
-            $orderTopping = OrderDetailTopping::where('order_detail_id', $orderDetail->id)->get();
-            $toppingPrice = 0;
-            if($orderTopping != null) {
-                foreach ($orderTopping as $topping) {
-                    $toppingPrice += $topping->topping->price * $topping->quantity;
-                }
-            }
-
-            $calculatePrice = $menu->price * $menu->quantity + $toppingPrice;
-            $orderDetail->price = $calculatePrice;
-            $orderDetail->save();
-
-            $menu->stock = $menu->stock - $data['quantity'];
-            $menu->save();
-
-            $this->updatePrice($data['order_id']);
-        }
-
-
-
-        $orderDetail = OrderDetail::where('order_id', $request->datas[0]['order_id'])->get();
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Order detail created successfully',
-            'data' => $orderDetail
-        ], 201);
-
-    }
-
-    public function updatePrice($id) 
-    {
-
-        $order = Order::where('id', $id)->first();
-        $orderDetails = OrderDetail::where('order_id', $order->id)->get();
-        $totalPrice = $orderDetails->sum('price');
-
-        $order->price_order = $totalPrice;
-        $order->save();
-    }
-
-    public function getOrderDetails(Request $request) 
-    {
-        $request->validate([
-            'order_id' => 'required|integer|exists:orders,id'
-        ]);
-        $orderDetails = OrderDetail::where('order_id', $request->order_id)->get();
-        // dd($orderDetails->toArray()->menu);
-        return response()->json([
-            'status' => 'success',
-            'message' => 'List of order details',
-            'data' => OrderDetailResource::collection($orderDetails)
-        ], 200);
+        return [
+            'id' => $this->id,
+            'quantity' => $this->quantity,
+            'price' => $this->price,
+            'notes' => $this->notes,
+            'menu_id' => $this->menu_id,
+            'menu' => Menu::find($this->menu_id),
+            'variant_id' => $this->variant_id,
+            'variant' => Variant::find($this->variant_id),
+            'toppings' => ToppingResource::collection(OrderDetailTopping::where('order_detail_id', $this->id)->get()),
+        ];
     }
 }
