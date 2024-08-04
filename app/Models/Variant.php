@@ -11,11 +11,7 @@ class Variant extends Model
 {
     use HasFactory;
 
-    // Nama tabel jika tidak mengikuti konvensi penamaan Laravel
     protected $table = 'variants';
-
-    // Primary key dari tabel jika tidak menggunakan id
-    protected $primaryKey = 'id_varian';
 
     // Kolom yang bisa diisi
     protected $fillable = [
@@ -37,4 +33,14 @@ class Variant extends Model
         'created_at',
         'updated_at'
     ];
+
+    public function orderDetails()
+    {
+        return $this->belongsTo(OrderDetail::class);
+    }
+
+    public function cart()
+    {
+        return $this->belongsTo(Cart::class);
+    }
 }

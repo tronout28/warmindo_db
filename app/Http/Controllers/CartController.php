@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use App\Http\Resources\CartResource;
 use App\Models\CartTopping;
 use App\Models\Menu;
-use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
@@ -40,14 +39,14 @@ class CartController extends Controller
             'datas.*.toppings.*.topping_id' => 'required|integer|exists:toppings,id',
             'datas.*.toppings.*.quantity' => 'required|integer',
             'datas.*.menu_id' => 'required|integer|exists:menus,id',
-            'datas.*.notes' => 'nullable|string',
+            'datas.*.variant_id' => 'nullable|integer|exists:variants,id',
         ]);
 
         foreach ($request->datas as $data) {
             $carts = Cart::create([
                 'quantity' => $data['quantity'],
                 'menu_id' => $data['menu_id'],
-                'notes' => $data['notes'],
+                'variant_id' => $data['variant_id'],
             ]);
 
             if ($data['toppings'] != null) {
@@ -93,7 +92,7 @@ class CartController extends Controller
             'toppings.*.topping_id' => 'required_with:toppings|integer|exists:toppings,id',
             'toppings.*.quantity' => 'required_with:toppings|integer',
             'menu_id' => 'nullable|integer|exists:menus,id',
-            'notes' => 'nullable|string',
+            'variant_id' => 'nullable|integer|exists:variants,id',
         ]);
 
         $cart = Cart::find($id);
@@ -117,8 +116,8 @@ class CartController extends Controller
             $menu->save();
         }
 
-        if ($request->has('notes')) {
-            $cart->notes = $request->notes;
+        if ($request->has('variant_id')) {
+            $cart->variant_id = $request->variant_id;
         }
 
         if ($request->has('toppings')) {
@@ -151,7 +150,7 @@ class CartController extends Controller
 
     public function getCart()
     {
-        $cart = Cart::with(['menu', 'cartToppings.topping'])->get();
+        $cart = Cart::with(['menu', 'cartToppings.topping','variant'])->get();
 
         if ($cart->isEmpty()) {
             return response()->json([
