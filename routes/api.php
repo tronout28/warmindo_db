@@ -16,6 +16,14 @@ Route::group(['prefix' => 'menus'], function() {
     Route::delete('/{id}', [MenuController::class, 'destroy']);
 });
 
+use App\Http\Controllers\NotificationController;
+
+Route::group(['prefix' => 'notifications', 'middleware' => ['auth:admin']], function () {
+    Route::post('/send', [NotificationController::class, 'sendNotification']);
+    Route::post('/send-to-all', [NotificationController::class, 'sendNotificationToAll']);
+    Route::get('/all', [NotificationController::class, 'getNotifications']);
+});
+
 use App\Http\Controllers\CartController;
 
 Route::group(['prefix' => 'carts', 'middleware' => 'auth:sanctum'], function () {
