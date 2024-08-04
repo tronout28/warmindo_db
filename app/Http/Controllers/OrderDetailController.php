@@ -29,7 +29,7 @@ class OrderDetailController extends Controller
             $orderDetail = OrderDetail::create([
                 'quantity' => $data['quantity'],
                 'menu_id' => $data['menu_id'],
-                'variant_id' => $data['variant_id'],
+                'variant_id' => $data['variant_id']?? null,
                 'order_id' => $data['order_id'],
                 'notes' => $data['notes'],
             ]);
