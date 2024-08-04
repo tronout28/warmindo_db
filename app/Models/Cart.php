@@ -9,6 +9,8 @@ class Cart extends Model
 {
     use HasFactory;
 
+    protected $table = 'carts';
+
     protected $fillable = [
          'menu_id', 'quantity', 'price'
     ];
@@ -21,27 +23,23 @@ class Cart extends Model
         'notes' => 'string',
     ];
 
-    public function order()
-    {
-        return $this->belongsTo(Order::class);
-    }
-
     public function menu()
     {
         return $this->belongsTo(Menu::class);
     }
 
-    public function CartsTopping()
+    public function cartToppings()
     {
-        return $this->hasMany(Cart::class);
+        return $this->hasMany(CartTopping::class);
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
     }
 
     public function orderDetails()
     {
         return $this->hasMany(OrderDetail::class);
-    }
-
-    public function toppings() {
-        return $this->hasMany(carttopping::class);
     }
 }

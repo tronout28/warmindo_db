@@ -2,12 +2,12 @@
 
 namespace App\Http\Resources;
 
-use App\Models\carttopping;
+use App\Models\CartTopping;
 use App\Models\Menu;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class OrderDetailResource extends JsonResource
+class CartResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -22,8 +22,14 @@ class OrderDetailResource extends JsonResource
             'price' => $this->price,
             'notes' => $this->notes,
             'menu_id' => $this->menu_id,
-            'menu' => Menu::find($this->menu_id),
-            'toppings' => ToppingResource::collection(carttopping::where('cart_id', $this->id)->get()),
+            'menu' => [
+                'id' => $this->menu->id,
+                'name' => $this->menu->name_menu,
+                'description' => $this->menu->description,
+                'price' => $this->menu->price,
+                'stock' => $this->menu->stock,
+            ],
+            'toppings' => ToppingResource::collection($this->cartToppings),
         ];
     }
 }

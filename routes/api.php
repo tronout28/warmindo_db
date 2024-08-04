@@ -18,11 +18,11 @@ Route::group(['prefix' => 'menus'], function() {
 
 use App\Http\Controllers\CartController;
 
-Route::prefix('carts')->group(function () {
+Route::group(['prefix' => 'carts', 'middleware' => 'auth:sanctum'], function () {
     Route::get('/', [CartController::class, 'index']);
-    Route::post('/store', [CartController::class, 'store']);
-    Route::get('/{id}', [CartController::class, 'show']);
-    Route::put('/{id}', [CartController::class, 'update']);
+    Route::post('/store', [CartController::class, 'createCart']);
+    Route::get('/showcarts', [CartController::class, 'getCart']);
+    Route::put('/update/{id}', [CartController::class, 'updateCart']);
     Route::delete('/{id}', [CartController::class, 'destroy']);
 });
 

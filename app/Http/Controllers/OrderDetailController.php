@@ -30,7 +30,7 @@ class OrderDetailController extends Controller
                 'quantity' => $data['quantity'],
                 'menu_id' => $data['menu_id'],
                 'order_id' => $data['order_id'],
-                'variant_id' => $data['variant_id'],
+                'variant_id' => $data['variant_id'] ?? null,
                 'notes' => $data['notes'],
             ]);            
             if ($data['toppings'] != null) {
