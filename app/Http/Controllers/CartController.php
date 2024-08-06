@@ -37,8 +37,8 @@ class CartController extends Controller
             'datas' => 'required|array',
             'datas.*.quantity' => 'required|integer',
             'datas.*.toppings' => 'nullable|array',
-            'datas.*.toppings.*.topping_id' => 'required|integer|exists:toppings,id',
-            'datas.*.toppings.*.quantity' => 'required|integer',
+            'datas.*.toppings.*.topping_id' => 'nullable|integer|exists:toppings,id',
+            'datas.*.toppings.*.quantity' => 'nullable|integer',
             'datas.*.menu_id' => 'required|integer|exists:menus,id',
             'datas.*.variant_id' => 'nullable|integer|exists:variants,id',
         ]);
@@ -64,12 +64,15 @@ class CartController extends Controller
             $toppingPrice = 0;
             if (isset($data['toppings'])) {
                 foreach ($data['toppings'] as $topping) {
-                    $cartTopping = CartTopping::create([
-                        'cart_id' => $cart->id,
-                        'topping_id' => $topping['topping_id'],
-                        'quantity' => $topping['quantity'],
-                    ]);
-                    $toppingPrice += $cartTopping->topping->price * $topping['quantity'];
+                    // Check for null values before creating CartTopping
+                    if (!is_null($topping['topping_id']) && !is_null($topping['quantity'])) {
+                        $cartTopping = CartTopping::create([
+                            'cart_id' => $cart->id,
+                            'topping_id' => $topping['topping_id'],
+                            'quantity' => $topping['quantity'],
+                        ]);
+                        $toppingPrice += $cartTopping->topping->price * $topping['quantity'];
+                    }
                 }
             }
 

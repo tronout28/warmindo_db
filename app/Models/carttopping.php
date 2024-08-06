@@ -20,7 +20,6 @@ class CartTopping extends Model
         return $this->belongsTo(Cart::class);
     }
     
-    
 
     public function topping()
     {

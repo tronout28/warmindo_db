@@ -29,7 +29,7 @@ class NotificationController extends Controller
         //         'message' => 'You are not authorized to send notification'
         //     ], 403);
         // }
-        $user = User::where('id', $request->user_id)->first();
+        $user = User::where('id', $account->id)->first();
         if($user == null) {
             return response([
                 'status' => 'failed',

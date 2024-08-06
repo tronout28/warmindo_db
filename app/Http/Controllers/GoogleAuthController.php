@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class GoogleAuthController extends Controller
 {
@@ -38,8 +40,8 @@ class GoogleAuthController extends Controller
                 return redirect('/');
         }
 
-       } catch (\Throable $th) {
-              dd('Something Went wrong!'.$th->getMessage());
-       }
+         } catch (\Exception $e) {
+              dd($e->getMessage());
     }
+}
 }
