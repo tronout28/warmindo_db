@@ -18,7 +18,7 @@ Route::group(['prefix' => 'menus'], function() {
 
 use App\Http\Controllers\NotificationController;
 
-Route::group(['prefix' => 'notifications', 'middleware' => ['auth:admin']], function () {
+Route::group(['prefix' => 'notifications', 'middleware' => ['auth:sanctum']], function () {
     Route::post('/send', [NotificationController::class, 'sendNotification']);
     Route::post('/send-to-all', [NotificationController::class, 'sendNotificationToAll']);
     Route::get('/all', [NotificationController::class, 'getNotifications']);

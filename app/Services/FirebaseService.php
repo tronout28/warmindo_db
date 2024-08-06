@@ -1,12 +1,11 @@
 <?php
 
 namespace App\Services;
-
-use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification;
-use Kreait\Firebase\Factory;
 use App\Models\User;   
 use App\Models\Notification as NotificationModel;
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
 
 class FirebaseService
 {
