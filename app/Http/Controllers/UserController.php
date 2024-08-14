@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use Carbon\Carbon;
 use App\Models\User;
+use App\Models\Order;
 use App\Models\Otp;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -341,5 +342,16 @@ class UserController extends Controller
             'success' => false,
             'message' => 'User not found',
         ], 404);
+    }
+    public function getHistory()
+    {
+        $user = auth()->user();
+
+        $orders = Order::with(['orderDetails.menu'])->where('user_id', $user->id)->get();
+
+        return response(['status' => 'success',
+            'message' => 'Orders fetched successfully',
+            'orders' => $orders,
+        ], 200);
     }
 }
