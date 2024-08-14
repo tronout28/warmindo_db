@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Http\Resources\OrderDetailResource;
 use App\Models\Admin;
 use App\Models\Order;
 use Illuminate\Support\Facades\Auth;
@@ -224,12 +224,28 @@ class AdminController extends Controller
     public function getOrders()
     {
         $orders = Order::with(['orderDetails.menu'])->get();
-
-        return response(['status' => 'success',
+    
+        return response([
+            'status' => 'success',
             'message' => 'Orders fetched successfully',
-            'orders' => $orders,
+            'orders' => $orders->map(function($order) {
+                // Replace the orderDetails with the resource-transformed version
+                $order->orderDetails = OrderDetailResource::collection($order->orderDetails);
+                return [
+                    'id' => $order->id,
+                    'user_id' => $order->user_id,
+                    'price_order' => $order->price_order,
+                    'status' => $order->status,
+                    'note' => $order->note,
+                    'created_at' => $order->created_at,
+                    'updated_at' => $order->updated_at,
+                    'orderDetails' => $order->orderDetails,
+                ];
+            }),
         ], 200);
     }
+    
+    
 
     public function getOrderDetail($id)
     {
