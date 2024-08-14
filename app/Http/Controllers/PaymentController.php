@@ -56,6 +56,7 @@ class PaymentController extends Controller
         ];
         $response = $this->xenditService->createInvoice($options);
 
+        
         $payment = new Payment();
         $payment->status = 'pending';
         $payment->invoice_id = $response['id'];
