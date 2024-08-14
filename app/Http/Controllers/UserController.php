@@ -356,7 +356,6 @@ class UserController extends Controller
                 // Map the order details to the OrderDetailResource
                 $order->orderDetails = OrderDetailResource::collection($order->orderDetails);
                 return [
-                    
                     'id' => $order->id,
                     'user_id' => $order->user_id,
                     'price_order' => $order->price_order,
