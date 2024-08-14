@@ -5,6 +5,7 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Otp;
+use App\Http\Resources\OrderDetailResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -351,7 +352,20 @@ class UserController extends Controller
 
         return response(['status' => 'success',
             'message' => 'Orders fetched successfully',
-            'orders' => $orders,
+            'orders' => $orders->map(function($order) {
+                // Map the order details to the OrderDetailResource
+                $order->orderDetails = OrderDetailResource::collection($order->orderDetails);
+                return [
+                    'id' => $order->id,
+                    'user_id' => $order->user_id,
+                    'price_order' => $order->price_order,
+                    'status' => $order->status,
+                    'note' => $order->note,
+                    'created_at' => $order->created_at,
+                    'updated_at' => $order->updated_at,
+                    'orderDetails' => $order->orderDetails,
+                ];
+            }),
         ], 200);
     }
 }
