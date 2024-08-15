@@ -219,6 +219,7 @@ class AdminController extends Controller
             'orders' => $orders->map(function($order) {
                 $orderDetails = $order->orderDetails->map(function($detail) {
                     return [
+                        'quantity'=>$detail->quantity,
                         'menu' => $detail->menu,
                         'variant' => $detail->variant, // Include variant
                         'toppings' => $detail->toppings, // Include toppings
