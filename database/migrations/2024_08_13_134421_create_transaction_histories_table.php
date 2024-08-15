@@ -12,8 +12,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transaction_histories', function (Blueprint $table) {
-            $table->id();
+            $table->unsignedBigInteger('id')->unique()->primary();
+            $table->enum('payment_type', ['tunai', 'non_tunai'])->default('non_tunai');
+            $table->string('external_id')->nullable();
+            $table->string('payment_method')->nullable();
+            $table->string('status')->nullable();
+            $table->string('amount')->nullable();
+            $table->string('description')->nullable();
+            $table->string('payment_id')->nullable();
+            $table->string('payment_channel')->nullable();
+            $table->timestamp('paid_at')->nullable();
+            $table->unsignedBigInteger('history_id')->nullable();
             $table->timestamps();
+
+            $table->foreign('history_id')->references('id')->on('histories')->onDelete('cascade');
         });
     }
 
@@ -22,6 +34,9 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('transaction_histories', function (Blueprint $table) {
+            $table->dropForeign(['history_id']);
+        });
         Schema::dropIfExists('transaction_histories');
     }
 };

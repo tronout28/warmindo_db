@@ -15,23 +15,28 @@ use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
-    protected $xenditService;
+    protected $XenditService;
     protected $firebaseService;
     public function __construct(XenditService $xenditService, FirebaseService $firebaseService)
     {
-        $this->xenditService = $xenditService;
+        $this->XenditService = $xenditService;
         $this->firebaseService = $firebaseService;
     }
 
-    public function createPayment(Request $request)
+    public function createPayment(PaymentRequest $request)
     {
-        $request->validate([
-            'order_id' => 'required|integer|exists:orders,id',
-        ]);
+        $request->validated();
         $user = auth()->user();
+        $order = Order::where('id', $request->order_id)->first();
         $external_id = (string) date('YmdHis');
-        $description = 'Bayar Makan Anjay';
-        $order = Order::where('id', $request->order_id)->first();   
+        $description = 'Membayar Pemesanan ' . $user->username;
+
+        if ($order->price_order == null) {
+            return response([
+                'status' => 'failed',
+                'message' => 'Harga belum ditentukan',
+            ], 400);
+        }
         $amount = $order->price_order;
 
         $transaction = Payment::where('order_id', $order->id)->first();
@@ -53,10 +58,9 @@ class PaymentController extends Controller
             'description' => $description,
             'amount' => $amount,
             'currency' => 'IDR',
+            'payment_methods' => ["OVO", "DANA", "SHOPEEPAY", "LINKAJA", "JENIUSPAY", "QRIS"]
         ];
-        $response = $this->xenditService->createInvoice($options);
-
-        
+        $response = $this->XenditService->createInvoice($options);
         $payment = new Payment();
         $payment->status = 'pending';
         $payment->invoice_id = $response['id'];
@@ -68,8 +72,8 @@ class PaymentController extends Controller
 
         // send notification to user
         $expiredDate = Carbon::parse($response['expiry_date']);
-        $description = 'Menunggu pembayaran laundry  ' . $order->no_pemesanan . ' ' . '. Bayar sebelum tamggal ' . $expiredDate->format('d F Y') . ' pukul ' . $expiredDate->format('H:i') . ' WIB';
-        $this->firebaseService->sendNotification($payment->user->notification_token, 'Menunggu Pembayaran', 'Tenang kamu bisa membuat pembayaran lagi', '');
+        $description = 'Menunggu pembayaran order  ' . $order->no_pemesanan . '. Bayar sebelum tamggal ' . $expiredDate->format('d F Y') . ' pukul ' . $expiredDate->format('H:i') . ' WIB';
+        $this->firebaseService->sendNotification($payment->user->notification_token, 'Menunggu Pembayaran', $description, '');
         return response([
             'status' => 'success',
             'message' => 'Payment created successfully',
@@ -78,9 +82,13 @@ class PaymentController extends Controller
         ], 201);
     }
 
-    public function expirePayment($id)
+
+    public function expirePayment(Request $request)
     {
-        $payment = Payment::where('order_id', $id)->first();
+        $request->validate([
+            'order_id' => 'required|integer|exists:orders,id',
+        ]);
+        $payment = Payment::where('order_id', $request->id)->first();
         if ($payment == null) {
             return response([
                 'status' => 'failed',
@@ -93,9 +101,12 @@ class PaymentController extends Controller
                 'message' => 'Payment already expired',
             ], 400);
         }
-        $this->xenditService->expireInvoice($payment->invoice_id);
+        $this->XenditService->expireInvoice($payment->invoice_id);
         $payment->status = 'expired';
         $payment->save();
+
+        // send notification to user
+        $this->firebaseService->sendNotification($payment->user->notification_token, 'Pembayaranmu telah dibatalkan', 'Tenang kamu bisa membuat pembayaran lagi', '');
 
         return response([
             'status' => 'success',
@@ -115,7 +126,7 @@ class PaymentController extends Controller
                 'message' => 'Payment not found',
             ], 404);
         }
-        $response = $this->xenditService->getInvoice($payment->invoice_id);
+        $response = $this->XenditService->getInvoice($payment->invoice_id);
 
         $payment->status = strtolower($response['status']);
         $payment->save();
@@ -127,23 +138,7 @@ class PaymentController extends Controller
         ], 200);
     }
 
-    public function invoiceStatus(Request $request)
-    {
-        $payment = Payment::where('external_id', $request->external_id)->first();
-        if ($payment == null) {
-            return response([
-                'status' => 'failed',
-                'message' => 'Payment not found',
-            ], 404);
-        }
-        $payment->status = strtolower($request->status);
-        $payment->save();
-        return response([
-            'status' => 'success',
-            'message' => 'Payment status updated',
-            'payment_status' => $payment->status,
-        ], 200);
-    }
+
 
     public function getInvoiceUser(Request $request)
     {

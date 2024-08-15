@@ -27,4 +27,9 @@ class OrderDetailTopping extends Model
     {
         return $this->belongsTo(OrderDetail::class);
     }
+
+    public function menu()
+    {
+        return $this->belongsTo(Menu::class);
+    }   
 }

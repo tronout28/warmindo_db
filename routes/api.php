@@ -12,6 +12,8 @@ Route::group(['prefix' => 'menus'], function() {
     Route::get('/filter/{category}', [MenuController::class, 'filterByCategory']);
     Route::get('/Sfilter/{second_category}', [MenuController::class, 'filterBySecondCategory']);
     Route::get('/{id}', [MenuController::class, 'show']);
+    Route::put('/disable/{id}', [MenuController::class, 'disableMenu']);
+    Route::put('/enable/{id}', [MenuController::class, 'enableMenu']);
     Route::patch('/{id}', [MenuController::class, 'update']);
     Route::delete('/{id}', [MenuController::class, 'destroy']);
 });
@@ -43,6 +45,8 @@ Route::group(['prefix' => 'orders', 'middleware' => 'auth:sanctum'], function ()
     Route::put('/status/{id}', [OrderController::class, 'updateStatus']);
     Route::put('/price/{id}', [OrderController::class, 'updatePrice']);
     Route::get('/statistics', [OrderController::class, 'getSalesStatistics']);
+    Route::put('/updatenote/{id}', [OrderController::class, 'updateNote']);
+    Route::put('/updatepayment/{id}', [OrderController::class, 'updatepaymentmethod']);
     Route::post('/toHistory', [OrderController::class, 'tohistory']);
     Route::delete('/{id}', [OrderController::class, 'destroy']);
     Route::get('/filter/status', [OrderController::class, 'filterbystatues']);
@@ -81,8 +85,7 @@ Route::group(['prefix' => '/users'], function () {
     Route::post('/logout', [UserController::class, 'logout'])->middleware('auth:sanctum');
     Route::delete('/{id}', [UserController::class, 'destroy']);
     Route::post('/forgot-password', [UserController::class, 'forgotPassword'])->middleware('auth:sanctum');
-    Route::get('/get-history', [UserController::class, 'getHistory'])->middleware('auth:sanctum');
-    Route::post('/updatePhone', [UserController::class, 'updatePhoneNumberForGoogle'])->middleware('auth:sanctum');
+    Route::post('/updatePhone', [UserController::class, 'updatePhoneNumberForGoogle'])->middleware('auth:sanctum');;
 
 });
 
@@ -91,15 +94,13 @@ use App\Http\Controllers\AdminController;
 Route::group(['prefix' => '/admins'], function () {
     Route::post('/register', [AdminController::class, 'register']);
     Route::post('/login', [AdminController::class, 'login']);
-    Route::put('/update', [AdminController::class, 'update'])->middleware('auth:sanctum');
+    Route::put('/update/{id}', [AdminController::class, 'update'])->middleware('auth:sanctum');
     Route::post('/logout', [AdminController::class, 'logout'])->middleware('auth:sanctum');
-    Route::get('/details', [AdminController::class, 'details'])->middleware('auth:sanctum');
     Route::get('/users', [AdminController::class, 'getUser']);  
     Route::put('/users/{id}/verify', [AdminController::class, 'verifyUser']);
     Route::put('/users/{id}/unverify', [AdminController::class, 'unverifyUser']);
     Route::get('/orders', [AdminController::class, 'getOrders']);
-
-    Route::get('/order-details/{id}', [AdminController::class, 'getOrderDetail']); 
+    Route::get('/userdetailorder/{id}', [AdminController::class, 'userOrderdetail']); 
 });
 
 
@@ -123,10 +124,23 @@ Route::prefix('history')->group(function () {
 });
 
 use App\Http\Controllers\PaymentController;
-Route::group(['prefix' => '/payment', 'middleware' => 'auth:sanctum'], function() {
-    Route::post('/create', [PaymentController::class, 'createPayment']);
-    Route::get('/{id}', [PaymentController::class, 'getPaymentStatus']);
-} );
+use App\Http\Controllers\TransactionController;
+Route::group(['prefix' => 'payments'], function () {
+    Route::group(['middleware' => ['auth:user', 'scope:user']], function () {
+        Route::post('/create', [PaymentController::class, 'createPayment']);
+        Route::post('/update', [PaymentController::class, 'updatePaymentStatus']);
+        Route::get('/get', [PaymentController::class, 'getInvoiceUser']);
+        Route::delete('/expire', [PaymentController::class, 'expirePayment']);
+    });
+
+    Route::group(['prefix' => 'callback', 'middleware' => 'xendit-callback'], function () {
+        Route::post('/invoice-status', [TransactionController::class, 'invoiceStatus']);
+    });
+});
+
+Route::group(['prefix' => 'transaction', 'middleware' => ['auth:user', 'scope:user']], function () {
+    Route::get('/get', [TransactionController::class, 'getTransaction']);
+});
 
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\OrderDetailController;

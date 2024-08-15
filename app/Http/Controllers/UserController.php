@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Order;
 use App\Models\Otp;
 use App\Http\Resources\OrderDetailResource;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -350,11 +351,13 @@ class UserController extends Controller
 
         $orders = Order::with(['orderDetails.menu'])->where('user_id', $user->id)->get();
 
+       
+
         return response(['status' => 'success',
             'message' => 'Orders fetched successfully',
             'orders' => $orders->map(function($order) {
                 // Map the order details to the OrderDetailResource
-                $order->orderDetails = OrderDetailResource::collection($order->orderDetails);
+                $order = OrderDetailResource::collection($order->orderDetails);
                 return [
                     
                     'id' => $order->id,

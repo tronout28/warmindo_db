@@ -43,4 +43,9 @@ class Variant extends Model
     {
         return $this->belongsTo(Cart::class);
     }
+
+    public function toppings()
+    {
+        return $this->hasMany(Topping::class);
+    }
 }
