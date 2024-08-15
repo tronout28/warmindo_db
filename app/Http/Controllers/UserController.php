@@ -348,18 +348,13 @@ class UserController extends Controller
     public function getHistory()
     {
         $user = auth()->user();
-
         $orders = Order::with(['orderDetails.menu'])->where('user_id', $user->id)->get();
-
-       
-
         return response(['status' => 'success',
             'message' => 'Orders fetched successfully',
             'orders' => $orders->map(function($order) {
                 // Map the order details to the OrderDetailResource
-                $order = OrderDetailResource::collection($order->orderDetails);
+                $orderDetails = OrderDetailResource::collection($order->orderDetails);
                 return [
-                    
                     'id' => $order->id,
                     'user_id' => $order->user_id,
                     'price_order' => $order->price_order,
@@ -367,9 +362,10 @@ class UserController extends Controller
                     'note' => $order->note,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
-                    'orderDetails' => $order->orderDetails,
+                    'orderDetails' => $orderDetails,
                 ];
             }),
         ], 200);
     }
+    
 }
