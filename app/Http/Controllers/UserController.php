@@ -360,6 +360,8 @@ class UserController extends Controller
                     'price_order' => $order->price_order,
                     'status' => $order->status,
                     'note' => $order->note,
+                    'payment_method' => $order->payment_method,
+                    'order_method' => $order->order_method,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
                     'orderDetails' => $orderDetails,
