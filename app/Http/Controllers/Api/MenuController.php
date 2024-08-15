@@ -127,6 +127,24 @@ class MenuController extends Controller
  
          return new PostResource(true, 'Data Menu Berhasil Dihapus!', null);
      }
+
+     public function disableMenu($id)
+     {
+         $post = Menu::find($id);
+         $post->status_menu = true;
+         $post->save();
+ 
+         return new PostResource(true, 'Menu Disabled Successfully', $post);
+     }
+
+    public function enableMenu($id)
+        {
+            $post = Menu::find($id);
+            $post->status_menu = false;
+            $post->save();
+    
+            return new PostResource(true, 'Menu Enabled Successfully', $post);
+        }
  
      public function search(Request $request)
      {

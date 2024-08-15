@@ -16,6 +16,7 @@ class StoreStatus extends Model
         'end_time',
         'temporary_closure_duration',
     ];
+   
     public function getIsOpenAttribute()
     {
         $today = Carbon::now('Asia/Jakarta')->locale('id')->dayName; // Get the current day name in Indonesian

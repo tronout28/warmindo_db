@@ -33,4 +33,9 @@ class Menu extends Model
     {
         return $this->hasMany(Order::class);
     }
+
+    public function variants()
+    {
+        return $this->hasMany(Variant::class);
+    }
 }

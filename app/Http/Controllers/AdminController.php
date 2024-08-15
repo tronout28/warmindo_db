@@ -1,12 +1,12 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Http\Resources\OrderDetailResource;
+
 use App\Models\Admin;
 use App\Models\Order;
+use App\Models\OrderDetail;
+use App\Http\Resources\OrderDetailResource;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -70,96 +70,85 @@ class AdminController extends Controller
             'token' => $token,
         ], 201);
     }
-    public function details()
+
+    public function update(Request $request, $id)
     {
-        $user = auth()->user();
-        $token = $user->currentAccessToken();
-        return response()->json([
-            'success' => true,
-            'message' => 'User details',
-            'user' => $user,
-            'token' => $token,
-        ], 200);
-    }
-        public function update(Request $request)
-        {
-            $admin = auth()->user();
-            // Validate request input
-            $request->validate([
-                'name' => 'nullable|string|max:255',
-                'username' => 'nullable|string|max:255',
-                'email' => 'nullable|email', // Email is nullable
-                'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-                'phone_number' => 'nullable|string',
-                'password' => 'nullable|string|min:8',
-                'current_password' => 'nullable|string|min:8', // Make current_password nullable
-            ]);
-        
-            // Find the admin by ID
-        
-        
-            if ($admin == null) {
-                return response([
-                    'message' => 'Admin not found',
-                ], 404);
-            }
-        
-            // Prepare the user data for update
-            $userdata = [];
-            if ($request->filled('username')) {
-                $userdata['username'] = $request->username;
-            }
-            if ($request->filled('name')) {
-                $userdata['name'] = $request->name;
-            }
-            if ($request->filled('profile_picture')) {
-                $userdata['profile_picture'] = $request->profile_picture;
-            }
-            if ($request->filled('email')) {
-                $userdata['email'] = $request->email;
-            }
-            if ($request->filled('phone_number')) {
-                $userdata['phone_number'] = $request->phone_number;
-            }
-        
-            // Validate and update password if current password is provided
-            if ($request->filled('password')) {
-                if (!$request->filled('current_password') || !Hash::check($request->current_password, $admin->password)) {
-                    return response([
-                        'message' => 'Current password is incorrect or not provided',
-                    ], 400);
-                }
-                $userdata['password'] = Hash::make($request->password);
-            }
-        
-            // Update the user data
-            $admin->update($userdata);
-        
-            // Process profile picture upload if provided
-            if ($request->hasFile('profile_picture')) {
-                // Delete old picture if exists
-                if ($admin->profile_picture) {
-                    $oldImagePath = public_path('images') . '/' . $admin->profile_picture;
-                    if (file_exists($oldImagePath)) {
-                        unlink($oldImagePath);
-                    }
-                }
-                $imageName = env('APP_URL') . time().'.'.$request->profile_picture->extension();
-            
-                $request->profile_picture->move(public_path('images'), $imageName);
-                $admin->profile_picture = $imageName;
-                $admin->save();
-            }
-        
-            // Generate a new token for the user
-            $token = $admin->createToken('warmindo')->plainTextToken;
-        
+        // Validate request input
+        $request->validate([
+            'name' => 'nullable|string|max:255',
+            'username' => 'nullable|string|max:255',
+            'email' => 'nullable|email', // Email is nullable
+            'profile_picture' => 'nullable|string|max:255',
+            'phone_number' => 'nullable|string',
+            'password' => 'nullable|string|min:8',
+            'current_password' => 'nullable|string|min:8', // Make current_password nullable
+        ]);
+    
+        // Find the admin by ID
+        $user = Admin::find($id);
+    
+        if ($user == null) {
             return response([
-                'admin' => $admin,
-                'token' => $token,
-            ], 201);
+                'message' => 'Admin not found',
+            ], 404);
         }
-        
+    
+        // Prepare the user data for update
+        $userdata = [];
+        if ($request->filled('username')) {
+            $userdata['username'] = $request->username;
+        }
+        if ($request->filled('name')) {
+            $userdata['name'] = $request->name;
+        }
+        if ($request->filled('profile_picture')) {
+            $userdata['profile_picture'] = $request->profile_picture;
+        }
+        if ($request->filled('email')) {
+            $userdata['email'] = $request->email;
+        }
+        if ($request->filled('phone_number')) {
+            $userdata['phone_number'] = $request->phone_number;
+        }
+    
+        // Validate and update password if current password is provided
+        if ($request->filled('password')) {
+            if (!$request->filled('current_password') || !Hash::check($request->current_password, $user->password)) {
+                return response([
+                    'message' => 'Current password is incorrect or not provided',
+                ], 400);
+            }
+            $userdata['password'] = Hash::make($request->password);
+        }
+    
+        // Update the user data
+        $user->update($userdata);
+    
+        // Process profile picture upload if provided
+        if ($request->hasFile('profile_picture')) {
+            // Delete old picture if exists
+            if ($user->profile_picture) {
+                $oldImagePath = public_path('images') . '/' . $user->profile_picture;
+                if (file_exists($oldImagePath)) {
+                    unlink($oldImagePath);
+                }
+            }
+            // Save new profile picture
+            $imageName = time() . '.' . $request->profile_picture->extension();
+            $request->profile_picture->move(public_path('images'), $imageName);
+            $user->profile_picture = $imageName;
+            $user->save();
+        }
+    
+        // Generate a new token for the user
+        $token = $user->createToken('warmindo')->plainTextToken;
+    
+        return response([
+            'admin' => $user,
+            'token' => $token,
+        ], 201);
+    }
+    
     public function verifyUser($id)
     {
         $user = User::find($id);
@@ -209,7 +198,7 @@ class AdminController extends Controller
             'message' => 'Logged out',
         ], 200);
     }
-   
+
     public function getUser()
     {
         $users = User::all();
@@ -223,42 +212,27 @@ class AdminController extends Controller
 
     public function getOrders()
     {
-        $orders = Order::with(['orderDetails.menu'])->get();
-    
-        return response([
-            'status' => 'success',
+        $orders = Order::all();
+
+        return response(['status' => 'success',
             'message' => 'Orders fetched successfully',
-            'orders' => $orders->map(function($order) {
-                // Replace the orderDetails with the resource-transformed version
-                $order->orderDetails = OrderDetailResource::collection($order->orderDetails);
-                return [
-                    'id' => $order->id,
-                    'user_id' => $order->user_id,
-                    'price_order' => $order->price_order,
-                    'status' => $order->status,
-                    'note' => $order->note,
-                    'created_at' => $order->created_at,
-                    'updated_at' => $order->updated_at,
-                    'orderDetails' => $order->orderDetails,
-                ];
-            }),
+            'orders' => $orders,
         ], 200);
     }
-    
-    
 
-    public function getOrderDetail($id)
+    public function userOrderdetail($id)
     {
-        $order = Order::with(['orderDetails.menu'])->find($id);
+        $id->validate([
+            'order_id' => 'required|integer|exists:orders,id'
+        ]);
 
-        if (is_null($order)) {
-            return response()->json(['message' => 'Order not found'], 404);
-        }
+        $orderDetails = OrderDetail::where('order_id', $id->order_id)->get();
 
         return response()->json([
-            'success' => true,
-            'message' => 'Order details retrieved successfully',
-            'data' => $order,
+            'status' => 'success',
+            'message' => 'List of order details',
+            'data' => OrderDetailResource::collection($orderDetails)
         ], 200);
     }
+    
 }

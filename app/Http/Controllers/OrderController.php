@@ -28,8 +28,10 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal'])],
+            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal', 'menunggu pembayaran'])],
             'note' => 'nullable|string',
+            'payment_method' => ['nullable', Rule::in(['tunai','ovo', 'gopay', 'dana', 'linkaja', 'shopeepay', 'gopay', 'transfer'])],
+            'order_method' => ['nullable', Rule::in(['dine-in', 'take-away', 'delivery'])],
         ]);
 
         $user = auth()->user();
@@ -45,6 +47,8 @@ class OrderController extends Controller
         $order = Order::create([
             'user_id' => $user->id,
             'status' => $request->status,
+            'payment_method' => $request->payment_method,
+            'order_method' => $request->order_method,
             'note' => $request->note,
         ]);
 
@@ -56,28 +60,70 @@ class OrderController extends Controller
     }
 
 
-    public function getSalesStatistics()
+    // public function getSalesStatistics()
+    // {
+    //     $weeklySales = Order::where('status', 'selesai')
+    //         ->where('order_date', '>=', Carbon::now()->subWeek())
+    //         ->count();
+
+    //     $monthlySales = Order::where('status', 'selesai')
+    //         ->where('order_date', '>=', Carbon::now()->subMonth())
+    //         ->count();
+
+    //     $yearlySales = Order::where('status', 'selesai')
+    //         ->where('order_date', '>=', Carbon::now()->subYear())
+    //         ->count();
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Sales statistics retrieved successfully',
+    //         'data' => [
+    //             'weekly_sales' => $weeklySales,
+    //             'monthly_sales' => $monthlySales,
+    //             'yearly_sales' => $yearlySales,
+    //         ],
+    //     ], 200);
+    // }
+
+    public function updatepaymentmethod(Request $request, $id)
     {
-        $weeklySales = Order::where('status', 'selesai')
-            ->where('order_date', '>=', Carbon::now()->subWeek())
-            ->count();
+        $validator = Validator::make($request->all(), [
+            'payment_method' => ['required', Rule::in(['non-tunai', 'tunai'])],
+        ]);
 
-        $monthlySales = Order::where('status', 'selesai')
-            ->where('order_date', '>=', Carbon::now()->subMonth())
-            ->count();
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
 
-        $yearlySales = Order::where('status', 'selesai')
-            ->where('order_date', '>=', Carbon::now()->subYear())
-            ->count();
+        $order = Order::where('id', $id)->first();
+        $order->payment_method = $request->payment_method;
+        $order->save();
 
         return response()->json([
             'success' => true,
-            'message' => 'Sales statistics retrieved successfully',
-            'data' => [
-                'weekly_sales' => $weeklySales,
-                'monthly_sales' => $monthlySales,
-                'yearly_sales' => $yearlySales,
-            ],
+            'message' => 'Payment method updated successfully',
+            'data' => $order,
+        ], 200);
+    }
+
+    public function updateNote (Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'note' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $order = Order::where('id', $id)->first();
+        $order->note = $request->note;
+        $order->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Note updated successfully',
+            'data' => $order,
         ], 200);
     }
 

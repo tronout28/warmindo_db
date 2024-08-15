@@ -15,6 +15,8 @@ class Order extends Model
         'menu_id',
         'price_order',
         'status',
+        'payment_method',
+        'order_method',
         'note',
     ];
 
