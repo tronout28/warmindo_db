@@ -212,8 +212,7 @@ class AdminController extends Controller
 
     public function getOrders()
     {
-        $orders = Order::all();
-
+        $orders = Order::with(['orderDetails.menu'])->get();
         return response(['status' => 'success',
             'message' => 'Orders fetched successfully',
             'orders' => $orders,
