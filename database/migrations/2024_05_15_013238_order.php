@@ -17,8 +17,8 @@ return new class extends Migration
             $table->integer('price_order')->nullable();
             $table->enum('status', ['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal','menunggu pembayaran'])->default('menunggu pembayaran');
             $table->text('note')->nullable();
-            $table->string('payment_method', ['tunai','ovo', 'gopay', 'dana', 'linkaja', 'shopeepay', 'gopay', 'transfer'])->nullable();
-            $table->string('order_method', ['dine-in', 'take-away', 'delivery'])->nullable();
+            $table->enum('payment_method', ['tunai','ovo', 'gopay', 'dana', 'linkaja', 'shopeepay', 'transfer'])->nullable();
+            $table->enum('order_method', ['dine-in', 'take-away', 'delivery'])->nullable();
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
