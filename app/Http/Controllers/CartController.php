@@ -83,10 +83,6 @@ class CartController extends Controller
             $calculatePrice = ($menu->price * $data['quantity']) + $toppingPrice;
             $cart->price = $calculatePrice;
             $cart->save();
-
-            // Update menu stock
-            $menu->stock -= $data['quantity'];
-            $menu->save();
         }
 
         return response()->json([

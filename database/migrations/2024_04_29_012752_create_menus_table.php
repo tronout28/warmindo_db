@@ -18,7 +18,7 @@ return new class extends Migration
             $table->integer('stock');
             $table->float('ratings')->nullable();
             $table->text('description');
-            $table->boolean('status_menu')->default(false);
+            $table->boolean('status_menu')->default(true);
             $table->timestamps();
 
         });

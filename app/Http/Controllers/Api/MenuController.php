@@ -131,7 +131,7 @@ class MenuController extends Controller
      public function disableMenu($id)
      {
          $post = Menu::find($id);
-         $post->status_menu = true;
+         $post->status_menu = false;
          $post->save();
  
          return new PostResource(true, 'Menu Disabled Successfully', $post);
@@ -140,7 +140,7 @@ class MenuController extends Controller
     public function enableMenu($id)
         {
             $post = Menu::find($id);
-            $post->status_menu = false;
+            $post->status_menu = true;
             $post->save();
     
             return new PostResource(true, 'Menu Enabled Successfully', $post);
