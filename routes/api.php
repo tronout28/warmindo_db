@@ -126,7 +126,7 @@ Route::prefix('history')->group(function () {
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\TransactionController;
 Route::group(['prefix' => 'payments'], function () {
-    Route::group(['middleware' => ['auth:user', 'scope:user']], function () {
+    Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('/create', [PaymentController::class, 'createPayment']);
         Route::post('/update', [PaymentController::class, 'updatePaymentStatus']);
         Route::get('/get', [PaymentController::class, 'getInvoiceUser']);
@@ -138,7 +138,7 @@ Route::group(['prefix' => 'payments'], function () {
     });
 });
 
-Route::group(['prefix' => 'transaction', 'middleware' => ['auth:user', 'scope:user']], function () {
+Route::group(['prefix' => 'transaction', 'middleware' => ['auth:sanctum']], function () {
     Route::get('/get', [TransactionController::class, 'getTransaction']);
 });
 
