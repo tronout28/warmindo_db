@@ -212,19 +212,13 @@ class AdminController extends Controller
 
     public function getOrders()
     {
-        $orders = Order::with(['orderDetails.menu', 'orderDetails.variant', 'orderDetails.toppings'])->get();
+        $orders = Order::with(['orderDetails.menu'])->get();
         return response([
             'status' => 'success',
             'message' => 'Orders fetched successfully',
             'orders' => $orders->map(function($order) {
-                $orderDetails = $order->orderDetails->map(function($detail) {
-                    return [
-                        'quantity'=>$detail->quantity,
-                        'menu' => $detail->menu,
-                        'variant' => $detail->variant, // Include variant
-                        'toppings' => $detail->toppings, // Include toppings
-                    ];
-                });
+                // Map the order details to the OrderDetailResource
+                $orderDetails = OrderDetailResource::collection($order->orderDetails);
                 return [
                     'id' => $order->id,
                     'user_id' => $order->user_id,
@@ -240,6 +234,9 @@ class AdminController extends Controller
             }),
         ], 200);
     }
+    
+    
+    
     
 
     public function userOrderdetail($id)
