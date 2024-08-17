@@ -95,6 +95,7 @@ use App\Http\Controllers\AdminController;
 Route::group(['prefix' => '/admins'], function () {
     Route::post('/register', [AdminController::class, 'register']);
     Route::post('/login', [AdminController::class, 'login']);
+    Route::get('/details', [AdminController::class, 'details'])->middleware('auth:sanctum');
     Route::put('/update/{id}', [AdminController::class, 'update'])->middleware('auth:sanctum');
     Route::post('/logout', [AdminController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/users', [AdminController::class, 'getUser']);  
@@ -102,6 +103,7 @@ Route::group(['prefix' => '/admins'], function () {
     Route::put('/users/{id}/unverify', [AdminController::class, 'unverifyUser']);
     Route::get('/orders', [AdminController::class, 'getOrders']);
     Route::get('/userdetailorder/{id}', [AdminController::class, 'userOrderdetail']); 
+    Route:: get('/chart-sales', [OrderController::class, 'getChart']);
 });
 
 
@@ -134,7 +136,7 @@ Route::group(['prefix' => 'payments'], function () {
         Route::delete('/expire', [PaymentController::class, 'expirePayment']);
     });
 
-    Route::group(['prefix' => 'callback', 'middleware' => 'xendit-callback'], function () {
+    Route::group(['prefix' => 'callback', 'middleware' => 'xendit.callback.token'], function () {
         Route::post('/invoice-status', [TransactionController::class, 'invoiceStatus']);
     });
 });

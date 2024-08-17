@@ -69,7 +69,8 @@ class MenuController extends Controller
             'data' => $post
          ]);
      }
- 
+
+
      public function update(Request $request, $id)
      {
          $validator = Validator::make($request->all(), [
