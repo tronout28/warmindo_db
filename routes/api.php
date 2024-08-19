@@ -97,7 +97,7 @@ Route::group(['prefix' => '/admins'], function () {
     Route::post('/register', [AdminController::class, 'register']);
     Route::post('/login', [AdminController::class, 'login']);
     Route::get('/details', [AdminController::class, 'detailadmin'])->middleware('auth:sanctum');
-    Route::put('/update/{id}', [AdminController::class, 'update'])->middleware('auth:sanctum');
+    Route::put('/update', [AdminController::class, 'update'])->middleware('auth:sanctum');
     Route::post('/logout', [AdminController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/users', [AdminController::class, 'getUser']);  
     Route::put('/users/{id}/verify', [AdminController::class, 'verifyUser']);
