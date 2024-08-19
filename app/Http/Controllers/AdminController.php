@@ -88,7 +88,7 @@ class AdminController extends Controller
         ], 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
         // Validate request input
         $request->validate([
@@ -101,8 +101,8 @@ class AdminController extends Controller
             'current_password' => 'nullable|string|min:8', // Make current_password nullable
         ]);
     
-        // Find the admin by ID
-        $user = Admin::find($id);
+        // Get the authenticated user
+        $user = $request->user();
     
         if ($user == null) {
             return response([
@@ -165,6 +165,7 @@ class AdminController extends Controller
             'token' => $token,
         ], 201);
     }
+    
     
     public function verifyUser($id)
     {
