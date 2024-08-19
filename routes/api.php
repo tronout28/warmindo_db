@@ -50,6 +50,7 @@ Route::group(['prefix' => 'orders', 'middleware' => 'auth:sanctum'], function ()
     Route::post('/toHistory', [OrderController::class, 'tohistory']);
     Route::delete('/{id}', [OrderController::class, 'destroy']);
     Route::get('/filter/status', [OrderController::class, 'filterbystatues']);
+    Route::put('/{orderDetailId}/rate', [OrderController::class, 'rateMenuItem']);
 });
 
 use App\Http\Controllers\StoreStatusController;
@@ -95,7 +96,7 @@ use App\Http\Controllers\AdminController;
 Route::group(['prefix' => '/admins'], function () {
     Route::post('/register', [AdminController::class, 'register']);
     Route::post('/login', [AdminController::class, 'login']);
-    Route::get('/details', [AdminController::class, 'details'])->middleware('auth:sanctum');
+    Route::get('/details', [AdminController::class, 'detailadmin'])->middleware('auth:sanctum');
     Route::put('/update/{id}', [AdminController::class, 'update'])->middleware('auth:sanctum');
     Route::post('/logout', [AdminController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/users', [AdminController::class, 'getUser']);  

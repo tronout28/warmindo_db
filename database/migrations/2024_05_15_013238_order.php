@@ -15,10 +15,11 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->integer('price_order')->nullable();
-            $table->enum('status', ['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal','menunggu pembayaran'])->default('menunggu pembayaran');
+            $table->enum('status', ['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal', 'menunggu pembayaran'])->default('menunggu pembayaran');
             $table->text('note')->nullable();
-            $table->enum('payment_method', ['tunai','ovo', 'gopay', 'dana', 'linkaja', 'shopeepay', 'transfer'])->nullable();
-            $table->enum('order_method', ['dine-in', 'take-away', 'delivery'])->nullable();
+            $table->enum('payment_method', ['tunai', 'ovo', 'gopay', 'dana', 'linkaja', 'shopeepay', 'transfer'])->nullable(); // Use enum here
+            $table->enum('order_method', ['dine-in', 'take-away', 'delivery'])->nullable(); // Use enum here
+          
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });

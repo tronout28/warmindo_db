@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use Illuminate\Http\Request;
+use App\Models\Menu;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -78,6 +79,36 @@ class OrderController extends Controller
             'data' => $chart,
         ], 200);
     }
+
+    public function rateMenuItem(Request $request, $orderDetailId)
+    {
+        $validator = Validator::make($request->all(), [
+            'rating' => 'required|numeric|min:0|max:5',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $orderDetail = OrderDetail::find($orderDetailId);
+
+        if (!$orderDetail) {
+            return response()->json(['message' => 'Order detail not found'], 404);
+        }
+
+        $orderDetail->rating = $request->rating;
+        $orderDetail->save();
+
+        // Update the menu item's average rating
+        $orderDetail->menu->updateAverageRating();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Menu item rated successfully',
+            'data' => $orderDetail,
+        ], 200);
+    }
+
 
     public function updatepaymentmethod(Request $request, $id)
     {
