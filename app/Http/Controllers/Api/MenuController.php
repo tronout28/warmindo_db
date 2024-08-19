@@ -28,7 +28,7 @@ class MenuController extends Controller
              'category' => 'required|string|max:255',
              'second_category' => 'nullable|string|max:255',
              'stock' => 'required|integer',
-             'ratings' => 'required|numeric|min:0|max:5',
+             'rating' => 'required|numeric|min:0|max:5',
              'description' => 'required|string',
          ]);
  
@@ -47,7 +47,7 @@ class MenuController extends Controller
              'category' => $request->category,
              'second_category' => $request->second_category,
              'stock' => $request->stock,
-             'ratings' => $request->ratings,
+             'rating' => $request->rating,
              'description' => $request->description,
          ]);
          

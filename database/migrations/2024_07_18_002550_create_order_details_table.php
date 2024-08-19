@@ -19,6 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('menu_id');
             $table->unsignedBigInteger('order_id')->nullable();
             $table->unsignedBigInteger('variant_id')->nullable();
+            $table->float('rating')->nullable();
             $table->timestamps();
 
             $table->foreign('order_id')->references('id')->on('orders')->onDelete('set null');
@@ -34,6 +35,7 @@ return new class extends Migration
         Schema::table('order_details', function (Blueprint $table) {
             $table->dropForeign(['order_id']);
             $table->dropForeign(['menu_id']);
+            $table->dropColumn('rating'); 
         });
         Schema::dropIfExists('order_details');
     }

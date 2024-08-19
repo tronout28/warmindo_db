@@ -18,7 +18,7 @@ class Menu extends Model
         'category',
         'second_category', // Add the new column here
         'stock',
-        'ratings',
+        'rating',
         'description',
     ];
 
@@ -27,6 +27,18 @@ class Menu extends Model
         return Attribute::make(
             get: fn ($image) => url('/menu/'.$image),
         );
+    }
+
+    public function orderDetails()
+    {
+        return $this->hasMany(OrderDetail::class);
+    }
+
+    public function updateAverageRating()
+    {
+        $averageRating = $this->orderDetails()->avg('rating');
+        $this->rating = $averageRating;
+        $this->save();
     }
 
     public function orders()

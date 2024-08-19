@@ -12,7 +12,7 @@ class CreateHistoryTable extends Migration
     public function up(): void
     {
         Schema::create('history', function (Blueprint $table) {
-            $table->id();
+            $table->id(); // This automatically uses unsignedBigInteger
             $table->unsignedBigInteger('order_id');
             $table->unsignedBigInteger('menu_id');
             $table->integer('quantity');
@@ -30,12 +30,12 @@ class CreateHistoryTable extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('history');
+        Schema::table('history', function (Blueprint $table) {
+            $table->dropForeign(['order_id']);
+            $table->dropForeign(['menu_id']);
+        });
 
-        // Add these fields to the histories table migration if they do not exist
-    Schema::table('history', function (Blueprint $table) {
-        $table->json('order_details')->nullable();
-    });
+        Schema::dropIfExists('history');
 
     }
 }

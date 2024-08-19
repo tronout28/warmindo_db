@@ -32,7 +32,6 @@ class TransactionController extends Controller
         $transaction = Transaction::where('order_id', $payment->order_id)->first();
         if ($transaction == null) {
             Transaction::create([
-                'payment_type' => $payment->order->metode_pembayaran,
                 'external_id' => $request->external_id,
                 'payment_method' => $request->payment_method,
                 'status' => $request->status,
@@ -45,7 +44,6 @@ class TransactionController extends Controller
             ]);
         } else {
             $transaction->update([
-                'payment_type' => $payment->order->metode_pembayaran,
                 'external_id' => $request->external_id,
                 'payment_method' => $request->payment_method,
                 'status' => $request->status,

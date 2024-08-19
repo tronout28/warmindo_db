@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('category');
             $table->string('second_category');
             $table->integer('stock');
-            $table->float('ratings')->nullable();
+            $table->float('rating')->nullable();
             $table->text('description');
             $table->boolean('status_menu')->default(true);
             $table->timestamps();

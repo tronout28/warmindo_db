@@ -10,7 +10,13 @@ class OrderDetail extends Model
     use HasFactory;
 
     protected $fillable = [
-        'order_id', 'menu_id', 'quantity', 'price', 'variant_id', 'notes'
+        'order_id', 
+        'menu_id', 
+        'quantity', 
+        'price', 
+        'variant_id', 
+        'notes', 
+        'rating',
     ];
 
     protected $casts = [
