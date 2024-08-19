@@ -84,6 +84,7 @@ Route::group(['prefix' => '/users'], function () {
     Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])->middleware('auth:sanctum');
     Route::post('/send-otp-phonenumber', [OtpController::class, 'sendOtpwithPhoneNumber']);
     Route::post('/logout', [UserController::class, 'logout'])->middleware('auth:sanctum');
+    Route::get('/get-history', [UserController::class, 'getHistory'])->middleware('auth:sanctum');
     Route::delete('/{id}', [UserController::class, 'destroy']);
     Route::post('/forgot-password', [UserController::class, 'forgotPassword'])->middleware('auth:sanctum');
     Route::post('/updatePhone', [UserController::class, 'updatePhoneNumberForGoogle'])->middleware('auth:sanctum');;

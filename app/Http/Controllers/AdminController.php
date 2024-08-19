@@ -228,13 +228,32 @@ class AdminController extends Controller
 
     public function getOrders()
     {
-        $orders = Order::all();
-
-        return response(['status' => 'success',
+        $orders = Order::with(['orderDetails.menu'])->get();
+        return response([
+            'status' => 'success',
             'message' => 'Orders fetched successfully',
-            'orders' => $orders,
+            'orders' => $orders->map(function($order) {
+                // Map the order details to the OrderDetailResource
+                $orderDetails = OrderDetailResource::collection($order->orderDetails);
+                return [
+                    'id' => $order->id,
+                    'user_id' => $order->user_id,
+                    'price_order' => $order->price_order,
+                    'status' => $order->status,
+                    'note' => $order->note,
+                    'payment_method' => $order->payment_method,
+                    'order_method' => $order->order_method,
+                    'created_at' => $order->created_at,
+                    'updated_at' => $order->updated_at,
+                    'orderDetails' => $orderDetails,
+                ];
+            }),
         ], 200);
     }
+    
+    
+    
+    
 
     public function userOrderdetail($id)
     {
