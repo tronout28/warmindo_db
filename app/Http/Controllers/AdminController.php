@@ -34,21 +34,22 @@ class AdminController extends Controller
         ], 200);
     }
 
-    public function detailadmin($id)
-    {
-        $admin = Admin::find($id);
+    public function detailadmin()
+{
+    $admin = auth()->user();
 
-        if (!$admin) {
-            return response()->json([
-                'message' => 'Admin not found',
-            ], 404);
-        }
-
+    if (!$admin) {
         return response()->json([
-            'message' => 'Admin details',
-            'data' => $admin,
-        ], 200);
+            'message' => 'Admin not found',
+        ], 404);
     }
+
+    return response()->json([
+        'message' => 'Admin details',
+        'data' => $admin,
+    ], 200);
+}
+
 
     public function register(Request $request)
     {
