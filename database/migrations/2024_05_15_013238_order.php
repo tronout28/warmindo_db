@@ -19,6 +19,10 @@ return new class extends Migration
             $table->text('note')->nullable();
             $table->enum('payment_method', ['tunai', 'ovo', 'gopay', 'dana', 'linkaja', 'shopeepay', 'transfer'])->nullable(); // Use enum here
             $table->enum('order_method', ['dine-in', 'take-away', 'delivery'])->nullable(); // Use enum here
+            $table->text('reason_cancel')->nullable();
+            $table->enum('cancel_method',['tunai','BCA','BNI','BRI','BSI','Mandiri'])->nullable();
+            $table->integer('no_rekening')->nullable();
+            $table->decimal('admin_fee', 8, 2)->default(6500);
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
@@ -31,6 +35,7 @@ return new class extends Migration
     {
         Schema::table('orders', function (Blueprint $table) {
             $table->dropForeign(['user_id']);
+            $table->dropColumn('admin_fee');
         });
         Schema::dropIfExists('orders');
     }

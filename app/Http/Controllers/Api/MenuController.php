@@ -13,11 +13,12 @@ class MenuController extends Controller
 {
      // Existing methods...
 
-     public function index()
-     {
-         $posts = Menu::latest()->get();
-         return new PostResource(true, 'List Data menu', $posts);
-     }
+     public function index(Request $request)
+    {
+        $menus = Menu::with('ratings')->get(); // No need to manually add average_rating
+
+        return response()->json($menus);
+    }
  
      public function store(Request $request)
      {
@@ -28,7 +29,6 @@ class MenuController extends Controller
              'category' => 'required|string|max:255',
              'second_category' => 'nullable|string|max:255',
              'stock' => 'required|integer',
-             'rating' => 'required|numeric|min:0|max:5',
              'description' => 'required|string',
          ]);
  
@@ -57,19 +57,21 @@ class MenuController extends Controller
             'data' => $post
          ]);
      }
- 
-     public function show($id)
-     {
-         $post = Menu::find($id);
-         if (is_null($post)) {
-             return response()->json(['message' => 'Menu not found'], 404);
-         }
-         return response([
-            'status' => 'success',
-            'data' => $post
-         ]);
-     }
 
+     
+ 
+     public function show($id, Request $request)
+    {
+        $menu = Menu::findOrFail($id);
+        $userId = $request->query('user_id'); // Get user_id from query parameters
+        $averageRating = $menu->averageRating($userId);
+
+        return response()->json([
+            'menu_item' => $menu,
+            'average_rating' => $averageRating,
+            'user_id' => $userId,
+        ]);
+    }
 
      public function update(Request $request, $id)
      {

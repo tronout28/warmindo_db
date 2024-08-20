@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use Illuminate\Http\Request;
-use App\Models\Menu;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -80,32 +79,40 @@ class OrderController extends Controller
         ], 200);
     }
 
-    public function rateMenuItem(Request $request, $orderDetailId)
+    public function cancelOrder(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'rating' => 'required|numeric|min:0|max:5',
+            'reason_cancel' => 'required|string',
+            'cancel_method' => ['required', Rule::in(['tunai','BCA','BNI','BRI','BSI','Mandiri'])],
+            'no_rekening' => 'required|integer',
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        $orderDetail = OrderDetail::find($orderDetailId);
+        $order = Order::where('id', $id)->first();
 
-        if (!$orderDetail) {
-            return response()->json(['message' => 'Order detail not found'], 404);
+        if (!$order) {
+            return response()->json(['message' => 'Order not found'], 404);
         }
 
-        $orderDetail->rating = $request->rating;
-        $orderDetail->save();
+        // Set the order status to "menunggu batal" and apply the cancelation details
+        $order->status = 'menunggu batal';
+        $order->reason_cancel = $request->reason_cancel;
+        $order->cancel_method = $request->cancel_method;
+        $order->no_rekening = $request->no_rekening;
 
-        // Update the menu item's average rating
-        $orderDetail->menu->updateAverageRating();
+        // Apply the admin fee
+        $order->admin_fee = 6500;
+
+        $order->save();
 
         return response()->json([
             'success' => true,
-            'message' => 'Menu item rated successfully',
-            'data' => $orderDetail,
+            'message' => 'Order canceled successfully with an admin fee',
+            'data' => $order->load(['orderDetails.menu']),
+            'admin_fee' => $order->admin_fee
         ], 200);
     }
 
@@ -122,7 +129,7 @@ class OrderController extends Controller
 
         $order = Order::where('id', $id)->first();
         $order->payment_method = $request->payment_method;
-        $order->save();
+        $order->save(); 
 
         return response()->json([
             'success' => true,

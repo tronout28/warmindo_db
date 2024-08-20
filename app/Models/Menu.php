@@ -11,6 +11,8 @@ class Menu extends Model
 
     use HasFactory;
 
+    protected $appends = ['average_rating'];
+
     protected $fillable = [
         'image',
         'name_menu',
@@ -34,11 +36,27 @@ class Menu extends Model
         return $this->hasMany(OrderDetail::class);
     }
 
-    public function updateAverageRating()
+    public function ratings()
     {
-        $averageRating = $this->orderDetails()->avg('rating');
-        $this->rating = $averageRating;
-        $this->save();
+        return $this->hasMany(Rating::class);
+    }
+
+    public function getAverageRatingAttribute()
+    {
+        $userId = request()->query('user_id');
+        return $this->averageRating($userId);
+    }
+
+    // Method to calculate the average rating, optionally filtered by user_id
+    public function averageRating($userId = null)
+    {
+        $query = $this->ratings();
+
+        if ($userId) {
+            $query->where('user_id', $userId);
+        }
+
+        return $query->avg('rating');
     }
 
     public function orders()

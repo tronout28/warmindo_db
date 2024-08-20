@@ -48,4 +48,9 @@ class OrderDetail extends Model
     {
         return $this->hasMany(OrderDetailTopping::class);
     }
+
+    public function ratings()
+    {
+        return $this->hasMany(Rating::class);
+    }
 }
