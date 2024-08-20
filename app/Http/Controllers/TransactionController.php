@@ -56,6 +56,11 @@ class TransactionController extends Controller
             ]);
         }
 
+        if($transaction->status == 'PAID'){
+            $payment->order->status = 'sedang diproses';
+            $payment->order->save();
+        }
+
         if (strtolower($request->status) == 'paid') {
             $this->firebaseService->sendNotification($payment->user->notification_token, 'Pembayaran Berhasil', 'Pembayaran untuk laundry ' . $payment->order->id_order . '. Telah terbayarkan', '');
         }

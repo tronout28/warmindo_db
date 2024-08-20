@@ -144,17 +144,10 @@ class AdminController extends Controller
     
         // Process profile picture upload if provided
         if ($request->hasFile('profile_picture')) {
-            // Delete old picture if exists
-            if ($user->profile_picture) {
-                $oldImagePath = public_path('images') . '/' . $user->profile_picture;
-                if (file_exists($oldImagePath)) {
-                    unlink($oldImagePath);
-                }
-            }
-            // Save new profile picture
-            $imageName = time() . '.' . $request->profile_picture->extension();
-            $request->profile_picture->move(public_path('images'), $imageName);
-            $user->profile_picture = $imageName;
+            $profilePicture = $request->file('profile_picture');
+            $profilePictureName = time() . '.' . $profilePicture->extension();
+            $profilePicture->move(public_path('images'), $profilePictureName);
+            $user->profile_picture = $profilePictureName;
             $user->save();
         }
     

@@ -38,6 +38,11 @@ class Order extends Model
         return $this->hasMany(OrderDetail::class);
     }
 
+    public function ratings()
+    {
+        return $this->hasMany(Rating::class);
+    }
+
     public function history()
     {
         return $this->hasMany(History::class);

@@ -19,7 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('menu_id');
             $table->unsignedBigInteger('order_id')->nullable();
             $table->unsignedBigInteger('variant_id')->nullable();
-            $table->float('rating')->nullable();
+            $table->double('rating')->nullable();
             $table->timestamps();
 
             $table->foreign('order_id')->references('id')->on('orders')->onDelete('set null');

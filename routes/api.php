@@ -50,7 +50,7 @@ Route::group(['prefix' => 'orders', 'middleware' => 'auth:sanctum'], function ()
     Route::post('/toHistory', [OrderController::class, 'tohistory']);
     Route::delete('/{id}', [OrderController::class, 'destroy']);
     Route::get('/filter/status', [OrderController::class, 'filterbystatues']);
-    Route::put('/{orderDetailId}/rate', [OrderController::class, 'rateMenuItem']);
+    Route::post('/cancel/{id}', [OrderController::class, 'cancelOrder']);
 });
 
 use App\Http\Controllers\StoreStatusController;
@@ -159,6 +159,12 @@ Route::prefix('/order-details')->group(function () {
     Route::put('/{id}', [OrderDetailController::class, 'update']);
     Route::delete('/{id}', [OrderDetailController::class, 'destroy']);
 })->middleware('auth:sanctum');
+
+use App\Http\Controllers\RatingController;
+
+Route::group(['prefix' => 'ratings', 'middleware' => 'auth:sanctum'], function () {
+    Route::post('/rate', [RatingController::class, 'rateMenuItem']);
+});
 
 
 
