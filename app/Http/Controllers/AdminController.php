@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use Illuminate\Support\Facades\Log;
 
 use App\Models\Admin;
 use App\Models\Order;
@@ -223,13 +224,52 @@ class AdminController extends Controller
 
     public function getOrders()
     {
-        $orders = Order::all();
-
-        return response(['status' => 'success',
+        // Define the query
+        $query = Order::with(['orderDetails.menu'])
+            ->leftJoin('transactions', 'orders.id', '=', 'transactions.order_id')
+            ->select('orders.*', 'transactions.payment_channel as transaction_payment_method');
+    
+        // Log the SQL query
+        Log::info('SQL Query:', [
+            'query' => $query->toSql(),
+            'bindings' => $query->getBindings(),
+        ]);
+    
+        // Execute the query and get the results
+        $orders = $query->get();
+    
+        // Log the raw data
+        Log::info('Orders Data:', ['orders' => $orders]);
+    
+        return response([
+            'status' => 'success',
             'message' => 'Orders fetched successfully',
-            'orders' => $orders,
+            'orders' => $orders->map(function($order) {
+                // Determine the payment method to return
+                $paymentMethod = $order->transaction_payment_method ?? $order->payment_method;
+    
+                // Map the order details to the OrderDetailResource
+                $orderDetails = OrderDetailResource::collection($order->orderDetails);
+                return [
+                    'id' => $order->id,
+                    'user_id' => $order->user_id,
+                    'price_order' => $order->price_order,
+                    'status' => $order->status,
+                    'note' => $order->note,
+                    'payment_method' => $paymentMethod, // Use the resolved payment method
+                    'order_method' => $order->order_method,
+                    'created_at' => $order->created_at,
+                    'updated_at' => $order->updated_at,
+                    'orderDetails' => $orderDetails,
+                ];
+            }),
         ], 200);
     }
+    
+    
+    
+    
+    
 
     public function userOrderdetail($id)
     {

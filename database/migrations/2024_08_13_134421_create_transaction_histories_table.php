@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('payment_channel')->nullable();
             $table->timestamp('paid_at')->nullable();
             $table->unsignedBigInteger('history_id')->nullable();
+
             $table->timestamps();    
            });
     }
