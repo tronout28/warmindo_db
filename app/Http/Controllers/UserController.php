@@ -356,7 +356,8 @@ class UserController extends Controller
         return response(['status' => 'success',
             'message' => 'Orders fetched successfully',
             'orders' => $orders->map(function($order) {
-                // Map the order details to the OrderDetailResource
+                // Map the order details to the OrderDetailResource'
+                $paymentMethod = $order->transaction_payment_method ?? $order->payment_method;
                 $order = OrderDetailResource::collection($order->orderDetails);
                 return [
                     
@@ -365,6 +366,12 @@ class UserController extends Controller
                     'price_order' => $order->price_order,
                     'status' => $order->status,
                     'note' => $order->note,
+                    'payment_method' => $paymentMethod, // Use the resolved payment method
+                    'cancel_method'=>$order->cancel_method,
+                    'reason_cancel'=>$order->reason_cancel,
+                    'no_rekening'=>$order->no_rekening,
+                    'admin_fee'=>$order->admin_fee,
+                    'order_method' => $order->order_method,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
                     'orderDetails' => $order->orderDetails,
