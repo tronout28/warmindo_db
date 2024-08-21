@@ -74,8 +74,6 @@ class MenuController extends Controller
     }
     public function update(Request $request, $id)
     {
-        // Log::info('Update Menu Request: ', $request->all());
-    
         // Validate incoming request
         $validatedData = $request->validate([
             'name_menu' => 'nullable|string|max:255',
@@ -98,16 +96,28 @@ class MenuController extends Controller
         // Handle image upload 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-         $imageName = time().'.'.$image->extension();
-         $image->move(public_path('menu'), $imageName);
-             Storage::delete('public/image/'.basename($menu->image));
+            $imageName = time().'.'.$image->extension();
+            $image->move(public_path('menu'), $imageName);
+    
+            // Update the image path in the validated data
+            $validatedData['image'] = '' . $imageName;
+    
+            // Optionally delete the old image if it exists
+            if ($menu->image && file_exists(public_path($menu->image))) {
+                unlink(public_path($menu->image));
+            }
         }
     
         // Update the menu item with validated data
         $menu->update($validatedData);
     
-        return new PostResource(true, 'Data Menu Berhasil Diubah!', $menu);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data Menu Berhasil Diubah!',
+            'menu' => $menu,
+        ], 200);
     }
+    
     
     //  public function update(Request $request, $id)
     //  {
