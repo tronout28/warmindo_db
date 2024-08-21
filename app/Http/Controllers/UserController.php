@@ -384,6 +384,10 @@ class UserController extends Controller
                     'status' => $order->status,
                     'note' => $order->note,
                     'payment_method' => $paymentMethod, // Use the resolved payment method
+                    'cancel_method'=>$order->cancel_method,
+                    'reason_cancel'=>$order->reason_cancel,
+                    'no_rekening'=>$order->no_rekening,
+                    'admin_fee'=>$order->admin_fee,
                     'order_method' => $order->order_method,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
