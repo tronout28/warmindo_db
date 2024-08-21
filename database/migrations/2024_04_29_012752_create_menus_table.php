@@ -10,14 +10,14 @@ return new class extends Migration
     {
         Schema::create('menus', function (Blueprint $table) {
             $table->id();
-            $table->string('image');
-            $table->string('name_menu');
-            $table->integer('price');
-            $table->string('category');
-            $table->string('second_category');
-            $table->integer('stock');
+            $table->string('image')->nullable();
+            $table->string('name_menu')->nullable();
+            $table->integer('price')->nullable();
+            $table->string('category')->nullable();
+            $table->string('second_category')->nullable();
+            $table->integer('stock')->nullable();
             $table->double('rating')->nullable();
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->boolean('status_menu')->default(true);
             $table->timestamps();
 
