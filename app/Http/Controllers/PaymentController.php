@@ -152,6 +152,7 @@ class PaymentController extends Controller
                 'message' => 'Payment not found. You can create payment first',
             ], 404);
         }
+
         return response([
             'status' => 'success',
             'message' => 'Payment for order ' . $payment->order->nama_pemesan,

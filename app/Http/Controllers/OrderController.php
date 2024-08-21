@@ -116,7 +116,6 @@ class OrderController extends Controller
         ], 200);
     }
 
-
     public function updatepaymentmethod(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
