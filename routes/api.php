@@ -105,6 +105,8 @@ Route::group(['prefix' => '/admins'], function () {
     Route::get('/orders', [AdminController::class, 'getOrders']);
     Route::get('/userdetailorder/{id}', [AdminController::class, 'userOrderdetail']); 
     Route:: get('/chart-sales', [OrderController::class, 'getChart']);
+    Route::post('/rejectcancel/{id}', [AdminController::class, 'rejectcancel']);
+    Route::post('/acceptcancel/{id}', [AdminController::class, 'acceptcancel']);
 });
 
 
