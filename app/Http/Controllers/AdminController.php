@@ -247,7 +247,6 @@ class AdminController extends Controller
             'orders' => $orders->map(function($order) {
                 // Determine the payment method to return
                 $paymentMethod = $order->transaction_payment_method ?? $order->payment_method;
-    
                 // Map the order details to the OrderDetailResource
                 $orderDetails = OrderDetailResource::collection($order->orderDetails);
                 return [
@@ -258,6 +257,10 @@ class AdminController extends Controller
                     'note' => $order->note,
                     'payment_method' => $paymentMethod, // Use the resolved payment method
                     'order_method' => $order->order_method,
+                    'cancel_method'=>$order->cancel_method,
+                    'reason_cancel'=>$order->reason_cancel,
+                    'no_rekening'=>$order->no_rekening,
+                    'admin_fee'=>$order->admin_fee,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
                     'orderDetails' => $orderDetails,
