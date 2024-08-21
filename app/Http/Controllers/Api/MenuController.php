@@ -72,53 +72,71 @@ class MenuController extends Controller
             'user_id' => $userId,
         ]);
     }
+    public function update(Request $request, $id)
+    {
+        // Log::info('Update Menu Request: ', $request->all());
+    
+        // Validate incoming request
+        $validatedData = $request->validate([
+            'name_menu' => 'nullable|string|max:255',
+            'price' => 'nullable|numeric',
+            'category' => 'nullable|string|max:255',
+            'second_category' => 'nullable|string|max:255',
+            'stock' => 'nullable|integer',
+            'description' => 'nullable|string',
+            'status_menu' => 'nullable|boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validate image
+        ]);
+    
+        // Find the menu item
+        $menu = Menu::find($id);
+    
+        if (is_null($menu)) {
+            return response()->json(['message' => 'Menu item not found'], 404);
+        }
+    
+        // Handle image upload 
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+         $imageName = time().'.'.$image->extension();
+         $image->move(public_path('menu'), $imageName);
+             Storage::delete('public/image/'.basename($menu->image));
+        }
+    
+        // Update the menu item with validated data
+        $menu->update($validatedData);
+    
+        return new PostResource(true, 'Data Menu Berhasil Diubah!', $menu);
+    }
+    
+    //  public function update(Request $request, $id)
+    //  {
+    //     $validator = $request->validate([
+    //         'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:5000',
+    //         'name_menu' => 'required|string|max:255',
+    //         'price' => 'required|numeric',
+    //         'category' => 'required|string|max:255',
+    //         'second_category' => 'nullable|string|max:255',
+    //         'stock' => 'required|integer',
+    //         'description' => 'required|string',
+    //     ]);
 
-     public function update(Request $request, $id)
-     {
-         $validator = Validator::make($request->all(), [
-             'name_menu' => 'nullable|string|max:255',
-             'price' => 'nullable|numeric',
-             'category' => 'nullable|string|max:255',
-             'second_category' => 'nullable|string|max:255',
-             'stock' => 'nullable|integer',
-             'description' => 'nullable|string',
-         ]);
+    //      $post = Menu::find($id);
  
-         if ($validator->fails()) {
-             return response()->json($validator->errors(), 422);
-         }
+    //      if ($request->hasFile('image')) {
+    //          $image = $request->file('image');
+    //          $imageName = time().'.'.$image->extension();
+    //          $image->move(public_path('menu'), $imageName);
+    //          Storage::delete('public/image/'.basename($post->image));
+    //          $post->update([$validator]);
+    //      } else {
+    //          $post->update([
+    //              $validator
+    //          ]);
+    //      }
  
-         $post = Menu::find($id);
- 
-         if ($request->hasFile('image')) {
-             $image = $request->file('image');
-             $imageName = time().'.'.$image->extension();
-             $image->move(public_path('menu'), $imageName);
- 
-             Storage::delete('public/image/'.basename($post->image));
- 
-             $post->update([
-                 'image' => $imageName,
-                 'name_menu' => $request->name_menu,
-                 'price' => $request->price,
-                 'category' => $request->category,
-                 'second_category' => $request->second_category,
-                 'stock' => $request->stock,
-                 'description' => $request->description,
-             ]);
-         } else {
-             $post->update([
-                 'name_menu' => $request->name_menu,
-                 'price' => $request->price,
-                 'category' => $request->category,
-                 'second_category' => $request->second_category,
-                 'stock' => $request->stock,
-                 'description' => $request->description,
-             ]);
-         }
- 
-         return new PostResource(true, 'Data Menu Berhasil Diubah!', $post);
-     }
+    //     
+    //  }
  
      public function destroy($id)
      {
