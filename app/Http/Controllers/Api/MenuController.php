@@ -76,12 +76,12 @@ class MenuController extends Controller
      public function update(Request $request, $id)
      {
          $validator = Validator::make($request->all(), [
-             'name_menu' => 'required|string|max:255',
-             'price' => 'required|numeric',
-             'category' => 'required|string|max:255',
+             'name_menu' => 'nullable|string|max:255',
+             'price' => 'nullable|numeric',
+             'category' => 'nullable|string|max:255',
              'second_category' => 'nullable|string|max:255',
-             'stock' => 'required|integer',
-             'description' => 'required|string',
+             'stock' => 'nullable|integer',
+             'description' => 'nullable|string',
          ]);
  
          if ($validator->fails()) {
