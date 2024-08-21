@@ -14,7 +14,7 @@ Route::group(['prefix' => 'menus'], function() {
     Route::get('/{id}', [MenuController::class, 'show']);
     Route::put('/disable/{id}', [MenuController::class, 'disableMenu']);
     Route::put('/enable/{id}', [MenuController::class, 'enableMenu']);
-    Route::patch('/{id}', [MenuController::class, 'update']);
+    Route::put('/{id}', [MenuController::class, 'update']);
     Route::delete('/{id}', [MenuController::class, 'destroy']);
 });
 
