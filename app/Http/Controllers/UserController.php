@@ -347,50 +347,29 @@ class UserController extends Controller
     }
     public function getHistory()
     {
-        // Get the authenticated user
         $user = auth()->user();
-    
-        // Define the query
-        $query = Order::with(['orderDetails.menu'])
-            ->leftJoin('transactions', 'orders.id', '=', 'transactions.order_id')
-            ->select('orders.*', 'transactions.payment_channel as transaction_payment_method')
-            ->where('orders.user_id', $user->id);
-    
-        // Log the SQL query
-        Log::info('SQL Query for History:', [
-            'query' => $query->toSql(),
-            'bindings' => $query->getBindings(),
-        ]);
-    
-        // Execute the query and get the results
-        $orders = $query->get();
-    
-        // Log the raw data
-        Log::info('User Orders Data:', ['orders' => $orders]);
-    
-        return response([
-            'status' => 'success',
+
+        $orders = Order::with(['orderDetails.menu'])->where('user_id', $user->id)->get();
+
+       
+
+        return response(['status' => 'success',
             'message' => 'Orders fetched successfully',
             'orders' => $orders->map(function($order) {
-                // Determine the payment method to return
-                $paymentMethod = $order->transaction_payment_method ?? $order->payment_method;
-    
                 // Map the order details to the OrderDetailResource
-                $orderDetails = OrderDetailResource::collection($order->orderDetails);
+                $order = OrderDetailResource::collection($order->orderDetails);
                 return [
+                    
                     'id' => $order->id,
                     'user_id' => $order->user_id,
                     'price_order' => $order->price_order,
                     'status' => $order->status,
                     'note' => $order->note,
-                    'payment_method' => $paymentMethod, // Use the resolved payment method
-                    'order_method' => $order->order_method,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
-                    'orderDetails' => $orderDetails,
+                    'orderDetails' => $order->orderDetails,
                 ];
             }),
         ], 200);
     }
-    
 }

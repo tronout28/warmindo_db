@@ -31,7 +31,7 @@ class TransactionController extends Controller
 
         $transaction = Transaction::where('order_id', $payment->order_id)->first();
         if ($transaction == null) {
-            Transaction::create([
+            $transaction = Transaction::create([
                 'external_id' => $request->external_id,
                 'payment_method' => $request->payment_method,
                 'status' => $request->status,
@@ -56,7 +56,7 @@ class TransactionController extends Controller
             ]);
         }
 
-        if($transaction->status == 'PAID'){
+        if($transaction->status == 'paid'){
             $payment->order->status = 'sedang diproses';
             $payment->order->save();
         }

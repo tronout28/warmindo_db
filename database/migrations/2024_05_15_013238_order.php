@@ -23,7 +23,7 @@ return new class extends Migration
             // Add the cancelation-related fields
             $table->text('reason_cancel')->nullable();
             $table->enum('cancel_method',['tunai','BCA','BNI','BRI','BSI','Mandiri'])->nullable();
-            $table->integer('no_rekening')->nullable();
+            $table->bigInteger('no_rekening')->nullable();
             $table->decimal('admin_fee', 8, 2)->default(6500);
 
             $table->timestamps();
