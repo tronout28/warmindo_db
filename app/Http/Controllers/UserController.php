@@ -348,35 +348,32 @@ class UserController extends Controller
     public function getHistory()
     {
         $user = auth()->user();
-
+    
         $orders = Order::with(['orderDetails.menu'])->where('user_id', $user->id)->get();
-
-       
-
-        return response(['status' => 'success',
+    
+        return response([
+            'status' => 'success',
             'message' => 'Orders fetched successfully',
-            'orders' => $orders->map(function($order) {
-                // Map the order details to the OrderDetailResource'
+            'orders' => $orders->map(function ($order) {
                 $paymentMethod = $order->transaction_payment_method ?? $order->payment_method;
-                $order = OrderDetailResource::collection($order->orderDetails);
                 return [
-                    
                     'id' => $order->id,
                     'user_id' => $order->user_id,
                     'price_order' => $order->price_order,
                     'status' => $order->status,
                     'note' => $order->note,
-                    'payment_method' => $paymentMethod, // Use the resolved payment method
-                    'cancel_method'=>$order->cancel_method,
-                    'reason_cancel'=>$order->reason_cancel,
-                    'no_rekening'=>$order->no_rekening,
-                    'admin_fee'=>$order->admin_fee,
+                    'payment_method' => $paymentMethod,
+                    'cancel_method' => $order->cancel_method,
+                    'reason_cancel' => $order->reason_cancel,
+                    'no_rekening' => $order->no_rekening,
+                    'admin_fee' => $order->admin_fee,
                     'order_method' => $order->order_method,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
-                    'orderDetails' => $order->orderDetails,
+                    'orderDetails' => OrderDetailResource::collection($order->orderDetails), // Correctly handle order details here
                 ];
             }),
         ], 200);
     }
+    
 }
