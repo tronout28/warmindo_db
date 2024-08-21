@@ -349,8 +349,11 @@ class UserController extends Controller
     {
         $user = auth()->user();
     
-        $orders = Order::with(['orderDetails.menu'])->where('user_id', $user->id)->get();
-    
+        $query = Order::with(['orderDetails.menu'])
+        ->where('user_id', $user->id)
+        ->leftJoin('transactions', 'orders.id', '=', 'transactions.order_id')
+        ->select('orders.*', 'transactions.payment_channel as transaction_payment_method');
+        $orders = $query->get();
         return response([
             'status' => 'success',
             'message' => 'Orders fetched successfully',
