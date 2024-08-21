@@ -8,12 +8,20 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Http\Resources\OrderDetailResource;
 use Illuminate\Support\Facades\Auth;
+use App\Services\FirebaseService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Models\User;
 
 class AdminController extends Controller
 {
+
+    protected $firebaseService;
+    public function __construct(FirebaseService $firebaseService)
+    {
+        $this->firebaseService = $firebaseService;
+    }
+
     public function login(Request $request)
     {
         $request->validate([
@@ -181,6 +189,79 @@ class AdminController extends Controller
         ], 200);
     }
 
+    public function rejectcancel($id)
+    {
+        $order = Order::where('id', $id)->first();
+
+        if (!$order) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+
+        // Update the order status to "sedang diproses"
+        $order->status = 'sedang diproses';
+        $order->save();
+
+        // Send notification to the user about the rejection
+        $this->firebaseService->sendNotification(
+            $order->user->notification_token,
+            'Pembatalan Ditolak',
+            'Permintaan pembatalan order Anda dengan ID ' . $order->id . ' telah ditolak. Pesanan Anda sedang diproses.',
+            ''
+        );
+
+        // Send notification to the admin if required
+        $this->firebaseService->sendToAdmin(
+            $order->admin->notification_token,
+            'Pembatalan Ditolak',
+            'Permintaan pembatalan order dari ' . $order->user()->name . ' telah ditolak. Pesanan sedang diproses.',
+            ''
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order cancelation rejected successfully',
+            'data' => $order->load(['orderDetails.menu']),
+        ], 200);
+    }
+
+    public function acceptcancel($id)
+    {
+        $order = Order::where('id', $id)->first();
+
+        if (!$order) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+
+        // Update the order status to "batal"
+        $order->status = 'batal';
+        $order->save();
+
+        // Send notification to the user about the acceptance
+        $this->firebaseService->sendNotification(
+            $order->user->notification_token,
+            'Pesanan Dibatalkan',
+            'Permintaan pembatalan order Anda dengan ID ' . $order->id . ' telah diterima. Pesanan Anda telah dibatalkan.',
+            ''
+        );
+
+        // Send notification to the admin if required
+        $this->firebaseService->sendToAdmin(
+            $order->admin->notification_token,
+            'Pembatalan Diterima',
+            'Permintaan pembatalan order dari ' . $order->user()->name . ' telah diterima. Pesanan telah dibatalkan.',
+            ''
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order cancelation accepted successfully',
+            'data' => $order->load(['orderDetails.menu']),
+        ], 200);
+    }
+
+
+
+
     public function unverifyUser($id)
     {
         $user = User::find($id);
@@ -240,7 +321,23 @@ class AdminController extends Controller
     
         // Log the raw data
         Log::info('Orders Data:', ['orders' => $orders]);
-    
+
+        if ($orders->isNotEmpty()) {
+            // Fetch all admins (you can modify this to fetch specific admins if necessary)
+            $admins = Admin::all();
+
+        foreach ($orders as $order) {
+            foreach ($admins as $admin) {
+                $this->firebaseService->sendToAdmin(
+                    $admin->notification_token,
+                    'Ada pesanan baru!',
+                    'Pesanan dengan  ' . $order->user()->nama . ' telah diterima. Silahkan cek aplikasi Anda. Terima kasih! 🎉',
+                    ''
+                );
+            }
+        }
+    }
+
         return response([
             'status' => 'success',
             'message' => 'Orders fetched successfully',
@@ -265,10 +362,6 @@ class AdminController extends Controller
             }),
         ], 200);
     }
-    
-    
-    
-    
     
 
     public function userOrderdetail($id)

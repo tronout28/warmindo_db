@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services;
+use App\Models\Admin;
 use App\Models\User;   
 use App\Models\Notification as NotificationModel;
 use Kreait\Firebase\Factory;
@@ -17,6 +18,7 @@ class FirebaseService
         $this->messaging = $factory->createMessaging();
     }
 
+
     public function writeNotification($notification_token, $title, $body, $imageUrl)
     {
         $user = User::where('notification_token', $notification_token)->first();
@@ -30,27 +32,41 @@ class FirebaseService
         return $notification;
     }
 
-    public function sendNotification($deviceToken, $title, $body, $imageUrl)
+    public function sendNotification($deviceToken, $title, $body, $imageUrl, $data = [])
     {
         $notification = Notification::create($title, $body, $imageUrl);
 
         $message = CloudMessage::withTarget('token', $deviceToken)
-            ->withNotification($notification);
+            ->withNotification($notification)->withData($data);
 
         $notify = $this->messaging->send($message);
+        $this->writeNotification($deviceToken, $title, $body, $imageUrl);
         return $notify;
     }
-    public function sendNotificationToall($title, $body, $imageUrl)
+    public function sendNotificationToall($title, $body, $imageUrl, $data = [])
     {
-        $token = User::whereNotNull('notification_token')->pluck('notification_token')->toArray();
+        $token = User::whereNotNull('notification_token')->get();
         $notification = Notification::create($title, $body, $imageUrl);
 
-        $message = CloudMessage::new()
-            ->withNotification($notification);
+        foreach ($token as $deviceToken) {
+            $message = CloudMessage::withTarget('token', $deviceToken->notification_token)
+                ->withNotification($notification)->withData($data);
+            $notify = $this->messaging->send($message);
+        }
+        $this->writeNotification("", $title, $body, $imageUrl);
+        return $notify;
+    }
 
-            $messages[] = $message;
-            $notify = $this->messaging->sendMulticast($messages, $token);
-            $this->writeNotification("", $title, $body, $imageUrl);
-             return $notify;
+    public function sendToAdmin($title, $body, $imageUrl, $data = [])
+    {
+        $token = Admin::whereNotNull('notification_token')->get();
+        $notification = Notification::create($title, $body, $imageUrl);
+
+        foreach ($token as $deviceToken) {
+            $message = CloudMessage::withTarget('token', $deviceToken->notification_token)
+                ->withNotification($notification)->withData($data);
+            $notify = $this->messaging->send($message);
+        }
+        return $notify;
     }
 }
