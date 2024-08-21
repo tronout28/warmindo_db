@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Transaction;
 use App\Models\TransactionHistory;
@@ -56,13 +57,11 @@ class TransactionController extends Controller
             ]);
         }
 
-        if($transaction->status == 'paid'){
-            $payment->order->status = 'sedang diproses';
-            $payment->order->save();
-        }
-
         if (strtolower($request->status) == 'paid') {
-            $this->firebaseService->sendNotification($payment->user->notification_token, 'Pembayaran Berhasil', 'Pembayaran untuk laundry ' . $payment->order->id_order . '. Telah terbayarkan', '');
+            $order = Order::where('id', $payment->order_id)->first();
+            $this->firebaseService->sendNotification($payment->user->notification_token, 'Pembayaran Berhasil', 'Pembayaran untuk Order ' . $payment->order->order_id . '. Telah terbayarkan', '');
+            $order->status = 'sedang diproses';
+            $order->save();
         }
 
         return response([
