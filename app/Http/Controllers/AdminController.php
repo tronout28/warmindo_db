@@ -331,7 +331,7 @@ class AdminController extends Controller
                 $this->firebaseService->sendToAdmin(
                     $admin->notification_token,
                     'Ada pesanan baru!',
-                    'Pesanan dengan  ' . $order->user()->nama . ' telah diterima. Silahkan cek aplikasi Anda. Terima kasih! 🎉',
+                    'Pesanan dengan  ' . $order->user()->username . ' telah diterima. Silahkan cek aplikasi Anda. Terima kasih! 🎉',
                     ''
                 );
             }
