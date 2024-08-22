@@ -87,6 +87,21 @@ class OrderController extends Controller
         ], 200);
     }
 
+    public function getRevenue()
+    {
+        $orders = Order::where('status', 'selesai')->get();
+        $revenue = 0;
+        foreach ($orders as $order) {
+            $revenue += $order->price_order;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Revenue retrieved successfully',
+            'data' => $revenue,
+        ], 200);
+    }
+
     public function cancelOrder(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
