@@ -206,15 +206,23 @@ class OrderController extends Controller
             return response()->json(['note' => 'Note is required when refund is true'], 422);
         }
 
-        if ($request->status == 'batal' ) {
-            $this->firebaseService->sendNotification($request->user()->notification_token, 'Pesanan anda telah Dibatalkan', 'Pembayaran untuk Order ' . $request->order()->id . '. Telah terbatalkan', '');
-        }elseif ($request->status == 'selesai') {
-            $this->firebaseService->sendNotification($request->user()->notification_token, 'Pesanan anda telah Selesai', 'Makanan anda' . $request->order()->id . '. Telah selesai dan sampai di tangan anda', '');
-        }elseif ($request->status == 'pesanan siap') {
-            $this->firebaseService->sendNotification($request->user()->notification_token, 'Pesanan anda telah Siap', 'Silahkan ambil makanan anda' . $request->order()->id . '. Di kedai Warmindo', '');
+        // Fetch the order from the database
+        $order = Order::where('id', $id)->first();
+
+        if (!$order) {
+            return response()->json(['message' => 'Order not found'], 404);
         }
 
-        $order = Order::where('id', $id)->first();
+        // Update the status and send notifications based on the status
+        if ($request->status == 'batal') {
+            $this->firebaseService->sendNotification($request->user()->notification_token, 'Pesanan anda telah Dibatalkan', 'Pembayaran untuk Order ' . $order->id . ' telah terbatalkan', '');
+        } elseif ($request->status == 'selesai') {
+            $this->firebaseService->sendNotification($request->user()->notification_token, 'Pesanan anda telah Selesai', 'Makanan anda dengan Order ID ' . $order->id . ' telah selesai dan sampai di tangan anda', '');
+        } elseif ($request->status == 'pesanan siap') {
+            $this->firebaseService->sendNotification($request->user()->notification_token, 'Pesanan anda telah Siap', 'Silahkan ambil makanan anda dengan Order ID ' . $order->id . ' di kedai Warmindo', '');
+        }
+
+        // Update the order status in the database
         $order->status = $request->status;
         $order->save();
 
@@ -224,6 +232,7 @@ class OrderController extends Controller
             'data' => $order->load(['orderDetails.menu', 'history.user']),
         ], 200);
     }
+
 
 
     

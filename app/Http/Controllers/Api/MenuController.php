@@ -60,18 +60,20 @@ class MenuController extends Controller
 
      
  
-     public function show($id, Request $request)
-    {
-        $menu = Menu::findOrFail($id);
-        $userId = $request->query('user_id'); // Get user_id from query parameters
-        $averageRating = $menu->averageRating($userId);
+        public function show($id, Request $request)
+        {
+            $menu = Menu::findOrFail($id);
+            $userId = $request->query('user_id'); // Get user_id from query parameters
+            $averageRating = $menu->averageRating($userId);
 
-        return response()->json([
-            'menu_item' => $menu,
-            'average_rating' => $averageRating,
-            'user_id' => $userId,
-        ]);
-    }
+            $formattedAverageRating = number_format($averageRating, 1);
+
+            return response()->json([
+                'menu_item' => $menu,
+                'average_rating' => $formattedAverageRating,
+                'user_id' => $userId,
+            ]);
+        }
     public function update(Request $request, $id)
     {
         // Validate incoming request

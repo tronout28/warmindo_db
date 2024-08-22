@@ -356,17 +356,33 @@ class UserController extends Controller
     public function getHistory()
     {
         $user = auth()->user();
-    
+
         $query = Order::with(['orderDetails.menu'])
-        ->where('user_id', $user->id)
-        ->leftJoin('transactions', 'orders.id', '=', 'transactions.order_id')
-        ->select('orders.*', 'transactions.payment_channel as transaction_payment_method');
+            ->where('user_id', $user->id)
+            ->leftJoin('transactions', 'orders.id', '=', 'transactions.order_id')
+            ->select('orders.*', 'transactions.payment_channel as transaction_payment_method');
+
         $orders = $query->get();
+
         return response([
             'status' => 'success',
             'message' => 'Orders fetched successfully',
-            'orders' => $orders->map(function ($order) {
+            'orders' => $orders->map(function ($order) use ($user) {
                 $paymentMethod = $order->transaction_payment_method ?? $order->payment_method;
+
+                // Filter order details to include only the user's rating
+                $orderDetails = $order->orderDetails->map(function ($detail) use ($user) {
+                    $userRating = $detail->menu->ratings()->where('user_id', $user->id)->first();
+                    return [
+                        'id' => $detail->id,
+                        'menu_id' => $detail->menu_id,
+                        'quantity' => $detail->quantity,
+                        'price' => $detail->price,
+                        'user_rating' => $userRating ? $userRating->rating : null,
+                        'comment' => $userRating ? $userRating->comment : null,
+                    ];
+                });
+
                 return [
                     'id' => $order->id,
                     'user_id' => $order->user_id,
@@ -381,7 +397,7 @@ class UserController extends Controller
                     'order_method' => $order->order_method,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
-                    'orderDetails' => OrderDetailResource::collection($order->orderDetails), // Correctly handle order details here
+                    'orderDetails' => $orderDetails,
                 ];
             }),
         ], 200);
