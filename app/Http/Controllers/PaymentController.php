@@ -6,6 +6,7 @@ require_once base_path('/vendor/autoload.php');
 
 use App\Http\Requests\PaymentRequest;
 use App\Models\Order;
+use App\Models\Notification as ModelsNotification;
 use App\Services\XenditService;
 use App\Models\Payment;
 use App\Services\FirebaseService;
