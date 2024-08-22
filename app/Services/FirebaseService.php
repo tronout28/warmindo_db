@@ -3,7 +3,7 @@
 namespace App\Services;
 use App\Models\Admin;
 use App\Models\User;   
-use App\Models\Notification as NotificationModel;
+use App\Models\notification as NotificationModel;
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
