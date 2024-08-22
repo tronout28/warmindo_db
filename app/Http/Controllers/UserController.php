@@ -25,32 +25,39 @@ class UserController extends Controller
             'email' => 'required|email',
             'google_id' => 'required|string',
             'profile_picture' => 'nullable|string',
-            
+            'notification_token' => 'required|string',
         ]);
-
+    
+        // Find the user by Google ID or email
         $user = User::where('google_id', $validatedData['google_id'])
                     ->orWhere('email', $validatedData['email'])
                     ->first();
-
+    
         if ($user) {
-            // Update user information if needed
- 
+            // Update existing user details including the notification token
+            $user->update([
+                'notification_token' => $validatedData['notification_token'],
+            ]);
+            $user->save();
         } else {
-            // Create new user
+            // Create a new user
             $user = User::create([
                 'name' => $validatedData['name'],
                 'username' => $validatedData['name'],
                 'profile_picture' => $validatedData['profile_picture'],
                 'email' => $validatedData['email'],
+                'notification_token' => $validatedData['notification_token'],
                 'google_id' => $validatedData['google_id'],
                 'email_verified_at' => now(),
                 'password' => null, 
             ]);
+            $user->save();
         }
-
-        $token = $user->createToken('warmindo')->plainTextToken;
     
-
+        // Generate the token
+        $token = $user->createToken('warmindo')->plainTextToken;
+        
+    
         return response()->json([
             'success' => true,
             'message' => 'User logged in successfully',
@@ -58,6 +65,7 @@ class UserController extends Controller
             'token' => $token,
         ], 200);
     }
+    
 
     public function register(Request $request)
     {
