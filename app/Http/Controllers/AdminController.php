@@ -27,9 +27,17 @@ class AdminController extends Controller
         $request->validate([
             'email' => 'required|email',
             'password' => 'required|string',
+            'notification_token' => 'nullable|string',
         ]);
 
+
+
         $user = Admin::where('email', $request->email)->first();
+
+        $user = Admin::create([
+            'notification_token' => $request->notification_token,
+        ]);
+
         if ($user == null || !Hash::check($request->password, $user->password)) {
             return response([
                 'message' => 'Invalid credentials',
@@ -69,6 +77,8 @@ class AdminController extends Controller
             'email' => 'required|email',
             'phone_number' => 'nullable|string',
             'password' => 'required|string|min:8',
+            'notification_token' => 'nullable|string',
+
         ]);
 
         $admin = Admin::where('email', $request->email)->first();
@@ -306,7 +316,7 @@ class AdminController extends Controller
     public function getOrders()
     {
         // Define the query
-        $query = Order::with(['orderDetails.menu'])
+        $query = Order::with(['orderDetails.menu', 'user']) // Ensure the user relationship is loaded
             ->leftJoin('transactions', 'orders.id', '=', 'transactions.order_id')
             ->select('orders.*', 'transactions.payment_channel as transaction_payment_method');
     
@@ -321,22 +331,22 @@ class AdminController extends Controller
     
         // Log the raw data
         Log::info('Orders Data:', ['orders' => $orders]);
-
+    
         if ($orders->isNotEmpty()) {
             // Fetch all admins (you can modify this to fetch specific admins if necessary)
             $admins = Admin::all();
-
-        foreach ($orders as $order) {
-            foreach ($admins as $admin) {
-                $this->firebaseService->sendToAdmin(
-                    $admin->notification_token,
-                    'Ada pesanan baru!',
-                    'Pesanan dengan  ' . $order->user()->username . ' telah diterima. Silahkan cek aplikasi Anda. Terima kasih! 🎉',
-                    ''
-                );
+    
+            foreach ($orders as $order) {
+                foreach ($admins as $admin) {
+                    $this->firebaseService->sendToAdmin(
+                        $admin->notification_token,
+                        'Ada pesanan baru!',
+                        'Pesanan dari ' . $order->user->username . ' telah diterima. Silahkan cek aplikasi Anda. Terima kasih! 🎉',
+                        ''
+                    );
+                }
             }
         }
-    }
 
         return response([
             'status' => 'success',

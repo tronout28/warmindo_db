@@ -59,7 +59,7 @@ class FirebaseService
 
     public function sendToAdmin($title, $body, $imageUrl, $data = [])
     {
-        $token = Admin::whereNotNull('notification_token')->get();
+        $token = Admin::whereNotNull('notification_token')->where('role', 'admin')->get();
         $notification = Notification::create($title, $body, $imageUrl);
 
         foreach ($token as $deviceToken) {
