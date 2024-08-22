@@ -192,11 +192,11 @@ class OrderController extends Controller
         }
 
         if ($request->status == 'batal' ) {
-            $this->firebaseService->sendNotification($request->user()->notification_token, 'Pesanan anda telah Dibatalkan', 'Pembayaran untuk Order ' . $request->order->order_id . '. Telah terbatalkan', '');
+            $this->firebaseService->sendNotification($request->user()->notification_token, 'Pesanan anda telah Dibatalkan', 'Pembayaran untuk Order ' . $request->order()->id . '. Telah terbatalkan', '');
         }elseif ($request->status == 'selesai') {
-            $this->firebaseService->sendNotification($request->user()->notification_token, 'Pesanan anda telah Selesai', 'Makanan anda' . $request->order->order_id . '. Telah selesai dan sampai di tangan anda', '');
+            $this->firebaseService->sendNotification($request->user()->notification_token, 'Pesanan anda telah Selesai', 'Makanan anda' . $request->order()->id . '. Telah selesai dan sampai di tangan anda', '');
         }elseif ($request->status == 'pesanan siap') {
-            $this->firebaseService->sendNotification($request->user()->notification_token, 'Pesanan anda telah Siap', 'Silahkan ambil makanan anda' . $request->order->order_id . '. Di kedai Warmindo', '');
+            $this->firebaseService->sendNotification($request->user()->notification_token, 'Pesanan anda telah Siap', 'Silahkan ambil makanan anda' . $request->order()->id . '. Di kedai Warmindo', '');
         }
 
         $order = Order::where('id', $id)->first();
