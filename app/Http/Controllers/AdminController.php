@@ -319,23 +319,23 @@ class AdminController extends Controller
         $query = Order::with(['orderDetails.menu', 'user']) // Ensure the user relationship is loaded
             ->leftJoin('transactions', 'orders.id', '=', 'transactions.order_id')
             ->select('orders.*', 'transactions.payment_channel as transaction_payment_method');
-    
+
         // Log the SQL query
         Log::info('SQL Query:', [
             'query' => $query->toSql(),
             'bindings' => $query->getBindings(),
         ]);
-    
+
         // Execute the query and get the results
         $orders = $query->get();
-    
+
         // Log the raw data
         Log::info('Orders Data:', ['orders' => $orders]);
-    
+
         if ($orders->isNotEmpty()) {
             // Fetch all admins (you can modify this to fetch specific admins if necessary)
             $admins = Admin::all();
-    
+
             foreach ($orders as $order) {
                 foreach ($admins as $admin) {
                     $this->firebaseService->sendToAdmin(
@@ -364,10 +364,10 @@ class AdminController extends Controller
                     'note' => $order->note,
                     'payment_method' => $paymentMethod, // Use the resolved payment method
                     'order_method' => $order->order_method,
-                    'cancel_method'=>$order->cancel_method,
-                    'reason_cancel'=>$order->reason_cancel,
-                    'no_rekening'=>$order->no_rekening,
-                    'admin_fee'=>$order->admin_fee,
+                    'cancel_method' => $order->cancel_method,
+                    'reason_cancel' => $order->reason_cancel,
+                    'no_rekening' => $order->no_rekening,
+                    'admin_fee' => $order->admin_fee,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
                     'orderDetails' => $orderDetails,
@@ -375,6 +375,7 @@ class AdminController extends Controller
             }),
         ], 200);
     }
+
     
 
     public function userOrderdetail($id)

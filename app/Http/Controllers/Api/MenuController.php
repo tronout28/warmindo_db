@@ -66,11 +66,12 @@ class MenuController extends Controller
             $userId = $request->query('user_id'); // Get user_id from query parameters
             $averageRating = $menu->averageRating($userId);
 
-            $formattedAverageRating = number_format($averageRating, 1);
+            // Format the average rating to 1 decimal place
+            $averageRating = round($averageRating, 1);
 
             return response()->json([
                 'menu_item' => $menu,
-                'average_rating' => $formattedAverageRating,
+                'average_rating' => $averageRating,
                 'user_id' => $userId,
             ]);
         }
