@@ -73,8 +73,8 @@ class PaymentController extends Controller
 
         // send notification to user
         $expiredDate = Carbon::parse($response['expiry_date']);
-        $description = 'Menunggu pembayaran order  ' . $order->no_pemesanan . '. Bayar sebelum tamggal ' . $expiredDate->format('d F Y') . ' pukul ' . $expiredDate->format('H:i') . ' WIB';
-        $this->firebaseService->sendNotification($payment->user->notification_token, 'Menunggu Pembayaran', $description, '');
+        $description = 'Menunggu pembayaran order  ' . $order->id . '. Bayar sebelum tamggal ' . $expiredDate->format('d F Y') . ' pukul ' . $expiredDate->format('H:i') . ' WIB';
+        $this->firebaseService->sendNotification($payment->user->notification_token, 'Menunggu Pembayaran', 'Pembayaran untuk Order ID ' . $order->id, '');
         return response([
             'status' => 'success',
             'message' => 'Payment created successfully',
@@ -107,7 +107,7 @@ class PaymentController extends Controller
         $payment->save();
 
         // send notification to user
-        $this->firebaseService->sendNotification($payment->user->notification_token, 'Pembayaranmu telah dibatalkan', 'Tenang kamu bisa membuat pembayaran lagi', '');
+        $this->firebaseService->sendNotification($payment->user->notification_token, 'Pembayaranmu telah dibatalkan', 'Pembayaran untuk Order ID ' . $request->order_id . 'Tenang kamu bisa membuat pembayaran lagi', '');
 
         return response([
             'status' => 'success',

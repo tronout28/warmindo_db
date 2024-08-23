@@ -42,7 +42,6 @@ Route::group(['prefix' => 'orders', 'middleware' => 'auth:sanctum'], function ()
     Route::get('/', [OrderController::class, 'index']);
     Route::post('/store', [OrderController::class, 'store']);
     Route::get('/{id}', [OrderController::class, 'show']);
-    Route::put('/status/{id}', [OrderController::class, 'updateStatus']);
     Route::put('/price/{id}', [OrderController::class, 'updatePrice']);
     Route::get('/statistics', [OrderController::class, 'getSalesStatistics']);
     Route::put('/updatenote/{id}', [OrderController::class, 'updateNote']);
@@ -101,6 +100,7 @@ Route::group(['prefix' => '/admins'], function () {
     Route::post('/logout', [AdminController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/users', [AdminController::class, 'getUser']);  
     Route::put('/users/{id}/verify', [AdminController::class, 'verifyUser']);
+    Route::put('/status/{id}', [OrderController::class, 'updateStatus']);
     Route::put('/users/{id}/unverify', [AdminController::class, 'unverifyUser']);
     Route::get('/orders', [AdminController::class, 'getOrders']);
     Route::get('/userdetailorder/{id}', [AdminController::class, 'userOrderdetail']); 

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\NotificationRequest;
 use App\Models\Admin;
-use App\Models\notification;
 use App\Models\Notification as ModelsNotification;
 use App\Models\User;
 use App\Services\FirebaseService;

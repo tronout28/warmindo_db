@@ -1,9 +1,10 @@
 <?php
 
 namespace App\Services;
+
 use App\Models\Admin;
 use App\Models\User;   
-use App\Models\notification as NotificationModel;
+use App\Models\Notification as NotificationModel;
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
@@ -17,7 +18,6 @@ class FirebaseService
         $factory = (new Factory)->withServiceAccount(__DIR__ . '/../../firebase-auth.json');
         $this->messaging = $factory->createMessaging();
     }
-
 
     public function writeNotification($notification_token, $title, $body, $imageUrl)
     {
@@ -34,48 +34,68 @@ class FirebaseService
 
     public function sendNotification($deviceToken, $title, $body, $imageUrl, $data = [])
     {
+        if (!$deviceToken) {
+            return 'Device token is null or invalid.';
+        }
+
         $notification = Notification::create($title, $body, $imageUrl);
 
         $message = CloudMessage::withTarget('token', $deviceToken)
-            ->withNotification($notification)->withData($data);
+            ->withNotification($notification)
+            ->withData($data);
 
         $notify = $this->messaging->send($message);
         $this->writeNotification($deviceToken, $title, $body, $imageUrl);
+
         return $notify;
     }
-    public function sendNotificationToall($title, $body, $imageUrl, $data = [])
+
+    public function sendNotificationToAll($title, $body, $imageUrl, $data = [])
     {
-        $token = User::whereNotNull('notification_token')->get();
+        $tokens = User::whereNotNull('notification_token')->pluck('notification_token');
         $notification = Notification::create($title, $body, $imageUrl);
 
-        foreach ($token as $deviceToken) {
-            $message = CloudMessage::withTarget('token', $deviceToken->notification_token)
-                ->withNotification($notification)->withData($data);
-            $notify = $this->messaging->send($message);
+        foreach ($tokens as $deviceToken) {
+            if (!$deviceToken) {
+                continue;
+            }
+
+            $message = CloudMessage::withTarget('token', $deviceToken)
+                ->withNotification($notification)
+                ->withData($data);
+            $this->messaging->send($message);
         }
+
         $this->writeNotification("", $title, $body, $imageUrl);
-        return $notify;
+
+        return 'Notifications sent to all users.';
     }
 
     public function sendToAdmin($title, $body, $imageUrl, $data = [])
     {
-        $tokens = Admin::whereNotNull('notification_token')->where('role', 'admin')->get();
+        $tokens = Admin::whereNotNull('notification_token')
+            ->where('role', 'admin')
+            ->pluck('notification_token');
+
         $notification = Notification::create($title, $body, $imageUrl);
 
-        $notify = null; // Initialize $notify
+        $notify = null;
 
         foreach ($tokens as $deviceToken) {
-            $message = CloudMessage::withTarget('token', $deviceToken->notification_token)
-                ->withNotification($notification)->withData($data);
+            if (!$deviceToken) {
+                continue;
+            }
+
+            $message = CloudMessage::withTarget('token', $deviceToken)
+                ->withNotification($notification)
+                ->withData($data);
             $notify = $this->messaging->send($message);
         }
 
-        // If no tokens were found, you can return a specific message or handle it accordingly
         if (!$notify) {
             return 'No admin tokens found or notifications sent.';
         }
 
-        return $notify;
+        return 'Notifications sent to all admins.';
     }
-
 }

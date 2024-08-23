@@ -59,7 +59,7 @@ class TransactionController extends Controller
 
         if (strtolower($request->status) == 'paid') {
             $order = Order::where('id', $payment->order_id)->first();
-            $this->firebaseService->sendNotification($payment->user->notification_token, 'Pembayaran Berhasil', 'Pembayaran untuk Order ' . $payment->order->order_id . '. Telah terbayarkan', '');
+            $this->firebaseService->sendNotification($payment->user->notification_token, 'Pembayaran Berhasil', 'Pembayaran untuk Order ID ' . $transaction->order_id . '. Telah terbayarkan', '');
             $order->status = 'sedang diproses';
             $order->save();
         }
