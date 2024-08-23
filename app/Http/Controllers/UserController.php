@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Order;
+use App\Models\Variant;
 use App\Models\Otp;
 use App\Http\Resources\OrderDetailResource;
-
+use App\Http\Resources\ToppingResource;
+use App\Models\OrderDetailTopping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -372,13 +374,15 @@ class UserController extends Controller
 
                 // Filter order details to include only the user's rating
                 $orderDetails = $order->orderDetails->map(function ($detail) use ($user) {
-                    $userRating = $detail->menu->ratings()->where('user_id', $user->id)->first();
+                    $userRating = $detail->menu->ratings()->where('user_id', $user->id)->where('order_detail_id', $detail->id) ->first();
                     return [
                         'id' => $detail->id,
-                        'menu_id' => $detail->menu_id,
-                        'quantity' => $detail->quantity,
-                        'price' => $detail->price,
+                        'quantity'=> $detail->quantity,
                         'user_rating' => $userRating ? $userRating->rating : null,
+                        'variant_id' => $detail->variant_id,
+                        'variant' => Variant::find($detail->variant_id),
+                        'toppings' => ToppingResource::collection(OrderDetailTopping::where('order_detail_id', $detail->id)->get()),
+                        'menu'=> $detail->menu,
                     ];
                 });
 
