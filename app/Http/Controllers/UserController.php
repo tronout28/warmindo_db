@@ -379,7 +379,6 @@ class UserController extends Controller
                         'quantity' => $detail->quantity,
                         'price' => $detail->price,
                         'user_rating' => $userRating ? $userRating->rating : null,
-                        'comment' => $userRating ? $userRating->comment : null,
                     ];
                 });
 
