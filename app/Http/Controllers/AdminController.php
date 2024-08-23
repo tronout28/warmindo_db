@@ -29,27 +29,31 @@ class AdminController extends Controller
             'password' => 'required|string',
             'notification_token' => 'nullable|string',
         ]);
-
-
-
+    
+        // Find the admin by email
         $user = Admin::where('email', $request->email)->first();
-
-        $user = Admin::create([
-            'notification_token' => $request->notification_token,
-        ]);
-
+    
         if ($user == null || !Hash::check($request->password, $user->password)) {
             return response([
                 'message' => 'Invalid credentials',
             ], 401);
         }
+    
+        // Update the notification token if provided
+        if ($request->filled('notification_token')) {
+            $user->notification_token = $request->notification_token;
+            $user->save();
+        }
+    
+        // Generate the token
         $token = $user->createToken('warmindo')->plainTextToken;
-
+    
         return response([
             'admin' => $user,
             'token' => $token,
         ], 200);
     }
+    
 
     public function detailadmin()
 {
