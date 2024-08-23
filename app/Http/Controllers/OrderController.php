@@ -5,6 +5,7 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Admin;
 use Illuminate\Support\Facades\DB;
 use App\Services\FirebaseService;
 use Illuminate\Support\Facades\Validator;
@@ -102,50 +103,63 @@ class OrderController extends Controller
     }
 
     public function cancelOrder(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'reason_cancel' => 'required|string',
-            'cancel_method' => ['required', Rule::in(['tunai','BCA','BNI','BRI','BSI','Mandiri'])],
-            'no_rekening' => 'required|integer',
-        ]);
+{
+    $validator = Validator::make($request->all(), [
+        'reason_cancel' => 'required|string',
+        'cancel_method' => ['required', Rule::in(['tunai', 'BCA', 'BNI', 'BRI', 'BSI', 'Mandiri'])],
+        'no_rekening' => 'required|integer',
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        $order = Order::where('id', $id)->first();
-
-        if (!$order) {
-            return response()->json(['message' => 'Order not found'], 404);
-        }
-
-        if ($request->status == 'menunggu batal') {
-            $this->firebaseService->sendNotification($request->user()->notification_token, 'Pesanan anda telah Dibatalkan', 'Pembayaran untuk Order ' . $request->order()->order_id . '. Telah terbatalkan', '');
-        }
-
-        if ($request->status == 'menunggu batal') {
-            $this->firebaseService->sendToAdmin($request->admin()->notification_token, 'Permintaan pembatalan order', 'Terdapat permintaan pembatalan order dari ' . $request->user()->name. '. Silahkan cek aplikasi Anda', '');
-        }
-        
-
-        // Set the order status to "menunggu batal" and apply the cancelation details
-        $order->status = 'menunggu batal';
-        $order->reason_cancel = $request->reason_cancel;
-        $order->cancel_method = $request->cancel_method;
-        $order->no_rekening = $request->no_rekening;
-
-        // Apply the admin fee
-        $order->admin_fee = 6500;
-
-        $order->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Order canceled successfully with an admin fee',
-            'data' => $order->load(['orderDetails.menu']),
-            'admin_fee' => $order->admin_fee
-        ], 200);
+    if ($validator->fails()) {
+        return response()->json($validator->errors(), 422);
     }
+
+    $order = Order::where('id', $id)->first();
+
+    if (!$order) {
+        return response()->json(['message' => 'Order not found'], 404);
+    }
+
+    // Send notification to the user
+    $this->firebaseService->sendNotification(
+        $request->user()->notification_token,
+        'Pesanan anda telah Dibatalkan',
+        'Pembayaran untuk Order ' . $order->id . ' telah terbatalkan',
+        ''
+    );
+
+    // Fetch the admin (assuming there's only one or a specific admin you want to notify)
+    $admin = Admin::first(); // You can modify this line to get a specific admin if needed
+
+    if ($admin) {
+        // Send notification to the admin
+        $this->firebaseService->sendToAdmin(
+            $admin->notification_token,
+            'Permintaan pembatalan order',
+            'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda',
+            ''
+        );
+    }
+
+    // Set the order status to "menunggu batal" and apply the cancelation details
+    $order->status = 'menunggu batal';
+    $order->reason_cancel = $request->reason_cancel;
+    $order->cancel_method = $request->cancel_method;
+    $order->no_rekening = $request->no_rekening;
+
+    // Apply the admin fee
+    $order->admin_fee = 6500;
+
+    $order->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Order canceled successfully with an admin fee',
+        'data' => $order->load(['orderDetails.menu']),
+        'admin_fee' => $order->admin_fee
+    ], 200);
+}
+
 
     
 
@@ -206,19 +220,26 @@ class OrderController extends Controller
         }
 
         // Fetch the order from the database
-        $order = Order::where('id', $id)->first();
+        $order = Order::with('user')->where('id', $id)->first();
 
         if (!$order) {
             return response()->json(['message' => 'Order not found'], 404);
         }
 
+        // Fetch the user's notification token from the order
+        $userNotificationToken = $order->user->notification_token;
+
         // Update the status and send notifications based on the status
         if ($request->status == 'batal') {
-            $this->firebaseService->sendNotification($request->user()->notification_token, 'Pesanan anda telah Dibatalkan', 'Pembayaran untuk Order ' . $order->id . ' telah terbatalkan', '');
+            $this->firebaseService->sendNotification($userNotificationToken, 'Pesanan anda telah Dibatalkan', 'Pembayaran untuk Order ID ' . $order->id . ' telah terbatalkan', '');
         } elseif ($request->status == 'selesai') {
-            $this->firebaseService->sendNotification($request->user()->notification_token, 'Pesanan anda telah Selesai', 'Makanan anda dengan Order ID ' . $order->id . ' telah selesai dan sampai di tangan anda', '');
+            $this->firebaseService->sendNotification($userNotificationToken, 'Pesanan anda telah Selesai', 'Makanan anda dengan Order ID ' . $order->id . ' telah selesai dan sampai di tangan anda', '');
         } elseif ($request->status == 'pesanan siap') {
-            $this->firebaseService->sendNotification($request->user()->notification_token, 'Pesanan anda telah Siap', 'Silahkan ambil makanan anda dengan Order ID ' . $order->id . ' di kedai Warmindo', '');
+            $this->firebaseService->sendNotification($userNotificationToken, 'Pesanan anda telah Siap', 'Silahkan ambil makanan anda dengan Order ID ' . $order->id . ' di kedai Warmindo', '');
+        } elseif ($request->status == 'menunggu batal') {
+            $this->firebaseService->sendNotification($userNotificationToken, 'Permintaan pembatalan order', 'Permintaan pembatalan order anda dengan Order ID ' . $order->id . ' sedang diproses', '');
+        } elseif ($request->status == 'sedang diproses') {
+            $this->firebaseService->sendNotification($userNotificationToken, 'Pesanan anda sedang diproses', 'Pesanan anda dengan Order ID ' . $order->id . ' sedang diproses', '');
         }
 
         // Update the order status in the database
@@ -232,9 +253,6 @@ class OrderController extends Controller
         ], 200);
     }
 
-
-
-    
     public function show($id)
     {
         $order = Order::with(['orderDetails.menu', 'history.user'])->find($id);
