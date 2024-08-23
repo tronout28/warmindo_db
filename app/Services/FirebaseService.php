@@ -59,14 +59,23 @@ class FirebaseService
 
     public function sendToAdmin($title, $body, $imageUrl, $data = [])
     {
-        $token = Admin::whereNotNull('notification_token')->where('role', 'admin')->get();
+        $tokens = Admin::whereNotNull('notification_token')->where('role', 'admin')->get();
         $notification = Notification::create($title, $body, $imageUrl);
 
-        foreach ($token as $deviceToken) {
+        $notify = null; // Initialize $notify
+
+        foreach ($tokens as $deviceToken) {
             $message = CloudMessage::withTarget('token', $deviceToken->notification_token)
                 ->withNotification($notification)->withData($data);
             $notify = $this->messaging->send($message);
         }
+
+        // If no tokens were found, you can return a specific message or handle it accordingly
+        if (!$notify) {
+            return 'No admin tokens found or notifications sent.';
+        }
+
         return $notify;
     }
+
 }
