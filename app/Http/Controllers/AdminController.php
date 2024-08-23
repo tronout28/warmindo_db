@@ -118,21 +118,21 @@ class AdminController extends Controller
             'name' => 'nullable|string|max:255',
             'username' => 'nullable|string|max:255',
             'email' => 'nullable|email', // Email is nullable
-            'profile_picture' => 'nullable|string|max:255',
+            'profile_picture' => 'nullable|image|max:255', // Validate as image and limit file size
             'phone_number' => 'nullable|string',
             'password' => 'nullable|string|min:8',
             'current_password' => 'nullable|string|min:8', // Make current_password nullable
         ]);
-    
+
         // Get the authenticated user
         $user = $request->user();
-    
+
         if ($user == null) {
             return response([
                 'message' => 'Admin not found',
             ], 404);
         }
-    
+
         // Prepare the user data for update
         $userdata = [];
         if ($request->filled('username')) {
@@ -141,16 +141,13 @@ class AdminController extends Controller
         if ($request->filled('name')) {
             $userdata['name'] = $request->name;
         }
-        if ($request->filled('profile_picture')) {
-            $userdata['profile_picture'] = $request->profile_picture;
-        }
         if ($request->filled('email')) {
             $userdata['email'] = $request->email;
         }
         if ($request->filled('phone_number')) {
             $userdata['phone_number'] = $request->phone_number;
         }
-    
+
         // Validate and update password if current password is provided
         if ($request->filled('password')) {
             if (!$request->filled('current_password') || !Hash::check($request->current_password, $user->password)) {
@@ -160,10 +157,10 @@ class AdminController extends Controller
             }
             $userdata['password'] = Hash::make($request->password);
         }
-    
+
         // Update the user data
         $user->update($userdata);
-    
+
         // Process profile picture upload if provided
         if ($request->hasFile('profile_picture')) {
             $profilePicture = $request->file('profile_picture');
@@ -172,15 +169,16 @@ class AdminController extends Controller
             $user->profile_picture = $profilePictureName;
             $user->save();
         }
-    
+
         // Generate a new token for the user
         $token = $user->createToken('warmindo')->plainTextToken;
-    
+
         return response([
             'admin' => $user,
             'token' => $token,
         ], 201);
     }
+
     
     
     public function verifyUser($id)

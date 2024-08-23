@@ -70,37 +70,137 @@ class OrderController extends Controller
     public function getChart()
     {
         $orders = Order::where('status', 'selesai')->get();
-        $chart = [];
+    
+        $dailyChart = [];
+        $weeklyChart = [];
+        $monthlyChart = [];
+        $yearlyChart = [];
+    
+        $totalDailyOrders = 0;
+        $totalWeeklyOrders = 0;
+        $totalMonthlyOrders = 0;
+        $totalYearlyOrders = 0;
+    
         foreach ($orders as $order) {
-            $date = Carbon::parse($order->created_at)->format('d-m-Y');
-            if (array_key_exists($date, $chart)) {
-                $chart[$date] += $order->price_order;
+            $date = Carbon::parse($order->created_at);
+            
+            // Daily orders count
+            $dailyKey = $date->format('d-m-Y');
+            if (array_key_exists($dailyKey, $dailyChart)) {
+                $dailyChart[$dailyKey] += 1;
             } else {
-                $chart[$date] = $order->price_order;
+                $dailyChart[$dailyKey] = 1;
             }
+            $totalDailyOrders += 1;
+    
+            // Weekly orders count (group by week number of the year)
+            $weeklyKey = $date->format('o-W'); // 'o' is for ISO-8601 year number, 'W' is for ISO-8601 week number
+            if (array_key_exists($weeklyKey, $weeklyChart)) {
+                $weeklyChart[$weeklyKey] += 1;
+            } else {
+                $weeklyChart[$weeklyKey] = 1;
+            }
+            $totalWeeklyOrders += 1;
+    
+            // Monthly orders count
+            $monthlyKey = $date->format('Y-m'); // 'Y' for year, 'm' for month
+            if (array_key_exists($monthlyKey, $monthlyChart)) {
+                $monthlyChart[$monthlyKey] += 1;
+            } else {
+                $monthlyChart[$monthlyKey] = 1;
+            }
+            $totalMonthlyOrders += 1;
+    
+            // Yearly orders count
+            $yearlyKey = $date->format('Y'); // 'Y' for year
+            if (array_key_exists($yearlyKey, $yearlyChart)) {
+                $yearlyChart[$yearlyKey] += 1;
+            } else {
+                $yearlyChart[$yearlyKey] = 1;
+            }
+            $totalYearlyOrders += 1;
         }
-
+    
         return response()->json([
             'success' => true,
             'message' => 'Chart retrieved successfully',
-            'data' => $chart,
+            'data' => [
+                'daily_chart' => $dailyChart,
+                'weekly_chart' => $weeklyChart,
+                'monthly_chart' => $monthlyChart,
+                'yearly_chart' => $yearlyChart,
+                'total_orders' => [
+                    'daily' => $totalDailyOrders,
+                    'weekly' => $totalWeeklyOrders,
+                    'monthly' => $totalMonthlyOrders,
+                    'yearly' => $totalYearlyOrders,
+                ],
+            ],
         ], 200);
     }
+    
 
-    public function getRevenue()
-    {
-        $orders = Order::where('status', 'selesai')->get();
-        $revenue = 0;
-        foreach ($orders as $order) {
-            $revenue += $order->price_order;
+public function getRevenueBreakdown()
+{
+    $orders = Order::where('status', 'selesai')->get();
+
+    $dailyRevenue = [];
+    $weeklyRevenue = [];
+    $monthlyRevenue = [];
+    $yearlyRevenue = [];
+    $totalRevenue = 0;
+
+    foreach ($orders as $order) {
+        $date = Carbon::parse($order->created_at);
+        $day = $date->format('d-m-Y');
+        $week = $date->format('W-Y'); // Week number and Year
+        $month = $date->format('m-Y');
+        $year = $date->format('Y');
+
+        $totalRevenue += $order->price_order;
+
+        // Daily Revenue
+        if (array_key_exists($day, $dailyRevenue)) {
+            $dailyRevenue[$day] += $order->price_order;
+        } else {
+            $dailyRevenue[$day] = $order->price_order;
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Revenue retrieved successfully',
-            'data' => $revenue,
-        ], 200);
+        // Weekly Revenue
+        if (array_key_exists($week, $weeklyRevenue)) {
+            $weeklyRevenue[$week] += $order->price_order;
+        } else {
+            $weeklyRevenue[$week] = $order->price_order;
+        }
+
+        // Monthly Revenue
+        if (array_key_exists($month, $monthlyRevenue)) {
+            $monthlyRevenue[$month] += $order->price_order;
+        } else {
+            $monthlyRevenue[$month] = $order->price_order;
+        }
+
+        // Yearly Revenue
+        if (array_key_exists($year, $yearlyRevenue)) {
+            $yearlyRevenue[$year] += $order->price_order;
+        } else {
+            $yearlyRevenue[$year] = $order->price_order;
+        }
     }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Revenue breakdown retrieved successfully',
+        'data' => [
+            'daily' => $dailyRevenue,
+            'weekly' => $weeklyRevenue,
+            'monthly' => $monthlyRevenue,
+            'yearly' => $yearlyRevenue,
+            'totalRevenue' => $totalRevenue,
+        ],
+    ], 200);
+}
+
 
     public function cancelOrder(Request $request, $id)
 {
