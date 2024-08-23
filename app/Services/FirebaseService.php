@@ -71,7 +71,7 @@ class FirebaseService
         return 'Notifications sent to all users.';
     }
 
-    public function sendToAdmin($title, $body, $imageUrl, $data = [])
+    public function sendToAdmin($notification_token, $title, $body, $imageUrl, $data = [])
     {
         $tokens = Admin::whereNotNull('notification_token')
             ->where('role', 'admin')
@@ -86,9 +86,11 @@ class FirebaseService
                 continue;
             }
 
+            // Ensure $data is an array
             $message = CloudMessage::withTarget('token', $deviceToken)
                 ->withNotification($notification)
-                ->withData($data);
+                ->withData(is_array($data) ? $data : []);
+
             $notify = $this->messaging->send($message);
         }
 
@@ -98,4 +100,5 @@ class FirebaseService
 
         return 'Notifications sent to all admins.';
     }
+
 }

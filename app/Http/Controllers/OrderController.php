@@ -140,7 +140,7 @@ class OrderController extends Controller
     }
     
 
-public function getRevenueBreakdown()
+public function getRevenue()
 {
     $orders = Order::where('status', 'selesai')->get();
 

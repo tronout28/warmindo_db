@@ -68,22 +68,22 @@ class NotificationController extends Controller
         ]);
     }
 
-    public function sendNotificationToAdmin(Request $request)
-    {
-        $account = auth()->user();
-        $request->validate([
-            'title' => 'required|string',
-            'body' => 'required|string',
-            'imageUrl' => 'nullable|string',
-        ]);
-        $title = $request->title;
-        $body = $request->body;
-        $imageUrl = $request->imaageUrl;
-        $message = $this->firebaseService->sendToAdmin($title, $body, $imageUrl);
+    // public function sendNotificationToAdmin(Request $request)
+    // {
+    //     $account = auth()->user();
+    //     $request->validate([
+    //         'title' => 'required|string',
+    //         'body' => 'required|string',
+    //         'imageUrl' => 'nullable|string',
+    //     ]);
+    //     $title = $request->title;
+    //     $body = $request->body;
+    //     $imageUrl = $request->imaageUrl;
+    //     $message = $this->firebaseService->sendToAdmin($title, $body, $imageUrl);
 
-        return response([
-            'message' => 'Notification sent successfully',
-            'data' => $message
-        ]);
-    }
+    //     return response([
+    //         'message' => 'Notification sent successfully',
+    //         'data' => $message
+    //     ]);
+    // }
 }
