@@ -384,17 +384,20 @@ class AdminController extends Controller
 
     public function userOrderdetail($id)
     {
-        $id->validate([
-            'order_id' => 'required|integer|exists:orders,id'
-        ]);
-
-        $orderDetails = OrderDetail::where('order_id', $id->order_id)->get();
-
+        // Validate the ID directly instead of through the request
+        if (!is_numeric($id) || !Order::where('id', $id)->exists()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'The order id is invalid or does not exist.'
+            ], 400);
+        }
+    
+        $orderDetails = OrderDetail::where('order_id', $id)->get();
+    
         return response()->json([
             'status' => 'success',
             'message' => 'List of order details',
             'data' => OrderDetailResource::collection($orderDetails)
         ], 200);
-    }
-    
+    }   
 }
