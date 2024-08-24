@@ -69,36 +69,68 @@ class OrderController extends Controller
 
     public function getChartOrder($interval = 'daily')
     {
-        // Define the date format based on the interval
+        // Define the date format and the step based on the interval
         $dateFormat = match($interval) {
             'weekly' => '%Y-%u',     // Week number and year
             'monthly' => '%Y-%m',    // Month and year
             'yearly' => '%Y',        // Year
             default => '%Y-%m-%d',   // Default to daily
         };
-
+        $dateStep = match($interval) {
+            'weekly' => '1 week',
+            'monthly' => '1 month',
+            'yearly' => '1 year',
+            default => '1 day',
+        };
+    
+        // Define the start and end dates for the interval
+        $startDate = DB::table('orders')->where('status', 'selesai')->min('created_at');
+        $endDate = DB::table('orders')->where('status', 'selesai')->max('created_at');
+    
+        if (!$startDate || !$endDate) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No data available',
+                'data' => [],
+                'overall_total' => 0,
+            ], 200);
+        }
+    
+        $startDate = Carbon::parse($startDate);
+        $endDate = Carbon::parse($endDate);
+    
         // Get order count grouped by the chosen interval and filtered by status "selesai"
-        $order = DB::table('orders')
+        $orders = DB::table('orders')
             ->select(DB::raw('count(*) as total'), DB::raw("DATE_FORMAT(created_at, '$dateFormat') as date"))
             ->where('status', 'selesai')
             ->groupBy('date')
-            ->get();
-
+            ->get()
+            ->keyBy('date');
+    
+        // Initialize an array to hold the full list of dates
+        $fullDates = [];
+        $currentDate = $startDate->copy();
+        while ($currentDate->lte($endDate)) {
+            $formattedDate = $currentDate->format($interval === 'daily' ? 'Y-m-d' : ($interval === 'monthly' ? 'Y-m' : ($interval === 'yearly' ? 'Y' : 'Y-W')));
+            $fullDates[$formattedDate] = [
+                'total' => (int)($orders->get($formattedDate)->total ?? 0),
+                'date' => $formattedDate,
+            ];
+            $currentDate->add($dateStep);
+        }
+    
         // Calculate the overall total orders
-        $overallTotal = $order->sum('total');
-
+        $overallTotal = array_sum(array_column($fullDates, 'total'));
+    
         return response()->json([
             'success' => true,
             'message' => 'Chart order retrieved successfully',
-            'data' => $order,
+            'data' => array_values($fullDates),
             'overall_total' => $overallTotal,
         ], 200);
     }
-
-
     
-
-    public function getChartRevenue($interval = 'daily')
+        public function getChartRevenue($interval = 'daily')
     {
         // Define the date format based on the interval
         $dateFormat = match($interval) {
@@ -107,27 +139,61 @@ class OrderController extends Controller
             'yearly' => '%Y',        // Year
             default => '%Y-%m-%d',   // Default to daily
         };
-
+    
+        // Define the step for the date increment
+        $dateStep = match($interval) {
+            'weekly' => '1 week',
+            'monthly' => '1 month',
+            'yearly' => '1 year',
+            default => '1 day',
+        };
+    
+        // Define the start and end dates for the interval
+        $startDate = DB::table('orders')->where('status', 'selesai')->min('created_at');
+        $endDate = DB::table('orders')->where('status', 'selesai')->max('created_at');
+    
+        if (!$startDate || !$endDate) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No data available',
+                'data' => [],
+                'overall_total' => 0,
+            ], 200);
+        }
+    
+        $startDate = Carbon::parse($startDate);
+        $endDate = Carbon::parse($endDate);
+    
         // Get revenue sum grouped by the chosen interval and filtered by status "selesai"
-        $order = DB::table('orders')
+        $orders = DB::table('orders')
             ->select(DB::raw('sum(price_order) as total'), DB::raw("DATE_FORMAT(created_at, '$dateFormat') as date"))
             ->where('status', 'selesai')
             ->groupBy('date')
-            ->get();
-
+            ->get()
+            ->keyBy('date');
+    
+        // Initialize an array to hold the full list of dates
+        $fullDates = [];
+        $currentDate = $startDate->copy();
+        while ($currentDate->lte($endDate)) {
+            $formattedDate = $currentDate->format($interval === 'daily' ? 'Y-m-d' : ($interval === 'monthly' ? 'Y-m' : ($interval === 'yearly' ? 'Y' : 'Y-W')));
+            $fullDates[$formattedDate] = [
+                'total' => (int)($orders->get($formattedDate)->total ?? 0),
+                'date' => $formattedDate,
+            ];
+            $currentDate->add($dateStep);
+        }
+    
         // Calculate the overall total revenue
-        $overallTotal = $order->sum('total');
-
+        $overallTotal = array_sum(array_column($fullDates, 'total'));
+    
         return response()->json([
             'success' => true,
             'message' => 'Chart revenue retrieved successfully',
-            'data' => $order,
+            'data' => array_values($fullDates),
             'overall_total' => $overallTotal,
         ], 200);
     }
-
-
-
 
     public function cancelOrder(Request $request, $id)
 {
