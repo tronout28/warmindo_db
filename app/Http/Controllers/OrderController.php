@@ -67,139 +67,66 @@ class OrderController extends Controller
         ], 201);
     }
 
-    public function getChart()
+    public function getChartOrder($interval = 'daily')
     {
-        $orders = Order::where('status', 'selesai')->get();
-    
-        $dailyChart = [];
-        $weeklyChart = [];
-        $monthlyChart = [];
-        $yearlyChart = [];
-    
-        $totalDailyOrders = 0;
-        $totalWeeklyOrders = 0;
-        $totalMonthlyOrders = 0;
-        $totalYearlyOrders = 0;
-    
-        foreach ($orders as $order) {
-            $date = Carbon::parse($order->created_at);
-            
-            // Daily orders count
-            $dailyKey = $date->format('d-m-Y');
-            if (array_key_exists($dailyKey, $dailyChart)) {
-                $dailyChart[$dailyKey] += 1;
-            } else {
-                $dailyChart[$dailyKey] = 1;
-            }
-            $totalDailyOrders += 1;
-    
-            // Weekly orders count (group by week number of the year)
-            $weeklyKey = $date->format('o-W'); // 'o' is for ISO-8601 year number, 'W' is for ISO-8601 week number
-            if (array_key_exists($weeklyKey, $weeklyChart)) {
-                $weeklyChart[$weeklyKey] += 1;
-            } else {
-                $weeklyChart[$weeklyKey] = 1;
-            }
-            $totalWeeklyOrders += 1;
-    
-            // Monthly orders count
-            $monthlyKey = $date->format('Y-m'); // 'Y' for year, 'm' for month
-            if (array_key_exists($monthlyKey, $monthlyChart)) {
-                $monthlyChart[$monthlyKey] += 1;
-            } else {
-                $monthlyChart[$monthlyKey] = 1;
-            }
-            $totalMonthlyOrders += 1;
-    
-            // Yearly orders count
-            $yearlyKey = $date->format('Y'); // 'Y' for year
-            if (array_key_exists($yearlyKey, $yearlyChart)) {
-                $yearlyChart[$yearlyKey] += 1;
-            } else {
-                $yearlyChart[$yearlyKey] = 1;
-            }
-            $totalYearlyOrders += 1;
-        }
-    
+        // Define the date format based on the interval
+        $dateFormat = match($interval) {
+            'weekly' => '%Y-%u',     // Week number and year
+            'monthly' => '%Y-%m',    // Month and year
+            'yearly' => '%Y',        // Year
+            default => '%Y-%m-%d',   // Default to daily
+        };
+
+        // Get order count grouped by the chosen interval and filtered by status "selesai"
+        $order = DB::table('orders')
+            ->select(DB::raw('count(*) as total'), DB::raw("DATE_FORMAT(created_at, '$dateFormat') as date"))
+            ->where('status', 'selesai')
+            ->groupBy('date')
+            ->get();
+
+        // Calculate the overall total orders
+        $overallTotal = $order->sum('total');
+
         return response()->json([
             'success' => true,
-            'message' => 'Chart retrieved successfully',
-            'data' => [
-                'daily_chart' => $dailyChart,
-                'weekly_chart' => $weeklyChart,
-                'monthly_chart' => $monthlyChart,
-                'yearly_chart' => $yearlyChart,
-                'total_orders' => [
-                    'daily' => $totalDailyOrders,
-                    'weekly' => $totalWeeklyOrders,
-                    'monthly' => $totalMonthlyOrders,
-                    'yearly' => $totalYearlyOrders,
-                ],
-            ],
+            'message' => 'Chart order retrieved successfully',
+            'data' => $order,
+            'overall_total' => $overallTotal,
         ], 200);
     }
+
+
     
 
-public function getRevenue()
-{
-    $orders = Order::where('status', 'selesai')->get();
+    public function getChartRevenue($interval = 'daily')
+    {
+        // Define the date format based on the interval
+        $dateFormat = match($interval) {
+            'weekly' => '%Y-%u',     // Week number and year
+            'monthly' => '%Y-%m',    // Month and year
+            'yearly' => '%Y',        // Year
+            default => '%Y-%m-%d',   // Default to daily
+        };
 
-    $dailyRevenue = [];
-    $weeklyRevenue = [];
-    $monthlyRevenue = [];
-    $yearlyRevenue = [];
-    $totalRevenue = 0;
+        // Get revenue sum grouped by the chosen interval and filtered by status "selesai"
+        $order = DB::table('orders')
+            ->select(DB::raw('sum(price_order) as total'), DB::raw("DATE_FORMAT(created_at, '$dateFormat') as date"))
+            ->where('status', 'selesai')
+            ->groupBy('date')
+            ->get();
 
-    foreach ($orders as $order) {
-        $date = Carbon::parse($order->created_at);
-        $day = $date->format('d-m-Y');
-        $week = $date->format('W-Y'); // Week number and Year
-        $month = $date->format('m-Y');
-        $year = $date->format('Y');
+        // Calculate the overall total revenue
+        $overallTotal = $order->sum('total');
 
-        $totalRevenue += $order->price_order;
-
-        // Daily Revenue
-        if (array_key_exists($day, $dailyRevenue)) {
-            $dailyRevenue[$day] += $order->price_order;
-        } else {
-            $dailyRevenue[$day] = $order->price_order;
-        }
-
-        // Weekly Revenue
-        if (array_key_exists($week, $weeklyRevenue)) {
-            $weeklyRevenue[$week] += $order->price_order;
-        } else {
-            $weeklyRevenue[$week] = $order->price_order;
-        }
-
-        // Monthly Revenue
-        if (array_key_exists($month, $monthlyRevenue)) {
-            $monthlyRevenue[$month] += $order->price_order;
-        } else {
-            $monthlyRevenue[$month] = $order->price_order;
-        }
-
-        // Yearly Revenue
-        if (array_key_exists($year, $yearlyRevenue)) {
-            $yearlyRevenue[$year] += $order->price_order;
-        } else {
-            $yearlyRevenue[$year] = $order->price_order;
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Chart revenue retrieved successfully',
+            'data' => $order,
+            'overall_total' => $overallTotal,
+        ], 200);
     }
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Revenue breakdown retrieved successfully',
-        'data' => [
-            'daily' => $dailyRevenue,
-            'weekly' => $weeklyRevenue,
-            'monthly' => $monthlyRevenue,
-            'yearly' => $yearlyRevenue,
-            'totalRevenue' => $totalRevenue,
-        ],
-    ], 200);
-}
+
 
 
     public function cancelOrder(Request $request, $id)

@@ -104,8 +104,8 @@ Route::group(['prefix' => '/admins'], function () {
     Route::put('/users/{id}/unverify', [AdminController::class, 'unverifyUser']);
     Route::get('/orders', [AdminController::class, 'getOrders']);
     Route::get('/userdetailorder/{id}', [AdminController::class, 'userOrderdetail']); 
-    Route:: get('/chart-sales', [OrderController::class, 'getChart']);
-    Route:: get('/chart-revenue', [OrderController::class, 'getRevenue']);
+    Route:: get('/chart-sales', [OrderController::class, 'getChartOrder']);
+    Route:: get('/chart-revenue', [OrderController::class, 'getChartRevenue']);
     Route::post('/rejectcancel/{id}', [AdminController::class, 'rejectcancel']);
     Route::post('/acceptcancel/{id}', [AdminController::class, 'acceptcancel']);
 });
