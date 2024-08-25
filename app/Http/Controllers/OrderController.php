@@ -67,191 +67,199 @@ class OrderController extends Controller
         ], 201);
     }
 
-    public function getChartOrder($interval = 'daily')
+    public function getChartOrder(Request $request)
     {
-        // Define the date format and the step based on the interval
-        $dateFormat = match($interval) {
-            'weekly' => '%Y-%u',     // Week number and year
-            'monthly' => '%Y-%m',    // Month and year
-            'yearly' => '%Y',        // Year
-            default => '%Y-%m-%d',   // Default to daily
-        };
-        $dateStep = match($interval) {
-            'weekly' => '1 week',
-            'monthly' => '1 month',
-            'yearly' => '1 year',
-            default => '1 day',
-        };
+        $interval = $request->input('interval', 'daily');
+        $now = Carbon::now();
+        $startDate = null;
+        $endDate = null;
+        $dateFormat = null;
     
-        // Define the start and end dates for the interval
-        $startDate = DB::table('orders')->where('status', 'selesai')->min('created_at');
-        $endDate = DB::table('orders')->where('status', 'selesai')->max('created_at');
+        // Determine date range and format based on interval
+        switch ($interval) {
+            case 'weekly':
+                $startDate = $now->copy()->startOfDay()->subDays(6); // Last 7 days including today
+                $endDate = $now->copy()->endOfDay();
+                $dateFormat = '%Y-%m-%d';
+                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay());
+                break;
     
-        if (!$startDate || !$endDate) {
-            return response()->json([
-                'success' => true,
-                'message' => 'No data available',
-                'data' => [],
-                'overall_total' => 0,
-            ], 200);
+            case 'monthly':
+                $startDate = $now->copy()->startOfDay()->subDays(29); // Last 30 days including today
+                $endDate = $now->copy()->endOfDay();
+                $dateFormat = '%Y-%m-%d';
+                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay());
+                break;
+    
+            case 'yearly':
+                $startDate = $now->copy()->startOfMonth()->subMonths(11); // Last 12 months including current
+                $endDate = $now->copy()->endOfMonth();
+                $dateFormat = '%Y-%m';
+                $period = new \DatePeriod($startDate, new \DateInterval('P1M'), $endDate->addMonth());
+                break;
+    
+            default:
+                // Default to daily for the past 7 days
+                $startDate = $now->copy()->startOfDay()->subDays(6);
+                $endDate = $now->copy()->endOfDay();
+                $dateFormat = '%Y-%m-%d';
+                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay());
+                break;
         }
     
-        $startDate = Carbon::parse($startDate);
-        $endDate = Carbon::parse($endDate);
-    
-        // Get order count grouped by the chosen interval and filtered by status "selesai"
-        $orders = DB::table('orders')
-            ->select(DB::raw('count(*) as total'), DB::raw("DATE_FORMAT(created_at, '$dateFormat') as date"))
-            ->where('status', 'selesai')
+        // Fetch data from database
+        $orders = Order::where('status', 'selesai')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw("DATE_FORMAT(created_at, '{$dateFormat}') as date, COUNT(*) as total")
             ->groupBy('date')
-            ->get()
-            ->keyBy('date');
+            ->orderBy('date')
+            ->pluck('total', 'date')
+            ->toArray();
     
-        // Initialize an array to hold the full list of dates
-        $fullDates = [];
-        $currentDate = $startDate->copy();
-        while ($currentDate->lte($endDate)) {
-            $formattedDate = $currentDate->format($interval === 'daily' ? 'Y-m-d' : ($interval === 'monthly' ? 'Y-m' : ($interval === 'yearly' ? 'Y' : 'Y-W')));
-            $fullDates[$formattedDate] = [
-                'total' => (int)($orders->get($formattedDate)->total ?? 0),
+        // Initialize data array with zeros
+        $data = [];
+        foreach ($period as $date) {
+            $formattedDate = $date->format(str_replace('%', '', $dateFormat));
+            $data[] = [
                 'date' => $formattedDate,
+                'total' => isset($orders[$formattedDate]) ? (int)$orders[$formattedDate] : 0,
             ];
-            $currentDate->add($dateStep);
         }
     
-        // Calculate the overall total orders
-        $overallTotal = array_sum(array_column($fullDates, 'total'));
+        // Calculate overall total
+        $overallTotal = array_sum(array_column($data, 'total'));
     
         return response()->json([
-            'success' => true,
-            'message' => 'Chart order retrieved successfully',
-            'data' => array_values($fullDates),
+            'data' => $data,
             'overall_total' => $overallTotal,
-        ], 200);
+        ]);
     }
     
-        public function getChartRevenue($interval = 'daily')
+    public function getChartRevenue(Request $request)
     {
-        // Define the date format based on the interval
-        $dateFormat = match($interval) {
-            'weekly' => '%Y-%u',     // Week number and year
-            'monthly' => '%Y-%m',    // Month and year
-            'yearly' => '%Y',        // Year
-            default => '%Y-%m-%d',   // Default to daily
-        };
+        $interval = $request->input('interval', 'daily');
+        $now = Carbon::now();
+        $startDate = null;
+        $endDate = null;
+        $dateFormat = null;
     
-        // Define the step for the date increment
-        $dateStep = match($interval) {
-            'weekly' => '1 week',
-            'monthly' => '1 month',
-            'yearly' => '1 year',
-            default => '1 day',
-        };
+        // Determine date range and format based on interval
+        switch ($interval) {
+            case 'weekly':
+                $startDate = $now->copy()->startOfDay()->subDays(6); // Last 7 days including today
+                $endDate = $now->copy()->endOfDay();
+                $dateFormat = '%Y-%m-%d';
+                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay());
+                break;
     
-        // Define the start and end dates for the interval
-        $startDate = DB::table('orders')->where('status', 'selesai')->min('created_at');
-        $endDate = DB::table('orders')->where('status', 'selesai')->max('created_at');
+            case 'monthly':
+                $startDate = $now->copy()->startOfDay()->subDays(29); // Last 30 days including today
+                $endDate = $now->copy()->endOfDay();
+                $dateFormat = '%Y-%m-%d';
+                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay());
+                break;
     
-        if (!$startDate || !$endDate) {
-            return response()->json([
-                'success' => true,
-                'message' => 'No data available',
-                'data' => [],
-                'overall_total' => 0,
-            ], 200);
+            case 'yearly':
+                $startDate = $now->copy()->startOfMonth()->subMonths(11); // Last 12 months including current
+                $endDate = $now->copy()->endOfMonth();
+                $dateFormat = '%Y-%m';
+                $period = new \DatePeriod($startDate, new \DateInterval('P1M'), $endDate->addMonth());
+                break;
+    
+            default:
+                // Default to daily for the past 7 days
+                $startDate = $now->copy()->startOfDay()->subDays(6);
+                $endDate = $now->copy()->endOfDay();
+                $dateFormat = '%Y-%m-%d';
+                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay());
+                break;
         }
     
-        $startDate = Carbon::parse($startDate);
-        $endDate = Carbon::parse($endDate);
-    
-        // Get revenue sum grouped by the chosen interval and filtered by status "selesai"
-        $orders = DB::table('orders')
-            ->select(DB::raw('sum(price_order) as total'), DB::raw("DATE_FORMAT(created_at, '$dateFormat') as date"))
-            ->where('status', 'selesai')
+        // Fetch data from database
+        $revenues = Order::where('status', 'selesai')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw("DATE_FORMAT(created_at, '{$dateFormat}') as date, SUM(price_order) as total")
             ->groupBy('date')
-            ->get()
-            ->keyBy('date');
+            ->orderBy('date')
+            ->pluck('total', 'date')
+            ->toArray();
     
-        // Initialize an array to hold the full list of dates
-        $fullDates = [];
-        $currentDate = $startDate->copy();
-        while ($currentDate->lte($endDate)) {
-            $formattedDate = $currentDate->format($interval === 'daily' ? 'Y-m-d' : ($interval === 'monthly' ? 'Y-m' : ($interval === 'yearly' ? 'Y' : 'Y-W')));
-            $fullDates[$formattedDate] = [
-                'total' => (int)($orders->get($formattedDate)->total ?? 0),
+        // Initialize data array with zeros
+        $data = [];
+        foreach ($period as $date) {
+            $formattedDate = $date->format(str_replace('%', '', $dateFormat));
+            $data[] = [
                 'date' => $formattedDate,
+                'total' => isset($revenues[$formattedDate]) ? (int)$revenues[$formattedDate] : 0,
             ];
-            $currentDate->add($dateStep);
         }
     
-        // Calculate the overall total revenue
-        $overallTotal = array_sum(array_column($fullDates, 'total'));
+        // Calculate overall total
+        $overallTotal = array_sum(array_column($data, 'total'));
     
         return response()->json([
-            'success' => true,
-            'message' => 'Chart revenue retrieved successfully',
-            'data' => array_values($fullDates),
+            'data' => $data,
             'overall_total' => $overallTotal,
-        ], 200);
+        ]);
     }
 
     public function cancelOrder(Request $request, $id)
-{
-    $validator = Validator::make($request->all(), [
-        'reason_cancel' => 'required|string',
-        'cancel_method' => ['required', Rule::in(['tunai', 'BCA', 'BNI', 'BRI', 'BSI', 'Mandiri'])],
-        'no_rekening' => 'required|integer',
-    ]);
+    {
+        $validator = Validator::make($request->all(), [
+            'reason_cancel' => 'required|string',
+            'cancel_method' => ['required', Rule::in(['tunai', 'BCA', 'BNI', 'BRI', 'BSI', 'Mandiri'])],
+            'no_rekening' => 'required|integer',
+        ]);
 
-    if ($validator->fails()) {
-        return response()->json($validator->errors(), 422);
-    }
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
 
-    $order = Order::where('id', $id)->first();
+        $order = Order::where('id', $id)->first();
 
-    if (!$order) {
-        return response()->json(['message' => 'Order not found'], 404);
-    }
+        if (!$order) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
 
-    // Send notification to the user
-    $this->firebaseService->sendNotification(
-        $request->user()->notification_token,
-        'Pesanan anda telah Dibatalkan',
-        'Pembayaran untuk Order ' . $order->id . ' telah terbatalkan',
-        ''
-    );
-
-    // Fetch the admin (assuming there's only one or a specific admin you want to notify)
-    $admin = Admin::first(); // You can modify this line to get a specific admin if needed
-
-    if ($admin) {
-        // Send notification to the admin
-        $this->firebaseService->sendToAdmin(
-            $admin->notification_token,
-            'Permintaan pembatalan order',
-            'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda',
+        // Send notification to the user
+        $this->firebaseService->sendNotification(
+            $request->user()->notification_token,
+            'Pesanan anda telah Dibatalkan',
+            'Pembayaran untuk Order ' . $order->id . ' telah terbatalkan',
             ''
         );
+
+        // Fetch the admin (assuming there's only one or a specific admin you want to notify)
+        $admin = Admin::first(); // You can modify this line to get a specific admin if needed
+
+        if ($admin) {
+            // Send notification to the admin
+            $this->firebaseService->sendToAdmin(
+                $admin->notification_token,
+                'Permintaan pembatalan order',
+                'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda',
+                ''
+            );
+        }
+
+        // Set the order status to "menunggu batal" and apply the cancelation details
+        $order->status = 'menunggu batal';
+        $order->reason_cancel = $request->reason_cancel;
+        $order->cancel_method = $request->cancel_method;
+        $order->no_rekening = $request->no_rekening;
+
+        // Apply the admin fee
+        $order->admin_fee = 6500;
+
+        $order->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order canceled successfully with an admin fee',
+            'data' => $order->load(['orderDetails.menu']),
+            'admin_fee' => $order->admin_fee
+        ], 200);
     }
-
-    // Set the order status to "menunggu batal" and apply the cancelation details
-    $order->status = 'menunggu batal';
-    $order->reason_cancel = $request->reason_cancel;
-    $order->cancel_method = $request->cancel_method;
-    $order->no_rekening = $request->no_rekening;
-
-    // Apply the admin fee
-    $order->admin_fee = 6500;
-
-    $order->save();
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Order canceled successfully with an admin fee',
-        'data' => $order->load(['orderDetails.menu']),
-        'admin_fee' => $order->admin_fee
-    ], 200);
-}
 
 
     
