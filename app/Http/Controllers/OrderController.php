@@ -74,39 +74,40 @@ class OrderController extends Controller
         $startDate = null;
         $endDate = null;
         $dateFormat = null;
-    
+        $period = null;
+
         // Determine date range and format based on interval
         switch ($interval) {
             case 'weekly':
                 $startDate = $now->copy()->startOfDay()->subDays(6); // Last 7 days including today
                 $endDate = $now->copy()->endOfDay();
                 $dateFormat = '%Y-%m-%d';
-                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay());
+                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay(0)); // Iterate up to today
                 break;
-    
+
             case 'monthly':
                 $startDate = $now->copy()->startOfDay()->subDays(29); // Last 30 days including today
                 $endDate = $now->copy()->endOfDay();
                 $dateFormat = '%Y-%m-%d';
-                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay());
+                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay(0)); // Iterate up to today
                 break;
-    
+
             case 'yearly':
                 $startDate = $now->copy()->startOfMonth()->subMonths(11); // Last 12 months including current
                 $endDate = $now->copy()->endOfMonth();
                 $dateFormat = '%Y-%m';
-                $period = new \DatePeriod($startDate, new \DateInterval('P1M'), $endDate->addMonth());
+                $period = new \DatePeriod($startDate, new \DateInterval('P1M'), $endDate->addMonth(0)); // Iterate up to end of the month
                 break;
-    
+
             default:
                 // Default to daily for the past 7 days
                 $startDate = $now->copy()->startOfDay()->subDays(6);
                 $endDate = $now->copy()->endOfDay();
                 $dateFormat = '%Y-%m-%d';
-                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay());
+                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay(0)); // Iterate up to today
                 break;
         }
-    
+
         // Fetch data from database
         $orders = Order::where('status', 'selesai')
             ->whereBetween('created_at', [$startDate, $endDate])
@@ -115,67 +116,103 @@ class OrderController extends Controller
             ->orderBy('date')
             ->pluck('total', 'date')
             ->toArray();
-    
+
         // Initialize data array with zeros
         $data = [];
-        foreach ($period as $date) {
-            $formattedDate = $date->format(str_replace('%', '', $dateFormat));
-            $data[] = [
-                'date' => $formattedDate,
-                'total' => isset($orders[$formattedDate]) ? (int)$orders[$formattedDate] : 0,
-            ];
+        $overallTotal = 0;
+
+        if ($interval === 'monthly') {
+            $currentDate = $startDate->copy();
+            while ($currentDate->lessThanOrEqualTo($endDate)) {
+                $weekStart = $currentDate->copy()->startOfWeek();
+                $weekEnd = $currentDate->copy()->endOfWeek();
+                if ($weekEnd->greaterThan($endDate)) {
+                    $weekEnd = $endDate; // Adjust to ensure it does not exceed the endDate
+                }
+
+                $weekKey = 'week_' . (($currentDate->copy()->startOfWeek()->diffInWeeks($startDate->copy()->startOfWeek())) + 1);
+                $weekData = [];
+                $weeklyTotal = 0;
+
+                for ($day = 0; $day < 7; $day++) {
+                    $dayDate = $weekStart->copy()->addDays($day);
+                    
+                    // Ensure we don't go beyond the end date
+                    if ($dayDate->greaterThan($endDate)) {
+                        break;
+                    }
+
+                    $formattedDate = $dayDate->format('Y-m-d');
+                    $total = isset($orders[$formattedDate]) ? (int)$orders[$formattedDate] : 0;
+                    $weekData[] = [
+                        'date' => $formattedDate,
+                        'total' => $total,
+                    ];
+                    $weeklyTotal += $total;
+                }
+
+                $data[$weekKey] = $weekData;
+                $data['overall_' . $weekKey] = $weeklyTotal;
+                $overallTotal += $weeklyTotal;
+
+                $currentDate->addWeek(); // Move to the next week
+            }
+        } else {
+            foreach ($period as $date) {
+                $formattedDate = $date->format(str_replace('%', '', $dateFormat));
+                $data[] = [
+                    'date' => $formattedDate,
+                    'total' => isset($orders[$formattedDate]) ? (int)$orders[$formattedDate] : 0,
+                ];
+            }
+
+            $overallTotal = array_sum(array_column($data, 'total'));
         }
-    
-        // Calculate overall total
-        $overallTotal = array_sum(array_column($data, 'total'));
-    
+
         return response()->json([
             'data' => $data,
             'overall_total' => $overallTotal,
         ]);
     }
-    
-    public function getChartRevenue(Request $request)
+
+   public function getChartRevenue(Request $request)
     {
         $interval = $request->input('interval', 'daily');
         $now = Carbon::now();
         $startDate = null;
         $endDate = null;
         $dateFormat = null;
-    
-        // Determine date range and format based on interval
+        $period = null;
+
         switch ($interval) {
             case 'weekly':
                 $startDate = $now->copy()->startOfDay()->subDays(6); // Last 7 days including today
-                $endDate = $now->copy()->endOfDay();
+                $endDate = $now->copy()->endOfDay(); // End today
                 $dateFormat = '%Y-%m-%d';
-                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay());
+                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay(0)); // Iterate up to today
                 break;
-    
+
             case 'monthly':
                 $startDate = $now->copy()->startOfDay()->subDays(29); // Last 30 days including today
-                $endDate = $now->copy()->endOfDay();
+                $endDate = $now->copy()->endOfDay(); // End today
                 $dateFormat = '%Y-%m-%d';
-                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay());
                 break;
-    
+
             case 'yearly':
                 $startDate = $now->copy()->startOfMonth()->subMonths(11); // Last 12 months including current
                 $endDate = $now->copy()->endOfMonth();
                 $dateFormat = '%Y-%m';
-                $period = new \DatePeriod($startDate, new \DateInterval('P1M'), $endDate->addMonth());
+                $period = new \DatePeriod($startDate, new \DateInterval('P1M'), $endDate->addMonth(0));
                 break;
-    
+
             default:
-                // Default to daily for the past 7 days
-                $startDate = $now->copy()->startOfDay()->subDays(6);
-                $endDate = $now->copy()->endOfDay();
+                $startDate = $now->copy()->startOfDay()->subDays(6); // Default to last 7 days (weekly)
+                $endDate = $now->copy()->endOfDay(); // End today
                 $dateFormat = '%Y-%m-%d';
-                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay());
+                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay(0));
                 break;
         }
-    
-        // Fetch data from database
+
         $revenues = Order::where('status', 'selesai')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw("DATE_FORMAT(created_at, '{$dateFormat}') as date, SUM(price_order) as total")
@@ -183,20 +220,58 @@ class OrderController extends Controller
             ->orderBy('date')
             ->pluck('total', 'date')
             ->toArray();
-    
-        // Initialize data array with zeros
+
         $data = [];
-        foreach ($period as $date) {
-            $formattedDate = $date->format(str_replace('%', '', $dateFormat));
-            $data[] = [
-                'date' => $formattedDate,
-                'total' => isset($revenues[$formattedDate]) ? (int)$revenues[$formattedDate] : 0,
-            ];
+        $overallTotal = 0;
+
+        if ($interval === 'monthly') {
+            $currentDate = $startDate->copy();
+            while ($currentDate->lessThanOrEqualTo($endDate)) {
+                $weekStart = $currentDate->copy()->startOfWeek();
+                $weekEnd = $currentDate->copy()->endOfWeek();
+                if ($weekEnd->greaterThan($endDate)) {
+                    $weekEnd = $endDate; // Adjust to ensure it does not exceed the endDate
+                }
+
+                $weekKey = 'week_' . (($currentDate->copy()->startOfWeek()->diffInWeeks($startDate->copy()->startOfWeek())) + 1);
+                $weekData = [];
+                $weeklyTotal = 0;
+
+                for ($day = 0; $day < 7; $day++) {
+                    $dayDate = $weekStart->copy()->addDays($day);
+                    
+                    // Ensure we don't go beyond the end date
+                    if ($dayDate->greaterThan($endDate)) {
+                        break;
+                    }
+
+                    $formattedDate = $dayDate->format('Y-m-d');
+                    $total = isset($revenues[$formattedDate]) ? (int)$revenues[$formattedDate] : 0;
+                    $weekData[] = [
+                        'date' => $formattedDate,
+                        'total' => $total,
+                    ];
+                    $weeklyTotal += $total;
+                }
+
+                $data[$weekKey] = $weekData;
+                $data['overall_' . $weekKey] = $weeklyTotal;
+                $overallTotal += $weeklyTotal;
+
+                $currentDate->addWeek(); // Move to the next week
+            }
+        } else {
+            foreach ($period as $date) {
+                $formattedDate = $date->format(str_replace('%', '', $dateFormat));
+                $data[] = [
+                    'date' => $formattedDate,
+                    'total' => isset($revenues[$formattedDate]) ? (int)$revenues[$formattedDate] : 0,
+                ];
+            }
+
+            $overallTotal = array_sum(array_column($data, 'total'));
         }
-    
-        // Calculate overall total
-        $overallTotal = array_sum(array_column($data, 'total'));
-    
+
         return response()->json([
             'data' => $data,
             'overall_total' => $overallTotal,
