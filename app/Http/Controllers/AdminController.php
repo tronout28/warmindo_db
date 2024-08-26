@@ -268,13 +268,16 @@ class AdminController extends Controller
             ''
         );
     }
-        // Send notification to the admin if required
-        $this->firebaseService->sendToAdmin(
-            $order->admin->notification_token,
-            'Pembatalan Diterima',
-            'Permintaan pembatalan order dari ' . $order->user()->name . ' telah diterima. Pesanan telah dibatalkan.',
-            ''
-        );
+        // Retrieve the first admin
+    $admin = Admin::first();
+
+    // Send notification to the admin if required
+    $this->firebaseService->sendToAdmin(
+        $admin->notification_token,
+        'Pembatalan Diterima',
+        'Permintaan pembatalan order dari ' . $order->user->name . ' telah diterima. Pesanan telah dibatalkan.',
+        ''
+    );
 
         return response()->json([
             'success' => true,
@@ -453,6 +456,33 @@ class AdminController extends Controller
             ], 401);
         }
     }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = Admin::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response([
+                'status' => 'failed',
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        // Update the password
+        $user->password = bcrypt($request->password);
+        $user->save();
+
+        return response([
+            'status' => 'success',
+            'message' => 'Password has been reset successfully',
+        ], 200);
+    }
+
 
     public function userOrderdetail($id)
     {
