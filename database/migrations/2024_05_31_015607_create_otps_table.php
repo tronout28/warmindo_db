@@ -12,12 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('otps', function (Blueprint $table) {
-            $table->id();
+            $table->id(); // This creates an unsignedBigInteger primary key
             $table->string('otp');
-            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->unsignedBigInteger('admin_id')->nullable();
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('admin_id')->references('id')->on('admins')->onDelete('cascade');
         });
     }
 
@@ -26,8 +28,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('otps', function (Blueprint $table) {
             $table->dropForeign(['user_id']);
+            $table->dropForeign(['admin_id']);
         });
         Schema::dropIfExists('otps');
     }

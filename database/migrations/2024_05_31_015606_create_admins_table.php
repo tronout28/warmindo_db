@@ -6,13 +6,13 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
+     /**
      * Run the migrations.
      */
     public function up(): void
     {
         Schema::create('admins', function (Blueprint $table) {
-            $table->id();
+            $table->id(); // This creates an unsignedBigInteger primary key
             $table->string('name');
             $table->string('profile_picture')->nullable();
             $table->string('username')->unique();
