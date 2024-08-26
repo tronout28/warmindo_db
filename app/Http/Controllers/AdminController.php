@@ -246,7 +246,7 @@ class AdminController extends Controller
         }
 
         // Update the order status to "batal"
-        $order->status = 'batal';
+        $order->status = 'menunggu pengembalian dana';
         $order->save();
 
         // Send notification to the user about the acceptance
