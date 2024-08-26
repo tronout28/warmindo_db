@@ -240,6 +240,7 @@ class AdminController extends Controller
     public function acceptcancel($id)
     {
         $order = Order::where('id', $id)->first();
+        $order2 = Order::where('id', $id)->first();
 
         if (!$order) {
             return response()->json(['message' => 'Order not found'], 404);
@@ -250,13 +251,21 @@ class AdminController extends Controller
         $order->save();
 
         // Send notification to the user about the acceptance
+        if($order2->status == 'sedang diproses'){
+            $this->firebaseService->sendNotification(
+                $order->user->notification_token,
+                'Pesanan Dibatalkan',
+                'Pesanan anda dengan ID ' . $order->id . ' telah dibatalkan. oleh admin silahkan mengambil uang refund di lokasi order.',
+                ''
+            );
+    }else{
         $this->firebaseService->sendNotification(
             $order->user->notification_token,
             'Pesanan Dibatalkan',
-            'Permintaan pembatalan order Anda dengan ID ' . $order->id . ' telah diterima. Pesanan Anda telah dibatalkan.',
+            'Permintaan pembatalan order Anda dengan ID ' . $order->id . ' telah dibatalkan. Pesanan Anda telah dibatalkan.',
             ''
         );
-
+    }
         // Send notification to the admin if required
         $this->firebaseService->sendToAdmin(
             $order->admin->notification_token,
@@ -271,10 +280,7 @@ class AdminController extends Controller
             'data' => $order->load(['orderDetails.menu']),
         ], 200);
     }
-
-
-
-
+    
     public function unverifyUser($id)
     {
         $user = User::find($id);
