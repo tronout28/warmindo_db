@@ -79,9 +79,13 @@ Route::group(['prefix' => '/users'], function () {
     Route::post('/google-login', [UserController::class, 'googleLogin']);
     Route::get('/details', [UserController::class, 'details'])->middleware('auth:sanctum');
     Route::post('/update', [UserController::class, 'update'])->middleware('auth:sanctum');
+
+    Route::post('/send/email', [OtpController::class, 'sendEmailOtp']);
+    Route::post('/verify/email', [OtpController::class, 'verifyEmailOtp']);
     Route::post('/send-otp', [OtpController::class, 'sendOtp'])->middleware('auth:sanctum');
     Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])->middleware('auth:sanctum');
     Route::post('/send-otp-phonenumber', [OtpController::class, 'sendOtpwithPhoneNumber']);
+
     Route::post('/logout', [UserController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/get-history', [UserController::class, 'getHistory'])->middleware('auth:sanctum');
     Route::delete('/{id}', [UserController::class, 'destroy']);
@@ -99,6 +103,12 @@ Route::group(['prefix' => '/admins'], function () {
     Route::put('/update', [AdminController::class, 'update'])->middleware('auth:sanctum');
     Route::post('/logout', [AdminController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/users', [AdminController::class, 'getUser']);  
+
+    Route::post('/send/email', [OtpController::class, 'sendEmailOtp']);
+    Route::post('/verify/email', [OtpController::class, 'verifyEmailOtp']);
+    Route::post('/checkEmail', [AdminController::class, 'forgotPassword']);
+    Route::post('/verify', [AdminController::class, 'verifyForgotPassword']);
+
     Route::put('/users/{id}/verify', [AdminController::class, 'verifyUser']);
     Route::put('/status/{id}', [OrderController::class, 'updateStatus']);
     Route::put('/users/{id}/unverify', [AdminController::class, 'unverifyUser']);

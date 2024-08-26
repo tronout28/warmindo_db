@@ -9,6 +9,8 @@ use App\Models\OrderDetail;
 use App\Http\Resources\OrderDetailResource;
 use Illuminate\Support\Facades\Auth;
 use App\Services\FirebaseService;
+use App\Models\Otp;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -280,7 +282,7 @@ class AdminController extends Controller
             'data' => $order->load(['orderDetails.menu']),
         ], 200);
     }
-    
+
     public function unverifyUser($id)
     {
         $user = User::find($id);
@@ -386,7 +388,71 @@ class AdminController extends Controller
         ], 200);
     }
 
-    
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = Admin::where('email', $request->email)->first();
+        if ($user == null) {
+            return response([
+                'status' => 'failed',
+                'message' => 'User not found',
+            ], 404);
+        }
+        $otp = rand(100000, 999999);
+        $otps = Otp::where('admin_id', $user->id)->first();
+        if ($otps != null) {
+            return response([
+                'status' => 'failed',   
+                'message' => 'Otp already sent. Try again after 5 minutes',
+            ]);
+        }
+        Otp::create([
+            "otp" => $otp,
+            "admin_id" => $user->id,
+        ]);
+        $description = 'Ini adalah kode verifiskasi anda untuk reset password akun anda di aplikasi Warmindo App. Jangan berikan kode ini kepada siapapun. Kode berlaku selama 5 menit';
+        Mail::send('email.mail', ['otp' => $otp, "description" => $description, 'username' => $user->username], function ($message) use ($user) {
+            $message->to($user->email, $user->username)->subject('OTP Verification');
+        });
+        return response([
+            'status' => 'success',
+            'message' => 'OTP sent to your email, check your email address',
+        ]);
+    }
+
+    public function verifyForgotPassword(Request $request)
+    {
+        $request->validate([
+            'otp' => 'required|string|min:6|max:6',
+            'email' => 'required|email',
+        ]);
+
+        $user = Admin::where('email', $request->email)->first();
+        $otp = $request->otp;
+        $otps = Otp::where('admin_id', $user->id)->first();
+
+        if ($otps == null) {
+            return response([
+                'status' => 'failed',
+                'message' => 'OTP not found',
+            ], 404);
+        }
+        if ($otp == $otps->otp) {
+            $otps->delete();
+            return response([
+                'status' => 'success',
+                'message' => 'OTP verified successfully, you can use token for reset password',
+            ], 200);
+        } else {
+            return response([
+                'status' => 'failed',
+                'message' => 'OTP verification failed',
+            ], 401);
+        }
+    }
 
     public function userOrderdetail($id)
     {
