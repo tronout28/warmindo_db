@@ -108,6 +108,7 @@ Route::group(['prefix' => '/admins'], function () {
     Route::post('/verify/email', [OtpController::class, 'verifyEmailOtp']);
     Route::post('/checkEmail', [AdminController::class, 'forgotPassword']);
     Route::post('/verify', [AdminController::class, 'verifyForgotPassword']);
+    Route::post('/reset', [AdminController::class, 'resetPassword']);
 
     Route::put('/users/{id}/verify', [AdminController::class, 'verifyUser']);
     Route::put('/status/{id}', [OrderController::class, 'updateStatus']);
