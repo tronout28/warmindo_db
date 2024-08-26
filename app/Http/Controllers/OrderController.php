@@ -36,7 +36,7 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal', 'menunggu pembayaran'])],
+            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal', 'menunggu pembayaran','menunggu pengembalian dana'])],
             'note' => 'nullable|string',
             'payment_method' => ['nullable', Rule::in(['tunai','ovo', 'gopay', 'dana', 'linkaja', 'shopeepay', 'gopay', 'transfer'])],
             'order_method' => ['nullable', Rule::in(['dine-in', 'take-away', 'delivery'])],
@@ -76,39 +76,36 @@ class OrderController extends Controller
         $dateFormat = null;
         $period = null;
 
-        // Determine date range and format based on interval
         switch ($interval) {
             case 'weekly':
                 $startDate = $now->copy()->startOfDay()->subDays(6); // Last 7 days including today
-                $endDate = $now->copy()->endOfDay();
+                $endDate = $now->copy()->endOfDay(); // End today
                 $dateFormat = '%Y-%m-%d';
-                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay(0)); // Iterate up to today
+                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay()); // Iterate up to today
                 break;
 
             case 'monthly':
                 $startDate = $now->copy()->startOfDay()->subDays(29); // Last 30 days including today
-                $endDate = $now->copy()->endOfDay();
+                $endDate = $now->copy()->endOfDay(); // End today
                 $dateFormat = '%Y-%m-%d';
-                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay(0)); // Iterate up to today
+                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay()); // Iterate over last 30 days
                 break;
 
             case 'yearly':
                 $startDate = $now->copy()->startOfMonth()->subMonths(11); // Last 12 months including current
-                $endDate = $now->copy()->endOfMonth();
+                $endDate = $now->copy()->endOfMonth(); // End of the month
                 $dateFormat = '%Y-%m';
-                $period = new \DatePeriod($startDate, new \DateInterval('P1M'), $endDate->addMonth(0)); // Iterate up to end of the month
+                $period = new \DatePeriod($startDate, new \DateInterval('P1M'), $endDate->addMonth()); // Iterate over last 12 months
                 break;
 
             default:
-                // Default to daily for the past 7 days
-                $startDate = $now->copy()->startOfDay()->subDays(6);
-                $endDate = $now->copy()->endOfDay();
+                $startDate = $now->copy()->startOfDay()->subDays(6); // Default to last 7 days (weekly)
+                $endDate = $now->copy()->endOfDay(); // End today
                 $dateFormat = '%Y-%m-%d';
-                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay(0)); // Iterate up to today
+                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay()); // Iterate up to today
                 break;
         }
 
-        // Fetch data from database
         $orders = Order::where('status', 'selesai')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw("DATE_FORMAT(created_at, '{$dateFormat}') as date, COUNT(*) as total")
@@ -117,56 +114,20 @@ class OrderController extends Controller
             ->pluck('total', 'date')
             ->toArray();
 
-        // Initialize data array with zeros
         $data = [];
         $overallTotal = 0;
 
-        if ($interval === 'monthly') {
-            $currentDate = $startDate->copy();
-            while ($currentDate->lessThanOrEqualTo($endDate)) {
-                $weekStart = $currentDate->copy()->startOfWeek();
-                $weekEnd = $currentDate->copy()->endOfWeek();
-                if ($weekEnd->greaterThan($endDate)) {
-                    $weekEnd = $endDate; // Adjust to ensure it does not exceed the endDate
-                }
-
-                $weekKey = 'week_' . (($currentDate->copy()->startOfWeek()->diffInWeeks($startDate->copy()->startOfWeek())) + 1);
-                $weekData = [];
-                $weeklyTotal = 0;
-
-                for ($day = 0; $day < 7; $day++) {
-                    $dayDate = $weekStart->copy()->addDays($day);
-                    
-                    // Ensure we don't go beyond the end date
-                    if ($dayDate->greaterThan($endDate)) {
-                        break;
-                    }
-
-                    $formattedDate = $dayDate->format('Y-m-d');
-                    $total = isset($orders[$formattedDate]) ? (int)$orders[$formattedDate] : 0;
-                    $weekData[] = [
-                        'date' => $formattedDate,
-                        'total' => $total,
-                    ];
-                    $weeklyTotal += $total;
-                }
-
-                $data[$weekKey] = $weekData;
-                $data['overall_' . $weekKey] = $weeklyTotal;
-                $overallTotal += $weeklyTotal;
-
-                $currentDate->addWeek(); // Move to the next week
+        foreach ($period as $date) {
+            $formattedDate = $date->format(str_replace('%', '', $dateFormat));
+            if ($formattedDate > $now->format('Y-m-d')) {
+                break; // Stop iteration if the date exceeds today
             }
-        } else {
-            foreach ($period as $date) {
-                $formattedDate = $date->format(str_replace('%', '', $dateFormat));
-                $data[] = [
-                    'date' => $formattedDate,
-                    'total' => isset($orders[$formattedDate]) ? (int)$orders[$formattedDate] : 0,
-                ];
-            }
-
-            $overallTotal = array_sum(array_column($data, 'total'));
+            $total = isset($orders[$formattedDate]) ? (int)$orders[$formattedDate] : 0;
+            $data[] = [
+                'date' => $formattedDate,
+                'total' => $total,
+            ];
+            $overallTotal += $total;
         }
 
         return response()->json([
@@ -174,6 +135,7 @@ class OrderController extends Controller
             'overall_total' => $overallTotal,
         ]);
     }
+
 
    public function getChartRevenue(Request $request)
     {
@@ -189,13 +151,14 @@ class OrderController extends Controller
                 $startDate = $now->copy()->startOfDay()->subDays(6); // Last 7 days including today
                 $endDate = $now->copy()->endOfDay(); // End today
                 $dateFormat = '%Y-%m-%d';
-                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay(0)); // Iterate up to today
+                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay()); // Iterate up to today
                 break;
 
             case 'monthly':
                 $startDate = $now->copy()->startOfDay()->subDays(29); // Last 30 days including today
                 $endDate = $now->copy()->endOfDay(); // End today
                 $dateFormat = '%Y-%m-%d';
+                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay()); // Iterate over last 30 days
                 break;
 
             case 'yearly':
@@ -209,7 +172,7 @@ class OrderController extends Controller
                 $startDate = $now->copy()->startOfDay()->subDays(6); // Default to last 7 days (weekly)
                 $endDate = $now->copy()->endOfDay(); // End today
                 $dateFormat = '%Y-%m-%d';
-                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay(0));
+                $period = new \DatePeriod($startDate, new \DateInterval('P1D'), $endDate->addDay()); // Iterate up to today
                 break;
         }
 
@@ -224,52 +187,17 @@ class OrderController extends Controller
         $data = [];
         $overallTotal = 0;
 
-        if ($interval === 'monthly') {
-            $currentDate = $startDate->copy();
-            while ($currentDate->lessThanOrEqualTo($endDate)) {
-                $weekStart = $currentDate->copy()->startOfWeek();
-                $weekEnd = $currentDate->copy()->endOfWeek();
-                if ($weekEnd->greaterThan($endDate)) {
-                    $weekEnd = $endDate; // Adjust to ensure it does not exceed the endDate
-                }
-
-                $weekKey = 'week_' . (($currentDate->copy()->startOfWeek()->diffInWeeks($startDate->copy()->startOfWeek())) + 1);
-                $weekData = [];
-                $weeklyTotal = 0;
-
-                for ($day = 0; $day < 7; $day++) {
-                    $dayDate = $weekStart->copy()->addDays($day);
-                    
-                    // Ensure we don't go beyond the end date
-                    if ($dayDate->greaterThan($endDate)) {
-                        break;
-                    }
-
-                    $formattedDate = $dayDate->format('Y-m-d');
-                    $total = isset($revenues[$formattedDate]) ? (int)$revenues[$formattedDate] : 0;
-                    $weekData[] = [
-                        'date' => $formattedDate,
-                        'total' => $total,
-                    ];
-                    $weeklyTotal += $total;
-                }
-
-                $data[$weekKey] = $weekData;
-                $data['overall_' . $weekKey] = $weeklyTotal;
-                $overallTotal += $weeklyTotal;
-
-                $currentDate->addWeek(); // Move to the next week
+        foreach ($period as $date) {
+            $formattedDate = $date->format(str_replace('%', '', $dateFormat));
+            if ($formattedDate > $now->format('Y-m-d')) {
+                break; // Stop iteration if the date exceeds today
             }
-        } else {
-            foreach ($period as $date) {
-                $formattedDate = $date->format(str_replace('%', '', $dateFormat));
-                $data[] = [
-                    'date' => $formattedDate,
-                    'total' => isset($revenues[$formattedDate]) ? (int)$revenues[$formattedDate] : 0,
-                ];
-            }
-
-            $overallTotal = array_sum(array_column($data, 'total'));
+            $total = isset($revenues[$formattedDate]) ? (int)$revenues[$formattedDate] : 0;
+            $data[] = [
+                'date' => $formattedDate,
+                'total' => $total,
+            ];
+            $overallTotal += $total;
         }
 
         return response()->json([
@@ -300,10 +228,9 @@ class OrderController extends Controller
         $this->firebaseService->sendNotification(
             $request->user()->notification_token,
             'Pesanan anda telah Dibatalkan',
-            'Pembayaran untuk Order ' . $order->id . ' telah terbatalkan',
+            'Pembayaran untuk Order ' . $order->id . ' menunggu pembatalan',
             ''
         );
-
         // Fetch the admin (assuming there's only one or a specific admin you want to notify)
         $admin = Admin::first(); // You can modify this line to get a specific admin if needed
 
@@ -384,7 +311,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal'])],
+            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal','menunggu pengembalian dana'])],
         ]);
 
         if ($validator->fails()) {
@@ -416,6 +343,8 @@ class OrderController extends Controller
             $this->firebaseService->sendNotification($userNotificationToken, 'Permintaan pembatalan order', 'Permintaan pembatalan order anda dengan Order ID ' . $order->id . ' sedang diproses', '');
         } elseif ($request->status == 'sedang diproses') {
             $this->firebaseService->sendNotification($userNotificationToken, 'Pesanan anda sedang diproses', 'Pesanan anda dengan Order ID ' . $order->id . ' sedang diproses', '');
+        } elseif ($request->status == 'menunggu pengembalian dana') {
+            $this->firebaseService->sendNotification($userNotificationToken, 'Permintaan pengembalian dana', 'Permintaan pengembalian dana anda dengan Order ID ' . $order->id . ' sedang diproses', '');
         }
 
         // Update the order status in the database

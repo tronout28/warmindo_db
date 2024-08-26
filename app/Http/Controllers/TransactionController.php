@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Models\Transaction;
 use App\Models\TransactionHistory;
 use App\Services\FirebaseService;
+use App\Models\User;
 use Carbon\Carbon;
 
 use Illuminate\Http\Request;
@@ -62,6 +63,8 @@ class TransactionController extends Controller
             $this->firebaseService->sendNotification($payment->user->notification_token, 'Pembayaran Berhasil', 'Pembayaran untuk Order ID ' . $transaction->order_id . '. Telah terbayarkan', '');
             $order->status = 'sedang diproses';
             $order->save();
+            $admin = User::where('role', 'admin')->first();
+            $this->firebaseService->sendNotification($admin->notification_token, 'Pembayaran Berhasil', 'Pembayaran untuk Order ID ' . $transaction->order_id . '. Telah terbayarkan', '');
         }
 
         return response([
