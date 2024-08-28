@@ -64,8 +64,8 @@ class TransactionController extends Controller
             $this->firebaseService->sendNotification($payment->user->notification_token, 'Pembayaran Berhasil', 'Pembayaran untuk Order ID ' . $transaction->order_id . '. Telah terbayarkan', '');
             $order->status = 'sedang diproses';
             $order->save();
-            $admin = Admin::where('id')->first();
-            $this->firebaseService->sendNotification($admin->notification_token, 'Pembayaran Berhasil', 'Pembayaran untuk Order ID ' . $transaction->order_id . '. Telah terbayarkan', '');
+            $admin = Admin::first();
+            $this->firebaseService->sendNotification($admin->notification_token, 'Ada pesanan baru!', ' Pesanan dari ' . $order->user->username . 'telah diterima. Silahkan cek aplikasi Anda. Terima kasih! 🎉 ','');
         }
 
         return response([

@@ -347,22 +347,22 @@ class AdminController extends Controller
         // Log the raw data
         Log::info('Orders Data:', ['orders' => $orders]);
 
-        if ($orders->isNotEmpty()) {
-            // Fetch all admins (you can modify this to fetch specific admins if necessary)
-            $admins = Admin::all();
+        // if ($orders->isNotEmpty()) {
+        //     // Fetch all admins (you can modify this to fetch specific admins if necessary)
+        //     $admins = Admin::all();
 
-            foreach ($orders as $order) {
-                foreach ($admins as $admin) {
-                    $this->firebaseService->sendToAdmin(
-                        $admin->notification_token,
-                        'Ada pesanan baru!',
-                        'Pesanan dari ' . $order->user->username . ' telah diterima. Silahkan cek aplikasi Anda. Terima kasih! 🎉',
-                        '',
-                        [] // Pass an array instead of a string or other data types
-                    );
-                }
-            }
-        }
+        //     foreach ($orders as $order) {
+        //         foreach ($admins as $admin) {
+        //             $this->firebaseService->sendToAdmin(
+        //                 $admin->notification_token,
+        //                 'Ada pesanan baru!',
+        //                 'Pesanan dari ' . $order->user->username . ' telah diterima. Silahkan cek aplikasi Anda. Terima kasih! 🎉',
+        //                 '',
+        //                 [] // Pass an array instead of a string or other data types
+        //             );
+        //         }
+        //     }
+        // }
 
         return response([
             'status' => 'success',
