@@ -62,7 +62,8 @@ class OrderController extends Controller
         if ($request->payment_method == 'tunai'){
             $this->firebaseService->sendNotification($user->notification_token, 'Pembayaran Berhasil', 'Pembayaran tunai untuk Order ID ' .$order->id. '. Telah terbayarkan', '');
             $admin = Admin::first();
-            $this->firebaseService->sendNotification($admin->notification_token, 'Pembayaran Berhasil', 'Pembayaran tunai untuk Order ID ' . $order->id. '. Telah terbayarkan silahkan cek aplikasi anda', '');
+            $this->firebaseService->sendNotification($admin->notification_token, 'Ada pesanan baru!', ' Pesanan dari ' . $order->user->username . 'telah diterima. Silahkan cek aplikasi Anda. Terima kasih! 🎉 ','');
+        
         }
         return response()->json([
             'success' => true,
