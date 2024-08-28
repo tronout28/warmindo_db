@@ -51,7 +51,12 @@ class OrderController extends Controller
         if ($request->refund && is_null($request->note)) {
             return response()->json(['note' => 'Note is required when refund is true'], 422);
         }
-
+        $order = Order::with('user')->where('id')->first();
+        if ($request->payment_method == 'tunai'){
+            $this->firebaseService->sendNotification($user->notification_token, 'Pembayaran Berhasil', 'Pembayaran untuk Order ID ' .$order->id. '. Telah terbayarkan', '');
+            $admin = Admin::where('id')->first();
+            $this->firebaseService->sendNotification($admin->notification_token, 'Pembayaran Berhasil', 'Pembayaran untuk Order ID ' . $order->id. '. Telah terbayarkan silahkan cek aplikasi anda', '');
+        }
         $order = Order::create([
             'user_id' => $user->id,
             'status' => $request->status,

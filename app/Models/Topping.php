@@ -15,6 +15,7 @@ class Topping extends Model
         'name_topping',
         'price',
         'stock_topping',
+        'status_topping',
         // 'menu_id',
     ];
 

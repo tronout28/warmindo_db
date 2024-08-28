@@ -86,6 +86,23 @@ class ToppingController extends Controller
             'data' => $topping
         ], 200);
     }
+    public function disableTopping($id)
+     {
+        $post = Topping::find($id);
+        $post->status_topping = false;
+        $post->save();
+
+        return response()->json(['message' => 'Topping disabled successfully'], 200);
+     }
+
+    public function enableTopping($id)
+        {
+            $post = Topping::find($id);
+            $post->status_menu = true;
+            $post->save();
+    
+            return response()->json(['message' => 'Menu enabled successfully'], 200);
+        }
 
     public function destroy($id)
     {
