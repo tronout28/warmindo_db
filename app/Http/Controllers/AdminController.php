@@ -405,27 +405,38 @@ class AdminController extends Controller
                 'message' => 'User not found',
             ], 404);
         }
+
         $otp = rand(100000, 999999);
-        $otps = Otp::where('admin_id', $user->id)->first();
+        
+        // Check if there's an existing OTP that's still valid
+        $otps = Otp::where('admin_id', $user->id)
+                    ->where('created_at', '>', now()->subMinutes(1))
+                    ->first();
+
         if ($otps != null) {
             return response([
-                'status' => 'failed',   
-                'message' => 'Otp already sent. Try again after 5 minutes',
+                'status' => 'failed',
+                'message' => 'Otp already sent. Try again after 1 minute',
             ]);
         }
+
+        // Create a new OTP record
         Otp::create([
             "otp" => $otp,
             "admin_id" => $user->id,
         ]);
-        $description = 'Ini adalah kode verifiskasi anda untuk reset password akun anda di aplikasi Warmindo App. Jangan berikan kode ini kepada siapapun. Kode berlaku selama 5 menit';
+
+        $description = 'Ini adalah kode verifikasi anda untuk reset password akun anda di aplikasi Warmindo App. Jangan berikan kode ini kepada siapapun. Kode berlaku selama 1 menit';
         Mail::send('email.mail', ['otp' => $otp, "description" => $description, 'username' => $user->username], function ($message) use ($user) {
             $message->to($user->email, $user->username)->subject('OTP Verification');
         });
+
         return response([
             'status' => 'success',
             'message' => 'OTP sent to your email, check your email address',
         ]);
     }
+
 
     public function verifyForgotPassword(Request $request)
     {

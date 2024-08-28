@@ -70,6 +70,8 @@ Route::prefix('toppings')->group(function () {
     Route::get('/{id}', [ToppingController::class, 'show']);
     Route::put('/{id}', [ToppingController::class, 'update']);
     Route::delete('/{id}', [ToppingController::class, 'destroy']);
+    Route::put('/disable/{id}', [ToppingController::class, 'disableTopping']);
+    Route::put('/enable/{id}', [ToppingController::class, 'enableTopping']);
 });
 
 Route::group(['prefix' => '/users'], function () {
@@ -130,6 +132,8 @@ Route::prefix('variants')->group(function () {
     Route::get('/{id}', [VariantController::class, 'show']);
     Route::put('/{id}', [VariantController::class, 'update']);
     Route::delete('/{id}', [VariantController::class, 'destroy']);
+    Route::put('/disable/{id}', [VariantController::class, 'disableVariant']);
+    Route::put('/enable/{id}', [VariantController::class, 'enableVariant']);
 });
 
 use App\Http\Controllers\HistoryController;
