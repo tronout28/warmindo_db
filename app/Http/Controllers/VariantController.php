@@ -93,7 +93,7 @@ class VariantController extends Controller
     public function disableVariant($id)
      {
         $post = Variant::find($id);
-        $post->status_topping = false;
+        $post->status_variant = false;
         $post->save();
 
         return response()->json(['message' => 'Topping disabled successfully'], 200);
@@ -102,7 +102,7 @@ class VariantController extends Controller
     public function enableVariant($id)
         {
             $post = Variant::find($id);
-            $post->status_menu = true;
+            $post->status_variant = true;
             $post->save();
     
             return response()->json(['message' => 'Menu enabled successfully'], 200);

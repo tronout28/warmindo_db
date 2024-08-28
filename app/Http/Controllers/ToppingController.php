@@ -98,7 +98,7 @@ class ToppingController extends Controller
     public function enableTopping($id)
         {
             $post = Topping::find($id);
-            $post->status_menu = true;
+            $post->status_topping = true;
             $post->save();
     
             return response()->json(['message' => 'Menu enabled successfully'], 200);
