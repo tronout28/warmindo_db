@@ -251,13 +251,13 @@ class OrderController extends Controller
         $order->no_rekening = $request->no_rekening;
 
         // Apply the admin fee
-        $order->admin_fee = 6500;
+        $order->admin_fee = 0;
 
         $order->save();
 
         return response()->json([
             'success' => true,
-            'message' => 'Order canceled successfully with an admin fee',
+            'message' => 'Order canceled successfully ',
             'data' => $order->load(['orderDetails.menu']),
             'admin_fee' => $order->admin_fee
         ], 200);

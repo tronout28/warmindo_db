@@ -7,6 +7,7 @@ use App\Models\Admin;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Http\Resources\OrderDetailResource;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use App\Services\FirebaseService;
 use App\Models\Otp;
@@ -225,7 +226,7 @@ class AdminController extends Controller
         );
 
         // Send notification to the admin if required
-        $this->firebaseService->sendToAdmin(
+        $this->firebaseService->sendNotification(
             $order->admin->notification_token,
             'Pembatalan Ditolak',
             'Permintaan pembatalan order dari ' . $order->user()->name . ' telah ditolak. Pesanan sedang diproses.',
@@ -269,10 +270,10 @@ class AdminController extends Controller
         );
     }
         // Retrieve the first admin
-    $admin = Admin::first();
+    $admin = Admin::where('id')->first();
 
     // Send notification to the admin if required
-    $this->firebaseService->sendToAdmin(
+    $this->firebaseService->sendNotification(
         $admin->notification_token,
         'Pembatalan Diterima',
         'Permintaan pembatalan order dari ' . $order->user->name . ' telah diterima. Pesanan telah dibatalkan.',
@@ -443,11 +444,19 @@ class AdminController extends Controller
                 'message' => 'OTP not found',
             ], 404);
         }
+
         if ($otp == $otps->otp) {
             $otps->delete();
+
+            // Generate a token for password reset
+            $token = Str::random(60);
+            $user->reset_token = $token;
+            $user->save();
+
             return response([
                 'status' => 'success',
-                'message' => 'OTP verified successfully, you can use token for reset password',
+                'message' => 'OTP verified successfully, use this token to reset your password',
+                'token' => $token,
             ], 200);
         } else {
             return response([
@@ -457,31 +466,35 @@ class AdminController extends Controller
         }
     }
 
+
     public function resetPassword(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'token' => 'required|string',
             'password' => 'required|string|min:8|confirmed',
         ]);
-
-        $user = Admin::where('email', $request->email)->first();
-
+    
+        $user = Admin::where('reset_token', $request->token)->first();
+    
         if (!$user) {
             return response([
                 'status' => 'failed',
-                'message' => 'User not found',
+                'message' => 'Invalid or expired token',
             ], 404);
         }
-
+    
         // Update the password
         $user->password = bcrypt($request->password);
+        // Clear the reset token after successful password reset
+        $user->reset_token = null;
         $user->save();
-
+    
         return response([
             'status' => 'success',
             'message' => 'Password has been reset successfully',
         ], 200);
     }
+    
 
 
     public function userOrderdetail($id)

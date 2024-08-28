@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Admin;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Transaction;
@@ -63,7 +64,7 @@ class TransactionController extends Controller
             $this->firebaseService->sendNotification($payment->user->notification_token, 'Pembayaran Berhasil', 'Pembayaran untuk Order ID ' . $transaction->order_id . '. Telah terbayarkan', '');
             $order->status = 'sedang diproses';
             $order->save();
-            $admin = User::where('role', 'admin')->first();
+            $admin = Admin::where('id')->first();
             $this->firebaseService->sendNotification($admin->notification_token, 'Pembayaran Berhasil', 'Pembayaran untuk Order ID ' . $transaction->order_id . '. Telah terbayarkan', '');
         }
 

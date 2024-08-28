@@ -25,25 +25,27 @@ class RatingController extends Controller
         }
 
         // Create or update the rating for the menu item in the order detail
-        $rating = Rating::create(
-            [
-                'order_detail_id' => $request->order_detail_id,
-                'menu_id' => $request->menu_id,
-                'rating' => $request->rating,
-                'user_id' => $user->id,
-            ],
-        );
+        $rating = Rating::create([
+            'order_detail_id' => $request->order_detail_id,
+            'menu_id' => $request->menu_id,
+            'rating' => $request->rating,
+            'user_id' => $user->id,
+        ]);
 
-        // Recalculate the average rating for the menu item
-        $rating = Rating::where('menu_id', $request->menu_id)->avg('rating');   
+        // Recalculate and round the average rating for the menu item
+        $averageRating = Rating::where('menu_id', $request->menu_id)->avg('rating');
+        $roundedAverageRating = round($averageRating, 1);
+
+        // Update the menu item with the rounded average rating
         $menu = Menu::find($request->menu_id);
-        $menu->rating = $rating;
+        $menu->rating = $roundedAverageRating;
         $menu->save();
 
         return response()->json([
             'success' => true,
             'message' => 'Menu item rated successfully',
-            'data' => $rating,
+            'data' => $roundedAverageRating,
         ], 200);
     }
+
 }
