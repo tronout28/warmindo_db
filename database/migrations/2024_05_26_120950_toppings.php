@@ -13,6 +13,7 @@ return new class extends Migration
             $table->string('name_topping');
             $table->decimal('price');
             $table->integer('stock_topping');
+            $table->boolean('status_topping')->default(true);
             $table->timestamps();
         });
     }

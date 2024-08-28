@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('category');
             $table->string('image')->nullable();
             $table->integer('stock_varian');
+            $table->boolean('status_variant')->default(true);
             $table->timestamps();
         });
     }

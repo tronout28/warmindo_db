@@ -60,7 +60,7 @@ class NotificationController extends Controller
         $title = $request->title;
         $body = $request->body;
         $imageUrl = $request->imaageUrl;
-        $message = $this->firebaseService->sendNotificationToAll($title, $body, $imageUrl );
+        $message = $this->firebaseService->sendNotificationToAll($title, $body, $imageUrl, []);
 
         return response([
             'message' => 'Notification sent successfully',

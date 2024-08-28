@@ -18,6 +18,7 @@ class Variant extends Model
         'name_varian',
         'category',
         'image',
+        'stock_varian',
         'stock_varian'
     ];
 
