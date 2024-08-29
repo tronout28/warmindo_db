@@ -224,13 +224,13 @@ class AdminController extends Controller
 
         $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
         foreach ($adminTokens as $adminToken) {
-            $this->firebaseService->sendToAdmin($adminToken, 'Pembatalan Ditolak', 'Permintaan pembatalan order dari ' . $order->user()->name . ' telah ditolak. Pesanan sedang diproses.', '');
+            $this->firebaseService->sendToAdmin($adminToken, 'Pembatalan Ditolak', 'Permintaan pembatalan order dari ' . $order->user->name . ' telah ditolak. Pesanan sedang diproses.', '');
         }
         // Send notification to the user about the rejection
         $this->firebaseService->sendNotification(
             $order->user->notification_token,
             'Pembatalan Ditolak',
-            'Permintaan pembatalan order Anda dengan ID ' . $order->id . ' telah ditolak. Pesanan Anda sedang diproses.',
+            'Permintaan pembatalan order Anda dengan ID ' . $order->id . ' telah ditolak. Pesanan kembali ke sedang diproses.',
             ''
         );
 
@@ -250,7 +250,7 @@ class AdminController extends Controller
             return response()->json(['message' => 'Order not found'], 404);
         }
 
-        $admin = Admin::whereNotNull('notification_token')->pluck('notification_token');
+        $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
         foreach ($adminTokens as $adminToken) {
             $this->firebaseService->sendToAdmin($adminToken, 'Pembatalan Diterima', 'Permintaan pembatalan order dari ' . $order->user->name . ' telah diterima. Pesanan telah dibatalkan.', '');
         }
