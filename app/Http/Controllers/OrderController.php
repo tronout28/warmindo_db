@@ -60,10 +60,9 @@ class OrderController extends Controller
             'note' => $request->note,
         ]);
         if ($request->payment_method == 'tunai'){
+            $adminToken = $order->admin->notification_token;
+            $this->firebaseService->sendToAdmin($adminToken, 'Ada pesanan baru!', ' Pesanan dari ' . $order->user->username . 'telah diterima. Silahkan cek aplikasi Anda. Terima kasih! 🎉 ','');
             $this->firebaseService->sendNotification($user->notification_token, 'Pembayaran Berhasil', 'Pembayaran tunai untuk Order ID ' .$order->id. '. Telah terbayarkan', '');
-            $admin = Admin::first();
-            $this->firebaseService->sendNotification($admin->notification_token, 'Ada pesanan baru!', ' Pesanan dari ' . $order->user->username . 'telah diterima. Silahkan cek aplikasi Anda. Terima kasih! 🎉 ','');
-        
         }
         return response()->json([
             'success' => true,
@@ -213,22 +212,65 @@ class OrderController extends Controller
 
     public function cancelOrder(Request $request, $id)
     {
-        $validator = Validator::make($request->all(), [
+        $order = Order::where('id', $id)->first();
+
+        if ($order->payment_method == 'tunai') {
+            $validator = Validator::make($request->all(), [
+                'reason_cancel' => 'required|string',
+            ]);
+            $order->reason_cancel = $request->reason_cancel;
+            $order->status = 'batal';
+            $order->save();
+
+            $adminToken = $order->admin->notification_token;
+
+            if ($adminToken) {
+                // Send notification to the admin
+                $this->firebaseService->sendToAdmin(
+                    $adminToken, // $notification_token
+                'Permintaan pembatalan order',
+                 'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda',
+                 ''
+                );
+            }
+             // Send notification to the user
+            $this->firebaseService->sendNotification(
+                $request->user()->notification_token,
+                'Pesanan anda telah Dibatalkan',
+                'Pembayaran untuk Order ' . $order->id . ' menunggu pembatalan',
+                ''
+            );
+            return response()->json([
+                'success' => true,
+                'message' => 'Order canceled successfully',
+                'data' => $order->load(['orderDetails.menu']),
+            ], 200);
+        }else{
+            $validator = Validator::make($request->all(), [
             'reason_cancel' => 'required|string',
             'cancel_method' => ['required', Rule::in(['tunai', 'BCA', 'BNI', 'BRI', 'BSI', 'Mandiri'])],
             'no_rekening' => 'required|integer',
         ]);
+         // Fetch the admin (assuming there's only one or a specific admin you want to notify)
+         $adminToken = $order->admin->notification_token;
+         // You can modify this line to get a specific admin if needed
+
+         if ($adminToken) {
+             // Send notification to the admin
+                 $this->firebaseService->sendToAdmin(
+                $adminToken, // $notification_token
+                'Permintaan pembatalan order',
+                'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda',
+                ''
+             );
+         }
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
-
-        $order = Order::where('id', $id)->first();
-
         if (!$order) {
             return response()->json(['message' => 'Order not found'], 404);
         }
-
         // Send notification to the user
         $this->firebaseService->sendNotification(
             $request->user()->notification_token,
@@ -236,28 +278,13 @@ class OrderController extends Controller
             'Pembayaran untuk Order ' . $order->id . ' menunggu pembatalan',
             ''
         );
-        // Fetch the admin (assuming there's only one or a specific admin you want to notify)
-        $admin = Admin::first(); // You can modify this line to get a specific admin if needed
-
-        if ($admin) {
-            // Send notification to the admin
-            $this->firebaseService->sendToAdmin(
-                $admin->notification_token,
-                'Permintaan pembatalan order',
-                'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda',
-                ''
-            );
-        }
-
         // Set the order status to "menunggu batal" and apply the cancelation details
         $order->status = 'menunggu batal';
         $order->reason_cancel = $request->reason_cancel;
         $order->cancel_method = $request->cancel_method;
         $order->no_rekening = $request->no_rekening;
-
         // Apply the admin fee
         $order->admin_fee = 0;
-
         $order->save();
 
         return response()->json([
@@ -266,6 +293,7 @@ class OrderController extends Controller
             'data' => $order->load(['orderDetails.menu']),
             'admin_fee' => $order->admin_fee
         ], 200);
+        }        
     }
 
 

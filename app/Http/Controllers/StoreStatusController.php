@@ -5,9 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\StoreStatus;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Services\FirebaseService;
+
 use Illuminate\Support\Facades\Log;
 class StoreStatusController extends Controller
 {
+    protected $firebaseService;
+    public function __construct(FirebaseService $firebaseService)
+    {
+        $this->firebaseService = $firebaseService;
+    }
     public function index()
     {
         $timezone = 'Asia/Jakarta'; 
@@ -124,6 +131,12 @@ class StoreStatusController extends Controller
         ]);
 
         $storeStatus = StoreStatus::find($id);
+
+        if('is_open' == true){
+            $this->firebaseService->sendNotificationToAll('Toko Sudah Buka', 'Status Toko Sekarang sudah buka kamu bisa memesan makanan sekarang', '', []);
+        }elseif ('is_open' == false) {
+            $this->firebaseService->sendNotificationToAll('Toko Sudah Tutup', 'Status Toko Sekarang sudah tutup kamu tidak bisa memesan makanan sekarang', '', []);
+        }
 
         if (is_null($storeStatus)) {
             return response()->json(['message' => 'Store status not found'], 404);
