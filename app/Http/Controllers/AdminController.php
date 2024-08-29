@@ -7,6 +7,8 @@ use App\Models\Admin;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Http\Resources\OrderDetailResource;
+use Illuminate\Support\Facades\Cache; // Import Cache facade
+
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use App\Services\FirebaseService;
@@ -221,8 +223,6 @@ class AdminController extends Controller
         $order->save();
 
         $adminToken = $order->admin->notification_token;
-
-
          // Send notification to the admin if required
          $this->firebaseService->sendToAdmin(
             $adminToken, // $notification_token
@@ -446,53 +446,54 @@ class AdminController extends Controller
 
 
     public function verifyForgotPassword(Request $request)
-{
-    $request->validate([
-        'otp' => 'required|string|min:6|max:6',
-        'email' => 'required|email',
-    ]);
-
-    $user = Admin::where('email', $request->email)->first();
-
-    if (!$user) {
-        return response([
-            'status' => 'failed',
-            'message' => 'User not found',
-        ], 404);
+    {
+        $request->validate([
+            'otp' => 'required|string|min:6|max:6',
+            'email' => 'required|email',
+        ]);
+    
+        $user = Admin::where('email', $request->email)->first();
+    
+        if (!$user) {
+            return response([
+                'status' => 'failed',
+                'message' => 'User not found',
+            ], 404);
+        }
+    
+        $otp = $request->otp;
+    
+        // Retrieve the most recent OTP within the last minute
+        $otps = Otp::where('admin_id', $user->id)
+                    ->where('created_at', '>', now()->subMinutes(1))
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+    
+        if (!$otps) {
+            return response([
+                'status' => 'failed',
+                'message' => 'OTP not found or expired',
+            ], 404);
+        }
+    
+        if ($otp === $otps->otp) {
+            // Generate a token for password reset and store it in cache
+            $token = Str::random(60);
+            Cache::put('password_reset_token_' . $user->id, $token, now()->addMinutes(10)); // Store for 10 minutes
+    
+            return response([
+                'status' => 'success',
+                'message' => 'OTP verified successfully, use this token to reset your password',
+                'token' => $token,
+            ], 200);
+        } else {
+            return response([
+                'status' => 'failed',
+                'message' => 'OTP verification failed',
+            ], 401);
+        }
     }
 
-    $otp = $request->otp;
-
-    // Retrieve the most recent OTP within the last minute
-    $otps = Otp::where('admin_id', $user->id)
-                ->where('created_at', '>', now()->subMinutes(1))
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-    if (!$otps) {
-        return response([
-            'status' => 'failed',
-            'message' => 'OTP not found or expired',
-        ], 404);
-    }
-
-    if ($otp === $otps->otp) {
-        // Generate a token for password reset
-        $token = Str::random(60);
-        $user->save();
-
-        return response([
-            'status' => 'success',
-            'message' => 'OTP verified successfully, use this token to reset your password',
-            'token' => $token,
-        ], 200);
-    } else {
-        return response([
-            'status' => 'failed',
-            'message' => 'OTP verification failed',
-        ], 401);
-    }
-}
 
 
 
@@ -502,20 +503,30 @@ class AdminController extends Controller
             'token' => 'required|string',
             'password' => 'required|string|min:8|confirmed',
         ]);
-    
-        $user = Admin::where($request->token)->first();
-    
+
+        // Find the user based on the token stored in cache
+        $user = null;
+        foreach (Admin::all() as $admin) {
+            if (Cache::get('password_reset_token_' . $admin->id) === $request->token) {
+                $user = $admin;
+                break;
+            }
+        }
+
         if (!$user) {
             return response([
                 'status' => 'failed',
                 'message' => 'Invalid or expired token',
             ], 404);
         }
-    
+
         // Update the password
         $user->password = bcrypt($request->password);
         $user->save();
-    
+
+        // Remove the token from cache after successful password reset
+        Cache::forget('password_reset_token_' . $user->id);
+
         return response([
             'status' => 'success',
             'message' => 'Password has been reset successfully',
