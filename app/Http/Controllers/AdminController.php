@@ -439,43 +439,55 @@ class AdminController extends Controller
 
 
     public function verifyForgotPassword(Request $request)
-    {
-        $request->validate([
-            'otp' => 'required|string|min:6|max:6',
-            'email' => 'required|email',
-        ]);
+{
+    $request->validate([
+        'otp' => 'required|string|min:6|max:6',
+        'email' => 'required|email',
+    ]);
 
-        $user = Admin::where('email', $request->email)->first();
-        $otp = $request->otp;
-        $otps = Otp::where('admin_id', $user->id)->first();
+    $user = Admin::where('email', $request->email)->first();
 
-        if ($otps == null) {
-            return response([
-                'status' => 'failed',
-                'message' => 'OTP not found',
-            ], 404);
-        }
-
-        if ($otp == $otps->otp) {
-            
-
-            // Generate a token for password reset
-            $token = Str::random(60);
-            $user->reset_token = $token;
-            $user->save();
-
-            return response([
-                'status' => 'success',
-                'message' => 'OTP verified successfully, use this token to reset your password',
-                'token' => $token,
-            ], 200);
-        } else {
-            return response([
-                'status' => 'failed',
-                'message' => 'OTP verification failed',
-            ], 401);
-        }
+    if (!$user) {
+        return response([
+            'status' => 'failed',
+            'message' => 'User not found',
+        ], 404);
     }
+
+    $otp = $request->otp;
+
+    // Retrieve the most recent OTP within the last minute
+    $otps = Otp::where('admin_id', $user->id)
+                ->where('created_at', '>', now()->subMinutes(1))
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+    if (!$otps) {
+        return response([
+            'status' => 'failed',
+            'message' => 'OTP not found or expired',
+        ], 404);
+    }
+
+    if ($otp === $otps->otp) {
+        // Generate a token for password reset
+        $token = Str::random(60);
+        $user->reset_token = $token;
+        $user->save();
+
+        return response([
+            'status' => 'success',
+            'message' => 'OTP verified successfully, use this token to reset your password',
+            'token' => $token,
+        ], 200);
+    } else {
+        return response([
+            'status' => 'failed',
+            'message' => 'OTP verification failed',
+        ], 401);
+    }
+}
+
 
 
     public function resetPassword(Request $request)
