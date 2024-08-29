@@ -32,9 +32,16 @@ class AdminController extends Controller
             'password' => 'required|string',
             'notification_token' => 'nullable|string',
         ]);
-    
+
+         
         // Find the admin by email
         $user = Admin::where('email', $request->email)->first();
+
+        // Update the notification token if provided
+        if ($request->filled('notification_token')) {
+            $user->notification_token = $request->notification_token;
+            $user->save();
+        }
     
         if ($user == null || !Hash::check($request->password, $user->password)) {
             return response([
@@ -42,11 +49,7 @@ class AdminController extends Controller
             ], 401);
         }
     
-        // Update the notification token if provided
-        if ($request->filled('notification_token')) {
-            $user->notification_token = $request->notification_token;
-            $user->save();
-        }
+       
     
         // Generate the token
         $token = $user->createToken('warmindo')->plainTextToken;
@@ -217,19 +220,22 @@ class AdminController extends Controller
         $order->status = 'sedang diproses';
         $order->save();
 
+        $adminToken = $order->admin->notification_token;
+
+
+         // Send notification to the admin if required
+         $this->firebaseService->sendToAdmin(
+            $adminToken, // $notification_token
+            'Pembatalan Ditolak',
+            'Permintaan pembatalan order dari ' . $order->user()->name . ' telah ditolak. Pesanan sedang diproses.',
+            ''
+        );
+
         // Send notification to the user about the rejection
         $this->firebaseService->sendNotification(
             $order->user->notification_token,
             'Pembatalan Ditolak',
             'Permintaan pembatalan order Anda dengan ID ' . $order->id . ' telah ditolak. Pesanan Anda sedang diproses.',
-            ''
-        );
-
-        // Send notification to the admin if required
-        $this->firebaseService->sendNotification(
-            $order->admin->notification_token,
-            'Pembatalan Ditolak',
-            'Permintaan pembatalan order dari ' . $order->user()->name . ' telah ditolak. Pesanan sedang diproses.',
             ''
         );
 
@@ -248,6 +254,16 @@ class AdminController extends Controller
         if (!$order) {
             return response()->json(['message' => 'Order not found'], 404);
         }
+
+        $admin = Admin::where('id')->first();
+
+        // Send notification to the admin if required
+        $this->firebaseService->sendNotification(
+            $admin->notification_token,
+            'Pembatalan Diterima',
+            'Permintaan pembatalan order dari ' . $order->user->name . ' telah diterima. Pesanan telah dibatalkan.',
+            ''
+        );
 
         // Update the order status to "batal"
         $order->status = 'menunggu pengembalian dana';
@@ -269,16 +285,7 @@ class AdminController extends Controller
             ''
         );
     }
-        // Retrieve the first admin
-    $admin = Admin::where('id')->first();
-
-    // Send notification to the admin if required
-    $this->firebaseService->sendNotification(
-        $admin->notification_token,
-        'Pembatalan Diterima',
-        'Permintaan pembatalan order dari ' . $order->user->name . ' telah diterima. Pesanan telah dibatalkan.',
-        ''
-    );
+    
 
         return response()->json([
             'success' => true,
@@ -496,7 +503,7 @@ class AdminController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
     
-        $user = Admin::where('reset_token', $request->token)->first();
+        $user = Admin::where($request->token)->first();
     
         if (!$user) {
             return response([
@@ -507,8 +514,6 @@ class AdminController extends Controller
     
         // Update the password
         $user->password = bcrypt($request->password);
-        // Clear the reset token after successful password reset
-        $user->reset_token = null;
         $user->save();
     
         return response([

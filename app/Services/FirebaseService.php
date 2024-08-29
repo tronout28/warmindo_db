@@ -73,32 +73,37 @@ class FirebaseService
 
     public function sendToAdmin($notification_token, $title, $body, $imageUrl, $data = [])
     {
-        $tokens = Admin::whereNotNull('notification_token')
-            ->where('role', 'admin')
-            ->pluck('notification_token');
-
+        // Jika $notification_token diberikan, ambil hanya token tersebut
+        if ($notification_token) {
+            $tokens = collect([$notification_token]);
+        } else {
+            // Jika $notification_token tidak diberikan, ambil semua token admin
+            $tokens = Admin::whereNotNull('notification_token')
+                ->pluck('notification_token');
+        }
+    
         $notification = Notification::create($title, $body, $imageUrl);
-
+    
         $notify = null;
-
+    
         foreach ($tokens as $deviceToken) {
             if (!$deviceToken) {
                 continue;
             }
-
-            // Ensure $data is an array
+    
+            // Pastikan $data adalah array
             $message = CloudMessage::withTarget('token', $deviceToken)
                 ->withNotification($notification)
                 ->withData(is_array($data) ? $data : []);
-
+    
             $notify = $this->messaging->send($message);
         }
-
+    
         if (!$notify) {
             return 'No admin tokens found or notifications sent.';
         }
-
-        return 'Notifications sent to all admins.';
+    
+        return 'Notifications sent to the selected admins.';
     }
 
 }
