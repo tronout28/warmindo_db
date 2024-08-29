@@ -472,7 +472,6 @@ class AdminController extends Controller
     if ($otp === $otps->otp) {
         // Generate a token for password reset
         $token = Str::random(60);
-        $user->reset_token = $token;
         $user->save();
 
         return response([
