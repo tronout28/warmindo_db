@@ -219,8 +219,10 @@ class OrderController extends Controller
         if ($order->payment_method == 'tunai') {
             $validator = Validator::make($request->all(), [
                 'reason_cancel' => 'required|string',
+                'cancel_method' => ['required', Rule::in(['tunai', 'BCA', 'BNI', 'BRI', 'BSI', 'Mandiri'])],
             ]);
             $order->reason_cancel = $request->reason_cancel;
+            $order->cancel_method = $request->cancel_method;
             $order->status = 'menunggu batal';
             $order->save();
 
