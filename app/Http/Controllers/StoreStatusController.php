@@ -59,13 +59,24 @@ class StoreStatusController extends Controller
                             // Reset the closure duration and open the store
                             $storeStatus->temporary_closure_duration = 0;
                             $storeStatus->is_open = true;
+                               if($storeStatus->is_open == true){
+                            $this->firebaseService->sendNotificationToAll('Toko Sudah Buka', 'Status Toko Sekarang sudah buka kamu bisa memesan makanan sekarang', '', []);
+                        }
+                            
                         }
                     } else {
                         // No temporary closure, set `is_open` to true if within hours
                         $storeStatus->is_open = true;
+                        if($storeStatus->is_open == true){
+                            $this->firebaseService->sendNotificationToAll('Toko Sudah Buka', 'Status Toko Sekarang sudah buka kamu bisa memesan makanan sekarang', '', []);
+                        }
+                        
                     }
                 }else{
                     $storeStatus->is_open = false;
+                    if($storeStatus->is_open == false){
+                        $this->firebaseService->sendNotificationToAll('Toko Sudah Tutup', 'Status Toko Sekarang sudah tutup kamu tidak bisa memesan makanan sekarang', '', []);
+                    }
                 }
             }
     
@@ -132,18 +143,14 @@ class StoreStatusController extends Controller
 
         $storeStatus = StoreStatus::find($id);
 
-        if('is_open' == true){
-            $this->firebaseService->sendNotificationToAll('Toko Sudah Buka', 'Status Toko Sekarang sudah buka kamu bisa memesan makanan sekarang', '', []);
-        }elseif ('is_open' == false) {
-            $this->firebaseService->sendNotificationToAll('Toko Sudah Tutup', 'Status Toko Sekarang sudah tutup kamu tidak bisa memesan makanan sekarang', '', []);
-        }
-
         if (is_null($storeStatus)) {
             return response()->json(['message' => 'Store status not found'], 404);
         }
 
         $storeStatus->update($validatedData);
-
+        if ($storeStatus->is_open == false) {
+            $this->firebaseService->sendNotificationToAll('Toko Sudah Tutup', 'Status Toko Sekarang sudah tutup kamu tidak bisa memesan makanan sekarang', '', []);
+        }
         return response()->json(['data' => $storeStatus], 200);
     }
 
