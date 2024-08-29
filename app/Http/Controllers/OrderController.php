@@ -225,10 +225,10 @@ class OrderController extends Controller
             $order->save();
 
             $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
-                // Send notification to the admin
-                foreach ($adminTokens as $adminToken) {
-                    $this->firebaseService->sendToAdmin($adminToken, 'Ada pesanan baru!', 'Pesanan dari ' . $order->user->username . ' telah diterima. Silahkan cek aplikasi Anda. Terima kasih! 🎉', '');
-                }
+            foreach ($adminTokens as $adminToken) {
+                $this->firebaseService->sendToAdmin($adminToken, 'Permintaan pembatalan order',  'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda',
+                '');
+            }
              // Send notification to the user
             $this->firebaseService->sendNotification(
                 $request->user()->notification_token,
@@ -248,18 +248,15 @@ class OrderController extends Controller
             'no_rekening' => 'required|integer',
         ]);
          // Fetch the admin (assuming there's only one or a specific admin you want to notify)
-         $adminToken = $order->admin->notification_token;
-         // You can modify this line to get a specific admin if needed
-
-         if ($adminToken) {
-             // Send notification to the admin
-                 $this->firebaseService->sendToAdmin(
-                $adminToken, // $notification_token
-                'Permintaan pembatalan order',
-                'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda',
-                ''
-             );
-         }
+         $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
+            foreach ($adminTokens as $adminToken) {
+                $this->firebaseService->sendToAdmin(
+                    $adminToken, // $notification_token
+                    'Permintaan pembatalan order',
+                    'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda',
+                    ''
+                 );
+            }
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
