@@ -222,15 +222,10 @@ class AdminController extends Controller
         $order->status = 'sedang diproses';
         $order->save();
 
-        $adminToken = $order->admin->notification_token;
-         // Send notification to the admin if required
-         $this->firebaseService->sendToAdmin(
-            $adminToken, // $notification_token
-            'Pembatalan Ditolak',
-            'Permintaan pembatalan order dari ' . $order->user()->name . ' telah ditolak. Pesanan sedang diproses.',
-            ''
-        );
-
+        $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
+        foreach ($adminTokens as $adminToken) {
+            $this->firebaseService->sendToAdmin($adminToken, 'Pembatalan Ditolak', 'Permintaan pembatalan order dari ' . $order->user()->name . ' telah ditolak. Pesanan sedang diproses.', '');
+        }
         // Send notification to the user about the rejection
         $this->firebaseService->sendNotification(
             $order->user->notification_token,
@@ -255,26 +250,25 @@ class AdminController extends Controller
             return response()->json(['message' => 'Order not found'], 404);
         }
 
-        $admin = Admin::where('id')->first();
-
-        // Send notification to the admin if required
-        $this->firebaseService->sendNotification(
-            $admin->notification_token,
-            'Pembatalan Diterima',
-            'Permintaan pembatalan order dari ' . $order->user->name . ' telah diterima. Pesanan telah dibatalkan.',
-            ''
-        );
-
+        $admin = Admin::whereNotNull('notification_token')->pluck('notification_token');
+        foreach ($adminTokens as $adminToken) {
+            $this->firebaseService->sendToAdmin($adminToken, 'Pembatalan Diterima', 'Permintaan pembatalan order dari ' . $order->user->name . ' telah diterima. Pesanan telah dibatalkan.', '');
+        }
         // Update the order status to "batal"
-        $order->status = 'menunggu pengembalian dana';
+        if($order->payment_method == 'tunai'){
+            $order->status = 'batal';
+        }else{
+            $order->status = 'menunggu pengembalian dana';
+        }
+        
         $order->save();
 
         // Send notification to the user about the acceptance
-        if($order2->status == 'sedang diproses'){
+        if($order2->payment_method != 'tunai'){
             $this->firebaseService->sendNotification(
                 $order->user->notification_token,
                 'Pesanan Dibatalkan',
-                'Pesanan anda dengan ID ' . $order->id . ' telah dibatalkan. oleh admin silahkan mengambil uang refund di lokasi order.',
+                'Pesanan anda dengan ID ' . $order->id . ' telah dibatalkan. oleh admin silahkan mengambil uang refund di lokasi warmindo.',
                 ''
             );
     }else{

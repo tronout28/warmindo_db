@@ -221,20 +221,14 @@ class OrderController extends Controller
                 'reason_cancel' => 'required|string',
             ]);
             $order->reason_cancel = $request->reason_cancel;
-            $order->status = 'batal';
+            $order->status = 'menunggu batal';
             $order->save();
 
-            $adminToken = $order->admin->notification_token;
-
-            if ($adminToken) {
+            $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
                 // Send notification to the admin
-                $this->firebaseService->sendToAdmin(
-                    $adminToken, // $notification_token
-                'Permintaan pembatalan order',
-                 'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda',
-                 ''
-                );
-            }
+                foreach ($adminTokens as $adminToken) {
+                    $this->firebaseService->sendToAdmin($adminToken, 'Ada pesanan baru!', 'Pesanan dari ' . $order->user->username . ' telah diterima. Silahkan cek aplikasi Anda. Terima kasih! 🎉', '');
+                }
              // Send notification to the user
             $this->firebaseService->sendNotification(
                 $request->user()->notification_token,
