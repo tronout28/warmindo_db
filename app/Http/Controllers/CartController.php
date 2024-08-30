@@ -128,7 +128,6 @@ class CartController extends Controller
                 $menu = Menu::find($data['menu_id']);
                 $cart->menu_id = $data['menu_id'];
                 $cart->price = $menu->price * ($data['quantity'] ?? $cart->quantity);
-                $menu->stock -= ($data['quantity'] ?? $cart->quantity);
                 $menu->save();
             }
     
