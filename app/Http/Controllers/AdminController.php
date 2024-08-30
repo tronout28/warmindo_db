@@ -204,6 +204,13 @@ class AdminController extends Controller
         $user->user_verified = true;
         $user->save();
 
+        $this->firebaseService->sendNotification(
+            $user->notification_token,
+            'Akun kamu terverifikasi oleh Admin',
+            'Akun kamu telah terverifikasi oleh admin. Selamat menikmati layanan kami! 🎉',
+            ''
+        );
+
         return response()->json([
             'message' => 'User verified successfully',
             'user' => $user,
@@ -301,6 +308,13 @@ class AdminController extends Controller
         // Unverify the user
         $user->user_verified = false;
         $user->save();
+
+        $this->firebaseService->sendNotification(
+            $user->notification_token,
+            'Akun kamu tidak terverifikasi',
+            'Akun kamu sudah tidak terverifikasi oleh admin. Silahkan hubungi admin untuk informasi lebih lanjut.',
+            ''
+        );
 
         return response()->json([
             'message' => 'Now user is not verified',
