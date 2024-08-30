@@ -11,18 +11,17 @@ class HistoryController extends Controller
 {
 
     public function getHistory()
-    {
-       
-        // Fetch all history records, you can add filtering based on request parameters if needed
-        $histories = History::with('menu')->get();
+{
+    // Fetch all history records, ordered by created_at in descending order (newest first)
+    $histories = History::with('menu')->orderBy('created_at', 'desc')->get();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'History records retrieved successfully',
-            'data' => $histories
-        ], 200);
-    
-    }
+    return response()->json([
+        'status' => 'success',
+        'message' => 'History records retrieved successfully',
+        'data' => $histories
+    ], 200);
+}
+
 
 
     public function destroy($id)
