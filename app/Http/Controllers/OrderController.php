@@ -35,6 +35,7 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
+
         $validator = Validator::make($request->all(), [
             'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal', 'menunggu pembayaran','menunggu pengembalian dana'])],
             'note' => 'nullable|string',
@@ -365,6 +366,18 @@ class OrderController extends Controller
             $this->firebaseService->sendNotification($userNotificationToken, 'Pesanan anda telah Dibatalkan', 'Pembayaran untuk Order ID ' . $order->id . ' telah terbatalkan', '');
         } elseif ($request->status == 'selesai') {
             $this->firebaseService->sendNotification($userNotificationToken, 'Pesanan anda telah Selesai', 'Makanan anda dengan Order ID ' . $order->id . ' telah selesai dan sampai di tangan anda', '');
+
+            $completedOrdersCount = Order::where('user_id', $order->user_id)
+            ->where('status', 'selesai')
+            ->count();
+
+        // Verify user if they have completed 14 orders
+        if ($completedOrdersCount >= 14 && !$order->user->user_verified) {
+            $order->user->user_verified = true;
+            $order->user->save();
+            $this->firebaseService->sendNotification($userNotificationToken, 'Selamat! Anda telah diverifikasi', 'Anda telah menyelesaikan 15 pesanan dan telah diverifikasi', '');
+        }
+
         } elseif ($request->status == 'pesanan siap') {
             $this->firebaseService->sendNotification($userNotificationToken, 'Pesanan anda telah Siap', 'Silahkan ambil makanan anda dengan Order ID ' . $order->id . ' di kedai Warmindo', '');
         } elseif ($request->status == 'menunggu batal') {
