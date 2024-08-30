@@ -58,6 +58,8 @@ class ToppingController extends Controller
         $validator = Validator::make($request->all(), [
             'name_topping' => 'required|string|max:255',
             'stock_topping' => 'required|integer',
+            'price' => 'required|numeric',
+            'stock_topping' => 'required|integer',
             'menu_ids' => 'required|array',
             'menu_ids.*' => 'integer|exists:menus,id',
         ]);
@@ -93,9 +95,11 @@ class ToppingController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'name_topping' => 'sometimes|required|string|max:255',
-            'stock_topping' => 'sometimes|required|integer',
-            'menu_ids' => 'sometimes|required|array',
+            'name_topping' => 'sometimes|nullable|string|max:255',
+            'stock_topping' => 'sometimes|nullable|integer',
+            'price' => 'sometimes|nullable|numeric',
+            'stock_topping' => 'sometimes|nullable|integer',
+            'menu_ids' => 'sometimes|nullable|array',
             'menu_ids.*' => 'integer|exists:menus,id',
         ]);
     
@@ -132,6 +136,7 @@ class ToppingController extends Controller
             'data' => $topping
         ], 200);
     }
+
     public function disableTopping($id)
      {
         $post = Topping::find($id);
