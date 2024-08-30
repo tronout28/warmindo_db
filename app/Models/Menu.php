@@ -68,4 +68,9 @@ class Menu extends Model
     {
         return $this->hasMany(Variant::class);
     }
+
+    public function toppings()
+    {
+        return $this->belongsToMany(Topping::class, 'menu_topping');
+    }
 }
