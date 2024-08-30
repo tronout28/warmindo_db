@@ -34,7 +34,7 @@ class ToppingController extends Controller
             $toppings = Topping::with('menus')->get()->map(function ($topping) {
                 return [
                     'id' => $topping->id,
-                    'name' => $topping->name_topping,
+                    'name_topping' => $topping->name_topping,
                     'price' => $topping->price,
                     'stock' => $topping->stock_topping,
                     'menus' => $topping->menus->map(function ($menu) {
