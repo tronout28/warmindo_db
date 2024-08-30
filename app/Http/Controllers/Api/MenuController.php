@@ -15,7 +15,7 @@ class MenuController extends Controller
 
      public function index(Request $request)
     {
-        $menus = Menu::with('ratings')->get(); // No need to manually add average_rating
+        $menus = Menu::with(['ratings', 'toppings'])->get(); // No need to manually add average_rating
 
         return response()->json($menus);
     }

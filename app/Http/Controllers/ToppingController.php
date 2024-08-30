@@ -3,37 +3,77 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Menu;
 use App\Models\Topping;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class ToppingController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $toppings = Topping::all();
+        $menuId = $request->query('menu_id');
+
+        if ($menuId) {
+            $toppings = Menu::findOrFail($menuId)->toppings->map(function ($topping) use ($menuId) {
+                return [
+                    'id' => $topping->id,
+                    'name' => $topping->name_topping,
+                    'price' => $topping->price,
+                    'stock' => $topping->stock_topping,
+                    'menus' => [
+                        [
+                            'menu_id' => $menuId,
+                            'menu_name' => Menu::find($menuId)->name_menu,
+                        ]
+                    ],
+                    // tambahkan properti lain yang dibutuhkan
+                ];
+            });
+        } else {
+            $toppings = Topping::with('menus')->get()->map(function ($topping) {
+                return [
+                    'id' => $topping->id,
+                    'name' => $topping->name_topping,
+                    'price' => $topping->price,
+                    'stock' => $topping->stock_topping,
+                    'menus' => $topping->menus->map(function ($menu) {
+                        return [
+                            'menu_id' => $menu->id,
+                            'menu_name' => $menu->name_menu,
+                        ];
+                    }),
+                    // tambahkan properti lain yang dibutuhkan
+                ];
+            });
+        }
+
         return response()->json(['data' => $toppings], 200);
     }
+
+
 
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name_topping' => 'required|string|max:255',
             'stock_topping' => 'required|integer',
-            //  'menu_id' => 'required|integer|exists:menus,id',
+            'menu_ids' => 'required|array',
+            'menu_ids.*' => 'integer|exists:menus,id',
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
-
-        $data = $request->all();
-
-        $topping = Topping::create($data);
-
+    
+        $topping = Topping::create($request->except('menu_ids'));
+    
+        // Attach the topping to the selected menus
+        $topping->menus()->attach($request->menu_ids);
+    
         return response()->json([
             'success' => true,
-            'message' => 'Topping created successfully',
+            'message' => 'Topping created and associated with menus successfully',
             'data' => $topping
         ], 201);
     }
@@ -54,31 +94,37 @@ class ToppingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name_topping' => 'sometimes|required|string|max:255',
-            'image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'stock_topping' => 'sometimes|required|integer',
+            'menu_ids' => 'sometimes|required|array',
+            'menu_ids.*' => 'integer|exists:menus,id',
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
-
+    
         $topping = Topping::findOrFail($id);
-        $data = $request->all();
-
-        if ($request->hasFile('image')) {
-            // Hapus gambar lama jika ada
-            if ($topping->image) {
-                Storage::delete('topping/' . $topping->image);
-            }
-
-            // Simpan gambar baru
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->extension();
-            $image->move(public_path('topping'), $imageName);
-            $data['image'] = $imageName;
+        $topping->update($request->except('menu_ids'));
+    
+        if ($request->has('menu_ids')) {
+            // Sync the topping with the selected menus
+            $topping->menus()->sync($request->menu_ids);
         }
 
-        $topping->update($data);
+        // if ($request->hasFile('image')) {
+        //     // Hapus gambar lama jika ada
+        //     if ($topping->image) {
+        //         Storage::delete('topping/' . $topping->image);
+        //     }
+
+        //     // Simpan gambar baru
+        //     $image = $request->file('image');
+        //     $imageName = time() . '.' . $image->extension();
+        //     $image->move(public_path('topping'), $imageName);
+        //     $data['image'] = $imageName;
+        // }
+
+        // $topping->update($data);
 
         return response()->json([
             'success' => true,
