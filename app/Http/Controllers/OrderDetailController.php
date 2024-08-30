@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Resources\OrderDetailResource;
 use App\Models\Menu;
 use App\Models\Order;
+use App\Models\Cart;
+use App\Models\Users;
 use App\Models\OrderDetail;
 use App\Models\OrderDetailTopping;
 use Illuminate\Http\Request;
@@ -63,7 +65,9 @@ class OrderDetailController extends Controller
 
             $this->updatePrice($data['order_id']);
         }
-
+        $order = Order::find($request->datas[0]['order_id']);
+        $userId = $order->user_id;
+        Cart::where('user_id', $userId)->delete();
         $orderDetail = OrderDetail::where('order_id', $request->datas[0]['order_id'])->get();
 
         return response()->json([
