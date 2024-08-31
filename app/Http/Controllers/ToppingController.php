@@ -18,10 +18,10 @@ class ToppingController extends Controller
             $toppings = Menu::findOrFail($menuId)->toppings->map(function ($topping) use ($menuId) {
                 return [
                     'id' => $topping->id,
-                    'name' => $topping->name_topping,
+                    'name_topping' => $topping->name_topping,
                     'price' => $topping->price,
-                    'stock' => $topping->stock_topping,
-                    'status' => $topping->status_topping,
+                    'stock_topping' => $topping->stock_topping,
+                    'status_topping' => $topping->status_topping,
                     'menus' => [
                         [
                             'menu_id' => $menuId,
@@ -35,10 +35,10 @@ class ToppingController extends Controller
             $toppings = Topping::with('menus')->get()->map(function ($topping) {
                 return [
                     'id' => $topping->id,
-                    'name' => $topping->name_topping,
+                    'name_topping' => $topping->name_topping,
                     'price' => $topping->price,
-                    'stock' => $topping->stock_topping,
-                    'status' => $topping->status_topping,
+                    'stock_topping' => $topping->stock_topping,
+                    'status_topping' => $topping->status_topping,
                     'menus' => $topping->menus->map(function ($menu) {
                         return [
                             'menu_id' => $menu->id,
