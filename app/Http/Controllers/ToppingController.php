@@ -21,6 +21,7 @@ class ToppingController extends Controller
                     'name' => $topping->name_topping,
                     'price' => $topping->price,
                     'stock' => $topping->stock_topping,
+                    'status' => $topping->status_topping,
                     'menus' => [
                         [
                             'menu_id' => $menuId,
@@ -37,6 +38,7 @@ class ToppingController extends Controller
                     'name_topping' => $topping->name_topping,
                     'price' => $topping->price,
                     'stock' => $topping->stock_topping,
+                    'status' => $topping->status_topping,
                     'menus' => $topping->menus->map(function ($menu) {
                         return [
                             'menu_id' => $menu->id,
@@ -59,6 +61,7 @@ class ToppingController extends Controller
             'name_topping' => 'required|string|max:255',
             'stock_topping' => 'required|integer',
             'price' => 'required|numeric',
+            'status_topping' => 'required|boolean',
             'menu_ids' => 'required|array',
             'menu_ids.*' => 'integer|exists:menus,id',
         ]);
@@ -97,6 +100,7 @@ class ToppingController extends Controller
             'name_topping' => 'sometimes|nullable|string|max:255',
             'stock_topping' => 'sometimes|nullable|integer',
             'price' => 'sometimes|nullable|numeric',
+            'status_topping' => 'sometimes|nullable|boolean',
             'menu_ids' => 'sometimes|nullable|array',
             'menu_ids.*' => 'integer|exists:menus,id',
         ]);
