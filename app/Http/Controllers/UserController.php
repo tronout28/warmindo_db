@@ -330,6 +330,8 @@ class UserController extends Controller
     public function logout()
     {
         $user = User::where('email', auth()->user()->email)->first();
+        $user->notification_token = null;
+        $user->save();
         $user->tokens()->delete();
 
         return response([

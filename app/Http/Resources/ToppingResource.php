@@ -17,6 +17,7 @@ class ToppingResource extends JsonResource
         return [
             'id' => optional($this->topping)->id,
             'name_topping' => optional($this->topping)->name_topping,
+            'stock_topping' => optional($this->topping)->stock_topping,
             'price' => optional($this->topping)->price,
         ];
     }

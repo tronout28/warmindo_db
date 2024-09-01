@@ -325,6 +325,8 @@ class AdminController extends Controller
     public function logout()
     {
         $user = Admin::where('email', auth()->user()->email)->first();
+        $user->notification_token = null;
+        $user->save();
         $user->tokens()->delete();
 
         return response([
