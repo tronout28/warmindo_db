@@ -241,6 +241,68 @@ class AdminController extends Controller
             ''
         );
 
+        if ($order->payment_method == 'tunai') {
+            $timeSinceProcessed = now()->diffInMinutes($order->updated_at);
+            
+            if ($timeSinceProcessed > 30) {
+                // Send notification to admins
+                    $this->firebaseService->sendToAdmin(
+                        $adminToken, 
+                        'Pesanan Belum Diambil ?', 
+                        'Pesanan dari ' . $order->user->name . ' (ID: ' . $order->user_id . ') belum diambil lebih dari 30 menit. Apakah Anda ingin lanjut menunggu user mengambil pesanan? Jika tidak, Anda dapat mengubah status order menjadi batal dan bisa unverify user ' . $order->user_id, 
+                        ''
+                    );
+                
+    
+                // Send notification to the user
+                $this->firebaseService->sendNotification(
+                    $order->user->notification_token,
+                    'Pesanan Anda Belum Diambil',
+                    'Pesanan Anda telah melebihi 30 menit. Jika belum diambil, akun Anda berisiko untuk di-unverify oleh admin.',
+                    ''
+                );
+            }if($timeSinceProcessed > 60){
+                 // Send notification to admins
+                    $this->firebaseService->sendToAdmin(
+                        $adminToken, 
+                        'Pesanan Belum Diambil ?', 
+                        'Pesanan dari ' . $order->user->name . ' (ID: ' . $order->user_id . ') belum diambil lebih dari 1 jam. Apakah Anda ingin lanjut menunggu user mengambil pesanan? Jika tidak, Anda dapat mengubah status order menjadi batal dan bisa unverify user ' . $order->user_id, 
+                        ''
+                    );
+
+                
+
+    
+                // Send notification to the user
+                    $this->firebaseService->sendNotification(
+                        $order->user->notification_token,
+                        'Pesanan Anda Belum Diambil',
+                        'Pesanan Anda telah melebihi 30 menit. Jika belum diambil, akun Anda berisiko untuk di-unverify oleh admin.',
+                        ''
+                    );
+                
+            }elseif($timeSinceProcessed > 120){
+                // Send notification to admins
+                    $this->firebaseService->sendToAdmin(
+                        $adminToken, 
+                        'Pesanan Belum Diambil ?', 
+                        'Pesanan dari ' . $order->user->name . ' (ID: ' . $order->user_id . ') belum diambil lebih dari 1 jam. Apakah Anda ingin lanjut menunggu user mengambil pesanan? Jika tidak, Anda dapat mengubah status order menjadi batal dan bisa unverify user ' . $order->user_id, 
+                        ''
+                    );
+
+                // Send notification to the user
+                    $this->firebaseService->sendNotification(
+                        $order->user->notification_token,
+                        'Pesanan Anda Belum Diambil',
+                        'Pesanan Anda telah melebihi 1 jam. Jika belum diambil, akun Anda akan di-unverify oleh admin. segera ambil pesanan anda!',
+                        ''
+                    );
+
+                    $order->updated_at = now()->subMinutes(60);
+                    $order->save();
+            }
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Order cancelation rejected successfully',
