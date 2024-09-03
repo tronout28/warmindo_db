@@ -307,6 +307,7 @@ class OrderController extends Controller
 
         $order = Order::where('id', $id)->first();
         $order->payment_method = $request->payment_method;
+        $order->status = 'sedang diproses';
         $order->save(); 
 
         return response()->json([
