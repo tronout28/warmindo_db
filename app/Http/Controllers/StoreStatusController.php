@@ -142,10 +142,34 @@ class StoreStatusController extends Controller
         $storeStatus->update($validatedData);
         if ($storeStatus->is_open == false) {
             $this->firebaseService->sendNotificationToAll('Toko Sudah Tutup', 'Status Toko Sekarang sudah tutup kamu tidak bisa memesan makanan sekarang', '', []);
+        }else{
+            $this->firebaseService->sendNotificationToAll('Toko Sudah Buka', 'Status Toko Sekarang sudah buka kamu bisa memesan makanan sekarang', '', []);
         }
         return response()->json(['data' => $storeStatus], 200);
     }
+    public function openStore($id)
+    {        
+        $storeStatus = StoreStatus::find($id);
 
+        if (is_null($storeStatus)) {
+            return response()->json(['message' => 'Store status not found'], 404);
+        }
+    
+            $storeStatus->update(['force_close' => false,'temporary_closure_duration' => 0]);
+                $this->firebaseService->sendNotificationToAll('Toko Sudah Buka', 'Status Toko Sekarang sudah buka kamu bisa memesan makanan sekarang', '', []);
+            return response()->json(['data' => $storeStatus], 200);
+    }
+    public function closeStore($id)
+    {        
+        $storeStatus = StoreStatus::find($id);
+
+        if (is_null($storeStatus)) {
+            return response()->json(['message' => 'Store status not found'], 404);
+        }
+            $storeStatus->update(['force_close' => true]);
+            $this->firebaseService->sendNotificationToAll('Toko Sudah Tutup', 'Status Toko Sekarang sudah tutup kamu tidak bisa memesan makanan sekarang', '', []);
+            return response()->json(['data' => $storeStatus], 200);
+    }
     public function destroy($id)
     {
         $storeStatus = StoreStatus::find($id);

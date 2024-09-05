@@ -58,6 +58,8 @@ Route::prefix('store-statuses')->group(function () {
     Route::get('/', [StoreStatusController::class, 'index']);
     Route::post('/store', [StoreStatusController::class, 'store']);
     Route::get('/{id}', [StoreStatusController::class, 'show']);
+    Route::post('/closed/{id}', [StoreStatusController::class, 'closeStore']);
+    Route::post('/open/{id}', [StoreStatusController::class, 'openStore']);
     Route::put('/{id}', [StoreStatusController::class, 'update']);
     Route::delete('/{id}', [StoreStatusController::class, 'destroy']);
 });
