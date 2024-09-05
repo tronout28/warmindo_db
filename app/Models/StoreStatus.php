@@ -15,13 +15,18 @@ class StoreStatus extends Model
         'start_time',
         'end_time',
         'temporary_closure_duration',
+        'force_close',
+
     ];
    
     public function getIsOpenAttribute()
     {
         $today = Carbon::now('Asia/Jakarta')->locale('id')->dayName; // Get the current day name in Indonesian
         $currentTime = Carbon::now('Asia/Jakarta')->format('H:i:s'); // Get the current time
-
+        if ($this->force_close) {
+            return false;
+        }
+    
         if ($this->temporary_closure_duration) {
             return false;
         }

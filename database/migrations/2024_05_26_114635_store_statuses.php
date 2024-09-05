@@ -16,7 +16,8 @@ return new class extends Migration
             $table->boolean('is_open')->default(false);
             $table->string('days')->nullable(); // Store days like "Monday, Tuesday"
             $table->time('start_time')->nullable();
-            $table->time('end_time')->nullable();
+            $table->time('end_time')->nullable();   
+            $table->boolean('force_close')->nullable()->default(false);
             $table->integer('temporary_closure_duration')->nullable(); // Store closure duration like "30 minutes"
             $table->timestamps();
         });
