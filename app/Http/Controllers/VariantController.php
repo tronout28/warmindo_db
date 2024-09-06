@@ -11,10 +11,10 @@ class VariantController extends Controller
 {
     public function index()
     {
-        $variants = Variant::all()->orderBy('created_at', 'desc') // Mengurutkan berdasarkan created_at dari yang terbaru
-        ->get();
+        $variants = Variant::orderBy('created_at', 'desc')->get(); // Apply orderBy to the query builder, not the collection
         return response()->json(['data' => $variants], 200);
     }
+
 
     public function store(Request $request)
     {
