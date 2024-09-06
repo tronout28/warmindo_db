@@ -15,45 +15,51 @@ class ToppingController extends Controller
         $menuId = $request->query('menu_id');
 
         if ($menuId) {
-            $toppings = Menu::findOrFail($menuId)->toppings->map(function ($topping) use ($menuId) {
-                return [
-                    'id' => $topping->id,
-                    'name_topping' => $topping->name_topping,
-                    'price' => $topping->price,
-                    'stock_topping' => $topping->stock_topping,
-                    'status_topping' => $topping->status_topping,
-                    'menus' => [
-                        [
-                            'menu_id' => $menuId,
-                            'menu_name' => Menu::find($menuId)->name_menu,
-                        ]
-                    ],
-                    // tambahkan properti lain yang dibutuhkan
-                ];
-            });
+            $toppings = Menu::findOrFail($menuId)->toppings()
+                ->orderBy('created_at', 'desc') // Urutkan toppings berdasarkan created_at
+                ->get()
+                ->map(function ($topping) use ($menuId) {
+                    return [
+                        'id' => $topping->id,
+                        'name_topping' => $topping->name_topping,
+                        'price' => $topping->price,
+                        'stock_topping' => $topping->stock_topping,
+                        'status_topping' => $topping->status_topping,
+                        'menus' => [
+                            [
+                                'menu_id' => $menuId,
+                                'menu_name' => Menu::find($menuId)->name_menu,
+                            ]
+                        ],
+                        // tambahkan properti lain yang dibutuhkan
+                    ];
+                });
         } else {
-            $toppings = Topping::with('menus')->get()->map(function ($topping) {
-                return [
-                    'id' => $topping->id,
-                    'name_topping' => $topping->name_topping,
-                    'price' => $topping->price,
-                    'stock_topping' => $topping->stock_topping,
-                    'status_topping' => $topping->status_topping,
-                    'menus' => $topping->menus->map(function ($menu) {
-                        return [
-                            'menu_id' => $menu->id,
-                            'menu_name' => $menu->name_menu,
-                        ];
-                    }),
-                    // tambahkan properti lain yang dibutuhkan
-                ];
-            });
+            $toppings = Topping::with(['menus' => function($query) {
+                    $query->orderBy('created_at', 'desc'); // Urutkan menus berdasarkan created_at
+                }])
+                ->orderBy('created_at', 'desc') // Urutkan toppings berdasarkan created_at
+                ->get()
+                ->map(function ($topping) {
+                    return [
+                        'id' => $topping->id,
+                        'name_topping' => $topping->name_topping,
+                        'price' => $topping->price,
+                        'stock_topping' => $topping->stock_topping,
+                        'status_topping' => $topping->status_topping,
+                        'menus' => $topping->menus->map(function ($menu) {
+                            return [
+                                'menu_id' => $menu->id,
+                                'menu_name' => $menu->name_menu,
+                            ];
+                        }),
+                        // tambahkan properti lain yang dibutuhkan
+                    ];
+                });
         }
 
         return response()->json(['data' => $toppings], 200);
     }
-
-
 
     public function store(Request $request)
     {

@@ -409,10 +409,30 @@ class AdminController extends Controller
 
     public function getOrders()
     {
+        // Define a custom sorting order for statuses
+        // $statusOrder = [
+        //     'konfirmasi pesanan' => 1,
+        //     'sedang diproses' => 2,
+        //     'pesanan siap' => 3,
+        //     'menunggu pengembalian dana' => 4,
+        //     'selesai' => 5,
+        //     'batal' => 6,
+        // ];
+
         // Define the query
         $query = Order::with(['orderDetails.menu', 'user']) // Ensure the user relationship is loaded
             ->leftJoin('transactions', 'orders.id', '=', 'transactions.order_id')
-            ->select('orders.*', 'transactions.payment_channel as transaction_payment_method');
+            ->select('orders.*', 'transactions.payment_channel as transaction_payment_method')
+            ->orderByRaw(
+                "FIELD(status, 'konfirmasi pesanan', 'sedang diproses', 'pesanan siap', 'menunggu pengembalian dana', 'selesai', 'batal')"
+            )
+            // For 'konfirmasi pesanan' and 'sedang diproses', order by oldest 'created_at'
+            ->orderByRaw(
+                "CASE 
+                    WHEN status = 'konfirmasi pesanan' THEN created_at
+                    WHEN status = 'sedang diproses' THEN created_at
+                END ASC"
+            );
 
         // Log the SQL query
         Log::info('SQL Query:', [
@@ -425,24 +445,7 @@ class AdminController extends Controller
 
         // Log the raw data
         Log::info('Orders Data:', ['orders' => $orders]);
-
-        // if ($orders->isNotEmpty()) {
-        //     // Fetch all admins (you can modify this to fetch specific admins if necessary)
-        //     $admins = Admin::all();
-
-        //     foreach ($orders as $order) {
-        //         foreach ($admins as $admin) {
-        //             $this->firebaseService->sendToAdmin(
-        //                 $admin->notification_token,
-        //                 'Ada pesanan baru!',
-        //                 'Pesanan dari ' . $order->user->username . ' telah diterima. Silahkan cek aplikasi Anda. Terima kasih! 🎉',
-        //                 '',
-        //                 [] // Pass an array instead of a string or other data types
-        //             );
-        //         }
-        //     }
-        // }
-
+        
         return response([
             'status' => 'success',
             'message' => 'Orders fetched successfully',
@@ -470,6 +473,7 @@ class AdminController extends Controller
             }),
         ], 200);
     }
+
 
     public function forgotPassword(Request $request)
     {
