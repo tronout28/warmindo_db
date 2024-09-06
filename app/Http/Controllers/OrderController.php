@@ -225,14 +225,14 @@ class OrderController extends Controller
             $order->reason_cancel = $request->reason_cancel;
             $order->cancel_method = $request->cancel_method;
             $order->status = 'batal';
-            if($order->status != 'sedang diproses'){
+            
+            if ($order->status != 'sedang diproses') {
                 $order->save();
                 $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
                 foreach ($adminTokens as $adminToken) {
-                    $this->firebaseService->sendToAdmin($adminToken, 'Permintaan pembatalan order',  'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda',
-                    '');
+                    $this->firebaseService->sendToAdmin($adminToken, 'Permintaan pembatalan order', 'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda', '');
                 }
-                 // Send notification to the user
+
                 $this->firebaseService->sendNotification(
                     $request->user()->notification_token,
                     'Pesanan anda telah Dibatalkan',
@@ -244,59 +244,72 @@ class OrderController extends Controller
                     'message' => 'Order canceled successfully',
                     'data' => $order->load(['orderDetails.menu']),
                 ], 200);
-            }else{
+            } else {
                 return response()->json([
                     'success' => false,
                     'message' => 'Order cannot be canceled',
                 ], 400);
-            }          
-        }else{
+            }
+        } else {
             $validator = Validator::make($request->all(), [
-            'reason_cancel' => 'required|string',
-            'cancel_method' => ['required', Rule::in(['tunai', 'BCA', 'BNI', 'BRI', 'BSI', 'Mandiri'])],
-            'no_rekening' => 'required|integer',
-        ]);
-         // Fetch the admin (assuming there's only one or a specific admin you want to notify)
-         $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
-            foreach ($adminTokens as $adminToken) {
-                $this->firebaseService->sendToAdmin(
-                    $adminToken, // $notification_token
-                    'Permintaan pembatalan order',
-                    'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda',
-                    ''
-                 );
+                'reason_cancel' => 'required|string',
+                'cancel_method' => ['required', Rule::in(['tunai', 'BCA', 'BNI', 'BRI', 'BSI', 'Mandiri'])],
+                'no_rekening' => 'required|integer',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 422);
             }
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-        if (!$order) {
-            return response()->json(['message' => 'Order not found'], 404);
-        }
-        // Send notification to the user
-        $this->firebaseService->sendNotification(
-            $request->user()->notification_token,
-            'Pesanan anda telah Dibatalkan',
-            'Pembayaran untuk Order ' . $order->id . ' menunggu pembatalan',
-            ''
-        );
-        // Set the order status to "menunggu batal" and apply the cancelation details
-        $order->status = 'menunggu pengembalian dana';
-        $order->reason_cancel = $request->reason_cancel;
-        $order->cancel_method = $request->cancel_method;
-        $order->no_rekening = $request->no_rekening;
-        // Apply the admin fee
-        $order->admin_fee = 0;
-        $order->save();
+            if (!$order) {
+                return response()->json(['message' => 'Order not found'], 404);
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Order canceled successfully ',
-            'data' => $order->load(['orderDetails.menu']),
-            'admin_fee' => $order->admin_fee
-        ], 200);
-        }        
+            // Tentukan admin_fee berdasarkan payment_method
+            $adminFeePercentage = 0;
+            switch ($order->payment_method) {
+                case 'OVO':
+                case 'DANA':
+                case 'LINKAJA':
+                    $adminFeePercentage = 0.015; // 1.5% untuk OVO, DANA, LINKAJA
+                    break;
+                case 'SHOPEEPAY':
+                    $adminFeePercentage = 0.018; // 2.0% untuk SHOPEEPAY
+                    break;
+                case 'JENIUSPAY':
+                    $adminFeePercentage = 0.02; // 2.0% untuk JENIUSPAY
+                    break;
+                case 'QRIS':
+                    $adminFeePercentage = 0.0063; // 0.63% untuk QRIS
+                    break;  
+                }
+            // Hitung admin_fee
+            $order->admin_fee = $order->price_order * $adminFeePercentage;
+
+            // Send notification to the user
+            $this->firebaseService->sendNotification(
+                $request->user()->notification_token,
+                'Pesanan anda telah Dibatalkan',
+                'Pembayaran untuk Order ' . $order->id . ' menunggu pembatalan',
+                ''
+            );
+
+            // Update order status
+            $order->status = 'menunggu pengembalian dana';
+            $order->reason_cancel = $request->reason_cancel;
+            $order->cancel_method = $request->cancel_method;
+            $order->no_rekening = $request->no_rekening;
+            $order->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order canceled successfully',
+                'data' => $order->load(['orderDetails.menu']),
+                'admin_fee' => $order->admin_fee
+            ], 200);
+        }
     }
+
 
 
     
