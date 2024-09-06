@@ -245,14 +245,15 @@ class AdminController extends Controller
             $timeSinceProcessed = now()->diffInMinutes($order->updated_at);
             
             if ($timeSinceProcessed > 30) {
-                // Send notification to admins
+                foreach ($adminTokens as $adminToken) {
+
                     $this->firebaseService->sendToAdmin(
                         $adminToken, 
                         'Pesanan Belum Diambil ?', 
                         'Pesanan dari ' . $order->user->name . ' (ID: ' . $order->user_id . ') belum diambil lebih dari 30 menit. Apakah Anda ingin lanjut menunggu user mengambil pesanan? Jika tidak, Anda dapat mengubah status order menjadi batal dan bisa unverify user ' . $order->user_id, 
                         ''
                     );
-                
+                }
     
                 // Send notification to the user
                 $this->firebaseService->sendNotification(
@@ -262,14 +263,15 @@ class AdminController extends Controller
                     ''
                 );
             }if($timeSinceProcessed > 60){
-                 // Send notification to admins
+                foreach ($adminTokens as $adminToken) {
+
                     $this->firebaseService->sendToAdmin(
                         $adminToken, 
                         'Pesanan Belum Diambil ?', 
                         'Pesanan dari ' . $order->user->name . ' (ID: ' . $order->user_id . ') belum diambil lebih dari 1 jam. Apakah Anda ingin lanjut menunggu user mengambil pesanan? Jika tidak, Anda dapat mengubah status order menjadi batal dan bisa unverify user ' . $order->user_id, 
                         ''
                     );
-
+                }
                 
 
     
@@ -282,13 +284,14 @@ class AdminController extends Controller
                     );
                 
             }elseif($timeSinceProcessed > 120){
-                // Send notification to admins
+                foreach ($adminTokens as $adminToken) {
                     $this->firebaseService->sendToAdmin(
                         $adminToken, 
                         'Pesanan Belum Diambil ?', 
                         'Pesanan dari ' . $order->user->name . ' (ID: ' . $order->user_id . ') belum diambil lebih dari 1 jam. Apakah Anda ingin lanjut menunggu user mengambil pesanan? Jika tidak, Anda dapat mengubah status order menjadi batal dan bisa unverify user ' . $order->user_id, 
                         ''
                     );
+                }
 
                 // Send notification to the user
                     $this->firebaseService->sendNotification(
@@ -310,52 +313,80 @@ class AdminController extends Controller
         ], 200);
     }
 
-    public function acceptcancel($id)
-    {
-        $order = Order::where('id', $id)->first();
-        $order2 = Order::where('id', $id)->first();
+    public function acceptCancel($id)
+{
+    $order = Order::where('id', $id)->first();
+    
+    if (!$order) {
+        return response()->json(['message' => 'Order not found'], 404);
+    }
 
-        if (!$order) {
-            return response()->json(['message' => 'Order not found'], 404);
-        }
-
-        $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
-        foreach ($adminTokens as $adminToken) {
-            $this->firebaseService->sendToAdmin($adminToken, 'Pembatalan Diterima', 'Permintaan pembatalan order dari ' . $order->user->name . ' telah diterima. Pesanan telah dibatalkan.', '');
-        }
-        // Update the order status to "batal"
-        if($order->payment_method == 'tunai'){
-            $order->status = 'batal';
-        }else{
-            $order->status = 'menunggu pengembalian dana';
-        }
-        
-        $order->save();
-
-        // Send notification to the user about the acceptance
-        if($order2->payment_method != 'tunai'){
-            $this->firebaseService->sendNotification(
-                $order->user->notification_token,
-                'Pesanan Dibatalkan',
-                'Pesanan anda dengan ID ' . $order->id . ' telah dibatalkan. oleh admin silahkan mengambil uang refund di lokasi warmindo.',
-                ''
-            );
-    }else{
-        $this->firebaseService->sendNotification(
-            $order->user->notification_token,
-            'Pesanan Dibatalkan',
-            'Permintaan pembatalan order Anda dengan ID ' . $order->id . ' telah dibatalkan. Pesanan Anda telah dibatalkan.',
+    $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
+    foreach ($adminTokens as $adminToken) {
+        $this->firebaseService->sendToAdmin(
+            $adminToken,
+            'Pembatalan Diterima',
+            'Permintaan pembatalan order dari ' . $order->user->name . ' telah diterima. Pesanan telah dibatalkan.',
             ''
         );
     }
-    
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Order cancelation accepted successfully',
-            'data' => $order->load(['orderDetails.menu']),
-        ], 200);
+    // Update the order status
+    if ($order->payment_method == 'tunai') {
+        $order->status = 'batal';
+    } else {
+        $order->status = 'menunggu pengembalian dana';
+
+        // Tentukan admin_fee berdasarkan payment_method
+        $adminFeePercentage = 0;
+        switch ($order->payment_method) {
+            case 'OVO':
+                case 'DANA':
+                case 'LINKAJA':
+                    $adminFeePercentage = 0.015; // 1.5% untuk OVO, DANA, LINKAJA
+                    break;
+                case 'SHOPEEPAY':
+                    $adminFeePercentage = 0.018; // 2.0% untuk SHOPEEPAY
+                    break;
+                case 'JENIUSPAY':
+                    $adminFeePercentage = 0.02; // 2.0% untuk JENIUSPAY
+                    break;
+                case 'QRIS':
+                    $adminFeePercentage = 0.0063; // 0.63% untuk QRIS
+                    break; 
+        }
+
+        // Hitung admin_fee
+        $order->admin_fee = $order->price_order * $adminFeePercentage;
     }
+
+    $order->save();
+
+    // Send notification to the user about the acceptance
+    if ($order->payment_method != 'tunai') {
+        $this->firebaseService->sendNotification(
+            $order->user->notification_token,
+            'Pesanan Dibatalkan',
+            'Pesanan anda dengan ID ' . $order->id . ' telah dibatalkan oleh admin. Silahkan mengambil uang refund di lokasi warmindo.',
+            ''
+        );
+    } else {
+        $this->firebaseService->sendNotification(
+            $order->user->notification_token,
+            'Pesanan Dibatalkan',
+            'Permintaan pembatalan order Anda dengan ID ' . $order->id . ' telah diterima. Pesanan Anda telah dibatalkan.',
+            ''
+        );
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Order cancelation accepted successfully',
+        'data' => $order->load(['orderDetails.menu']),
+        'admin_fee' => $order->admin_fee
+    ], 200);
+}
+
 
     public function unverifyUser($id)
     {
