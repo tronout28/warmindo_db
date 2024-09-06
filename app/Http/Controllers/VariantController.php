@@ -11,7 +11,8 @@ class VariantController extends Controller
 {
     public function index()
     {
-        $variants = Variant::all();
+        $variants = Variant::all()->orderBy('created_at', 'desc') // Mengurutkan berdasarkan created_at dari yang terbaru
+        ->get();
         return response()->json(['data' => $variants], 200);
     }
 

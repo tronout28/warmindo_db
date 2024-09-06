@@ -37,7 +37,7 @@ class OrderController extends Controller
     {
 
         $validator = Validator::make($request->all(), [
-            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal', 'menunggu pembayaran','menunggu pengembalian dana'])],
+            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu pembayaran','menunggu pengembalian dana','konfirmasi pesanan'])],
             'note' => 'nullable|string',
             'payment_method' => ['nullable', Rule::in(['tunai','ovo', 'gopay', 'dana', 'linkaja', 'shopeepay', 'gopay', 'transfer'])],
             'order_method' => ['nullable', Rule::in(['dine-in', 'take-away', 'delivery'])],
@@ -224,26 +224,32 @@ class OrderController extends Controller
             ]);
             $order->reason_cancel = $request->reason_cancel;
             $order->cancel_method = $request->cancel_method;
-            $order->status = 'menunggu batal';
-            $order->save();
-
-            $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
-            foreach ($adminTokens as $adminToken) {
-                $this->firebaseService->sendToAdmin($adminToken, 'Permintaan pembatalan order',  'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda',
-                '');
-            }
-             // Send notification to the user
-            $this->firebaseService->sendNotification(
-                $request->user()->notification_token,
-                'Pesanan anda telah Dibatalkan',
-                'Pembayaran untuk Order ' . $order->id . ' menunggu pembatalan',
-                ''
-            );
-            return response()->json([
-                'success' => true,
-                'message' => 'Order canceled successfully',
-                'data' => $order->load(['orderDetails.menu']),
-            ], 200);
+            $order->status = 'batal';
+            if($order->status != 'sedang diproses'){
+                $order->save();
+                $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
+                foreach ($adminTokens as $adminToken) {
+                    $this->firebaseService->sendToAdmin($adminToken, 'Permintaan pembatalan order',  'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda',
+                    '');
+                }
+                 // Send notification to the user
+                $this->firebaseService->sendNotification(
+                    $request->user()->notification_token,
+                    'Pesanan anda telah Dibatalkan',
+                    'Pembayaran untuk Order ' . $order->id . ' menunggu pembatalan',
+                    ''
+                );
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Order canceled successfully',
+                    'data' => $order->load(['orderDetails.menu']),
+                ], 200);
+            }else{
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order cannot be canceled',
+                ], 400);
+            }          
         }else{
             $validator = Validator::make($request->all(), [
             'reason_cancel' => 'required|string',
@@ -275,7 +281,7 @@ class OrderController extends Controller
             ''
         );
         // Set the order status to "menunggu batal" and apply the cancelation details
-        $order->status = 'menunggu batal';
+        $order->status = 'menunggu pengembalian dana';
         $order->reason_cancel = $request->reason_cancel;
         $order->cancel_method = $request->cancel_method;
         $order->no_rekening = $request->no_rekening;
@@ -341,7 +347,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal','menunggu pengembalian dana'])],
+            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap','menunggu pengembalian dana','pesanan diterima'])],
         ]);
 
         if ($validator->fails()) {
@@ -381,12 +387,12 @@ class OrderController extends Controller
 
         } elseif ($request->status == 'pesanan siap') {
             $this->firebaseService->sendNotification($userNotificationToken, 'Pesanan anda telah Siap', 'Silahkan ambil makanan anda dengan Order ID ' . $order->id . ' di kedai Warmindo', '');
-        } elseif ($request->status == 'menunggu batal') {
-            $this->firebaseService->sendNotification($userNotificationToken, 'Permintaan pembatalan order', 'Permintaan pembatalan order anda dengan Order ID ' . $order->id . ' sedang diproses', '');
         } elseif ($request->status == 'sedang diproses') {
             $this->firebaseService->sendNotification($userNotificationToken, 'Pesanan anda sedang diproses', 'Pesanan anda dengan Order ID ' . $order->id . ' sedang diproses', '');
         } elseif ($request->status == 'menunggu pengembalian dana') {
             $this->firebaseService->sendNotification($userNotificationToken, 'Permintaan pengembalian dana', 'Permintaan pengembalian dana anda dengan Order ID ' . $order->id . ' sedang diproses', '');
+        }elseif ($request->status == 'konfirmasi pesanan') {
+            $this->firebaseService->sendNotification($userNotificationToken, 'Tolong untuk senantiasa mengecek pesanan anda ', 'Pesanan anda dengan Order ID ' . $order->id . ' telah dikonfirmasi', '');
         }
 
         // Update the order status in the database
@@ -441,20 +447,33 @@ class OrderController extends Controller
         ], 200);
     }
 
-    public function filterbystatues (Request $request)
+    public function filterbystatues(Request $request)
     {
         $user = auth()->user();
         $request->validate([
-            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu batal'])],
+            'status' => ['required', Rule::in([
+                'selesai', 'sedang diproses', 'batal', 'pesanan siap', 
+                'menunggu pembayaran', 'menunggu pengembalian dana', 'konfirmasi pesanan'
+            ])],
         ]);
 
-        $orders = Order::where('status', $request->status)->where('user_id', $user->id)->get();
-        if($orders == null) {
+        $query = Order::where('status', $request->status)
+            ->where('user_id', $user->id);
+        
+        // If the status is 'konfirmasi pesanan' or 'sedang diproses', order by created_at ascending
+        if (in_array($request->status, ['konfirmasi pesanan', 'sedang diproses'])) {
+            $query->orderBy('created_at', 'asc');
+        }
+
+        $orders = $query->get();
+
+        if ($orders->isEmpty()) {
             return response([
                 'status' => false,
                 'message' => 'Order not found'
             ]);
         }
+
         return response()->json([
             'success' => true,
             'message' => 'List of orders filtered by status',

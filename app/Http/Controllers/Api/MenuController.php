@@ -13,9 +13,11 @@ class MenuController extends Controller
 {
      // Existing methods...
 
-     public function index(Request $request)
+     public function index()
     {
-        $menus = Menu::with(['ratings', 'toppings'])->get(); // No need to manually add average_rating
+        $menus = Menu::with(['ratings', 'toppings'])
+        ->orderBy('created_at', 'desc') // Mengurutkan berdasarkan created_at dari yang terbaru
+        ->get(); // No need to manually add average_rating
 
         return response()->json($menus);
     }
