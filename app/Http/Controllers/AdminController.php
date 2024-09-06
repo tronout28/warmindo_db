@@ -409,28 +409,18 @@ class AdminController extends Controller
 
     public function getOrders()
     {
-        // Define a custom sorting order for statuses
-        // $statusOrder = [
-        //     'konfirmasi pesanan' => 1,
-        //     'sedang diproses' => 2,
-        //     'pesanan siap' => 3,
-        //     'menunggu pengembalian dana' => 4,
-        //     'selesai' => 5,
-        //     'batal' => 6,
-        // ];
-
         // Define the query
         $query = Order::with(['orderDetails.menu', 'user']) // Ensure the user relationship is loaded
             ->leftJoin('transactions', 'orders.id', '=', 'transactions.order_id')
             ->select('orders.*', 'transactions.payment_channel as transaction_payment_method')
             ->orderByRaw(
-                "FIELD(status, 'konfirmasi pesanan', 'sedang diproses', 'pesanan siap', 'menunggu pengembalian dana', 'selesai', 'batal')"
+                "FIELD(orders.status, 'konfirmasi pesanan', 'sedang diproses', 'pesanan siap', 'menunggu pengembalian dana', 'selesai', 'batal')"
             )
             // For 'konfirmasi pesanan' and 'sedang diproses', order by oldest 'created_at'
             ->orderByRaw(
                 "CASE 
-                    WHEN status = 'konfirmasi pesanan' THEN created_at
-                    WHEN status = 'sedang diproses' THEN created_at
+                    WHEN orders.status = 'konfirmasi pesanan' THEN orders.created_at
+                    WHEN orders.status = 'sedang diproses' THEN orders.created_at
                 END ASC"
             );
 
@@ -473,6 +463,7 @@ class AdminController extends Controller
             }),
         ], 200);
     }
+
 
 
     public function forgotPassword(Request $request)
