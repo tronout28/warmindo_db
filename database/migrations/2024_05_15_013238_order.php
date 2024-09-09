@@ -24,8 +24,8 @@ return new class extends Migration
             $table->text('reason_cancel')->nullable();
             $table->enum('cancel_method',['tunai','BCA','BNI','BRI','BSI','Mandiri'])->nullable();
             $table->bigInteger('no_rekening')->nullable();
-            $table->decimal('admin_fee', 8, 2)->nullable();
-            
+            $table->decimal('admin_fee', 8, 3)->nullable();
+
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
