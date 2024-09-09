@@ -18,6 +18,7 @@ class Order extends Model
         'payment_method',
         'order_method',
         'note',
+        'admin_fee',  
     ];
 
     /**
@@ -46,5 +47,10 @@ class Order extends Model
     public function history()
     {
         return $this->hasMany(History::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasOne(Transaction::class);
     }
 }

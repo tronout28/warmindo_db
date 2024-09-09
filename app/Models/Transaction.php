@@ -21,4 +21,9 @@ class Transaction extends Model
         'paid_at',
         'order_id'
     ];
+
+    public function orders()
+    {
+        return $this->belongsTo(Order::class);
+    }
 }
