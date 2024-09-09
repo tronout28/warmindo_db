@@ -6,6 +6,7 @@ use App\Models\OrderDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Admin;
+use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use App\Services\FirebaseService;
 use Illuminate\Support\Facades\Validator;
@@ -216,29 +217,35 @@ class OrderController extends Controller
     public function cancelOrder(Request $request, $id)
     {
         $order = Order::where('id', $id)->first();
+        $transaction = Transaction::where('order_id', $order->id)->first(); // Ambil transaction terkait dengan order
+
+        if (!$order || !$transaction) {
+            return response()->json(['message' => 'Order or transaction not found'], 404);
+        }
 
         if ($order->payment_method == 'tunai') {
             $validator = Validator::make($request->all(), [
                 'reason_cancel' => 'required|string',
                 'cancel_method' => ['required', Rule::in(['tunai', 'BCA', 'BNI', 'BRI', 'BSI', 'Mandiri'])],
             ]);
+            
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 422);
+            }
+
             $order->reason_cancel = $request->reason_cancel;
             $order->cancel_method = $request->cancel_method;
             $order->status = 'batal';
             
-            if ($order->status != 'sedang diproses') {
+            if($order->status != 'sedang diproses'){
                 $order->save();
                 $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
                 foreach ($adminTokens as $adminToken) {
-                    $this->firebaseService->sendToAdmin($adminToken, 'Permintaan pembatalan order', 'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda', '');
+                    $this->firebaseService->sendToAdmin($adminToken, 'Permintaan pembatalan order',  'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda', '');
                 }
 
-                $this->firebaseService->sendNotification(
-                    $request->user()->notification_token,
-                    'Pesanan anda telah Dibatalkan',
-                    'Pembayaran untuk Order ' . $order->id . ' menunggu pembatalan',
-                    ''
-                );
+                $this->firebaseService->sendNotification($request->user()->notification_token, 'Pesanan anda telah Dibatalkan', 'Pembayaran untuk Order ' . $order->id . ' menunggu pembatalan', '');
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Order canceled successfully',
@@ -261,45 +268,60 @@ class OrderController extends Controller
                 return response()->json($validator->errors(), 422);
             }
 
-            if (!$order) {
-                return response()->json(['message' => 'Order not found'], 404);
-            }
+            // Set persentase fee berdasarkan payment_channel
+            $paymentChannel = strtolower($transaction->payment_channel); // Pastikan payment_channel dalam huruf kecil
+            $feePercent = 0;
 
-            // Tentukan admin_fee berdasarkan payment_method
-            $adminFeePercentage = 0;
-            switch ($order->payment_method) {
+            switch ($paymentChannel) {
                 case 'OVO':
                 case 'DANA':
                 case 'LINKAJA':
-                    $adminFeePercentage = 0.015; // 1.5% untuk OVO, DANA, LINKAJA
+                    $feePercent = 1.5;
                     break;
                 case 'SHOPEEPAY':
-                    $adminFeePercentage = 0.018; // 2.0% untuk SHOPEEPAY
+                    $feePercent = 1.8;
                     break;
                 case 'JENIUSPAY':
-                    $adminFeePercentage = 0.02; // 2.0% untuk JENIUSPAY
+                    $feePercent = 2.0;
                     break;
                 case 'QRIS':
-                    $adminFeePercentage = 0.0063; // 0.63% untuk QRIS
-                    break;  
-                }
-            // Hitung admin_fee
-            $order->admin_fee = $order->price_order * $adminFeePercentage;
+                    $feePercent = 0.63;
+                    break;
+                default:
+                    $feePercent = 0; // Tidak ada potongan jika payment_channel tidak ditemukan
+                    break;
+            }
 
-            // Send notification to the user
+            // Update price_order dan admin_fee
+            $order->price_order = $order->price_order * ($feePercent / 100);
+            $order->admin_fee = $feePercent; // Simpan persentase fee di kolom admin_fee
+
+            // Update status dan informasi pembatalan
+            $order->status = 'menunggu pengembalian dana';
+            $order->reason_cancel = $request->reason_cancel;
+            $order->cancel_method = $request->cancel_method;
+            $order->no_rekening = $request->no_rekening;
+
+            $order->save();
+
+            // Kirim notifikasi ke admin
+            $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
+            foreach ($adminTokens as $adminToken) {
+                $this->firebaseService->sendToAdmin(
+                    $adminToken,
+                    'Permintaan pembatalan order',
+                    'Terdapat permintaan pembatalan order dari ' . $request->user()->name . '. Silahkan cek aplikasi Anda',
+                    ''
+                );
+            }
+
+            // Kirim notifikasi ke user
             $this->firebaseService->sendNotification(
                 $request->user()->notification_token,
                 'Pesanan anda telah Dibatalkan',
                 'Pembayaran untuk Order ' . $order->id . ' menunggu pembatalan',
                 ''
             );
-
-            // Update order status
-            $order->status = 'menunggu pengembalian dana';
-            $order->reason_cancel = $request->reason_cancel;
-            $order->cancel_method = $request->cancel_method;
-            $order->no_rekening = $request->no_rekening;
-            $order->save();
 
             return response()->json([
                 'success' => true,
@@ -309,10 +331,6 @@ class OrderController extends Controller
             ], 200);
         }
     }
-
-
-
-    
 
     public function updatepaymentmethod(Request $request, $id)
     {

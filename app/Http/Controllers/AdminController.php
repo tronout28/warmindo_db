@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Log;
-
+use App\Models\Transaction;
 use App\Models\Admin;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Http\Resources\OrderDetailResource;
 use Illuminate\Support\Facades\Cache; // Import Cache facade
-
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use App\Services\FirebaseService;
@@ -314,79 +313,93 @@ class AdminController extends Controller
     }
 
     public function acceptCancel($id)
-{
-    $order = Order::where('id', $id)->first();
+    {
+        $order = Order::where('id', $id)->first();
+        
+        if (!$order) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
     
-    if (!$order) {
-        return response()->json(['message' => 'Order not found'], 404);
-    }
-
-    $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
-    foreach ($adminTokens as $adminToken) {
-        $this->firebaseService->sendToAdmin(
-            $adminToken,
-            'Pembatalan Diterima',
-            'Permintaan pembatalan order dari ' . $order->user->name . ' telah diterima. Pesanan telah dibatalkan.',
-            ''
-        );
-    }
-
-    // Update the order status
-    if ($order->payment_method == 'tunai') {
-        $order->status = 'batal';
-    } else {
-        $order->status = 'menunggu pengembalian dana';
-
-        // Tentukan admin_fee berdasarkan payment_method
-        $adminFeePercentage = 0;
-        switch ($order->payment_method) {
-            case 'OVO':
+        // Ambil transaksi terkait dengan order
+        $transaction = Transaction::where('order_id', $order->id)->first();
+    
+        if (!$transaction) {
+            return response()->json(['message' => 'Transaction not found for this order'], 404);
+        }
+    
+        $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
+        foreach ($adminTokens as $adminToken) {
+            $this->firebaseService->sendToAdmin(
+                $adminToken,
+                'Pembatalan Diterima',
+                'Permintaan pembatalan order dari ' . $order->user->name . ' telah diterima. Pesanan telah dibatalkan.',
+                ''
+            );
+        }
+    
+        // Update status order dan hitung admin_fee jika bukan tunai
+        if ($order->payment_method == 'tunai') {
+            $order->status = 'batal';
+        } else {
+            $order->status = 'menunggu pengembalian dana';
+    
+            // Tentukan admin_fee berdasarkan payment_channel dari transaksi
+            $paymentChannel = strtolower($transaction->payment_channel);
+            $adminFeePercentage = 0;
+    
+            switch ($paymentChannel) {
+                case 'OVO':
                 case 'DANA':
                 case 'LINKAJA':
-                    $adminFeePercentage = 0.015; // 1.5% untuk OVO, DANA, LINKAJA
+                    $adminFeePercentage = 1.5; // 1.5% untuk OVO, DANA, LINKAJA
                     break;
                 case 'SHOPEEPAY':
-                    $adminFeePercentage = 0.018; // 2.0% untuk SHOPEEPAY
+                    $adminFeePercentage = 1.8; // 1.8% untuk SHOPEEPAY
                     break;
                 case 'JENIUSPAY':
-                    $adminFeePercentage = 0.02; // 2.0% untuk JENIUSPAY
+                    $adminFeePercentage = 2.0; // 2.0% untuk JENIUSPAY
                     break;
                 case 'QRIS':
-                    $adminFeePercentage = 0.0063; // 0.63% untuk QRIS
+                    $adminFeePercentage = 0.63; // 0.63% untuk QRIS
                     break; 
+                default:
+                    $adminFeePercentage = 0; // Tidak ada potongan jika payment_channel tidak sesuai
+                    break;
+            }
+    
+            // Hitung admin_fee dan update price_order
+            $adminFeeAmount = $order->price_order * ($adminFeePercentage / 100);
+            $order->admin_fee = $adminFeePercentage; // Simpan persentase fee di kolom admin_fee
+            $order->price_order = $order->price_order - $adminFeeAmount;
         }
-
-        // Hitung admin_fee
-        $order->admin_fee = $order->price_order * $adminFeePercentage;
+    
+        $order->save();
+    
+        // Kirim notifikasi ke pengguna tentang penerimaan pembatalan
+        if ($order->payment_method != 'tunai') {
+            $this->firebaseService->sendNotification(
+                $order->user->notification_token,
+                'Pesanan Dibatalkan',
+                'Pesanan anda dengan ID ' . $order->id . ' telah dibatalkan oleh admin. Silahkan mengambil uang refund di lokasi warmindo.',
+                ''
+            );
+        } else {
+            $this->firebaseService->sendNotification(
+                $order->user->notification_token,
+                'Pesanan Dibatalkan',
+                'Permintaan pembatalan order Anda dengan ID ' . $order->id . ' telah diterima. Pesanan Anda telah dibatalkan.',
+                ''
+            );
+        }
+    
+        return response()->json([
+            'success' => true,
+            'message' => 'Order cancellation accepted successfully',
+            'data' => $order->load(['orderDetails.menu']),
+            'admin_fee' => $order->admin_fee
+        ], 200);
     }
-
-    $order->save();
-
-    // Send notification to the user about the acceptance
-    if ($order->payment_method != 'tunai') {
-        $this->firebaseService->sendNotification(
-            $order->user->notification_token,
-            'Pesanan Dibatalkan',
-            'Pesanan anda dengan ID ' . $order->id . ' telah dibatalkan oleh admin. Silahkan mengambil uang refund di lokasi warmindo.',
-            ''
-        );
-    } else {
-        $this->firebaseService->sendNotification(
-            $order->user->notification_token,
-            'Pesanan Dibatalkan',
-            'Permintaan pembatalan order Anda dengan ID ' . $order->id . ' telah diterima. Pesanan Anda telah dibatalkan.',
-            ''
-        );
-    }
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Order cancelation accepted successfully',
-        'data' => $order->load(['orderDetails.menu']),
-        'admin_fee' => $order->admin_fee
-    ], 200);
-}
-
+    
 
     public function unverifyUser($id)
     {

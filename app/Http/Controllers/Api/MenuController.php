@@ -88,7 +88,7 @@ class MenuController extends Controller
             'stock' => 'nullable|integer',
             'description' => 'nullable|string',
             'status_menu' => 'nullable|boolean',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validate image
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5000', // Validate image
         ]);
     
         // Find the menu item
