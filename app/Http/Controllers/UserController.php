@@ -91,7 +91,7 @@ class UserController extends Controller
             'phone_number' => 'required|string|max:255|unique:users',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:8',
-            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10000',
             'notification_token' => 'nullable|string',
         ], $messages);
         // Check if validation fails
@@ -220,7 +220,7 @@ class UserController extends Controller
             'email' => 'sometimes|nullable|email|unique:users,email,'.$user->id,
             'current_password' => 'sometimes|nullable|string|min:8', // Validasi current_password
             'password' => 'sometimes|nullable|string|min:8|confirmed', // Validasi konfirmasi password baru\
-            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10000',
         ]);
 
         Log::info('Update User Request: ', $request->all());

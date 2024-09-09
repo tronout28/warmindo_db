@@ -84,7 +84,7 @@ class AdminController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255',
-            'profile_picture' => 'nullable|string|max:255',
+            'profile_picture' => 'nullable|string|max:10000',
             'email' => 'required|email',
             'phone_number' => 'nullable|string',
             'password' => 'required|string|min:8',
@@ -125,7 +125,7 @@ class AdminController extends Controller
             'name' => 'nullable|string|max:255',
             'username' => 'nullable|string|max:255',
             'email' => 'nullable|email', // Email is nullable
-            'profile_picture' => 'nullable|image|max:255', // Validate as image and limit file size
+            'profile_picture' => 'nullable|image|max:10000', // Validate as image and limit file size
             'phone_number' => 'nullable|string',
             'password' => 'nullable|string|min:8',
             'current_password' => 'nullable|string|min:8', // Make current_password nullable
