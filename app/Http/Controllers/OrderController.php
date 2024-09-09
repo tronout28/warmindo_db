@@ -269,7 +269,7 @@ class OrderController extends Controller
             }
 
             // Set persentase fee berdasarkan payment_channel
-            $paymentChannel = strtolower($transaction->payment_channel); // Pastikan payment_channel dalam huruf kecil
+            $paymentChannel = $transaction->payment_channel; // Pastikan payment_channel dalam huruf kecil
             $feePercent = 0;
 
             switch ($paymentChannel) {

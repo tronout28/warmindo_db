@@ -344,7 +344,7 @@ class AdminController extends Controller
             $order->status = 'menunggu pengembalian dana';
     
             // Tentukan admin_fee berdasarkan payment_channel dari transaksi
-            $paymentChannel = strtolower($transaction->payment_channel);
+            $paymentChannel = $transaction->payment_channel;
             $adminFeePercentage = 0;
     
             switch ($paymentChannel) {
@@ -369,7 +369,7 @@ class AdminController extends Controller
     
             // Hitung admin_fee dan update price_order
             $adminFeeAmount = $order->price_order * ($adminFeePercentage / 100);
-            $order->admin_fee = $adminFeePercentage; // Simpan persentase fee di kolom admin_fee
+            $order->admin_fee = $adminFeeAmount; // Simpan persentase fee di kolom admin_fee
             $order->price_order = $order->price_order - $adminFeeAmount;
         }
     
