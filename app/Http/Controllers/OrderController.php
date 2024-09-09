@@ -292,9 +292,10 @@ class OrderController extends Controller
                     break;
             }
 
-            // Update price_order dan admin_fee
-            $order->price_order = $order->price_order * ($feePercent / 100);
-            $order->admin_fee = $feePercent; // Simpan persentase fee di kolom admin_fee
+            // Calculate admin fee and adjust price_order
+            $adminFeeAmount = $order->price_order * ($feePercent / 100);
+            $order->price_order = $order->price_order - $adminFeeAmount; // Subtract the admin fee from price_order
+            $order->admin_fee = $adminFeeAmount; // Store the admin fee
 
             // Update status dan informasi pembatalan
             $order->status = 'menunggu pengembalian dana';
@@ -331,6 +332,7 @@ class OrderController extends Controller
             ], 200);
         }
     }
+
 
     public function updatepaymentmethod(Request $request, $id)
     {
