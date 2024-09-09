@@ -59,7 +59,8 @@ class PaymentController extends Controller
             'description' => $description,
             'amount' => $amount,
             'currency' => 'IDR',
-            'payment_methods' => ["OVO", "DANA", "SHOPEEPAY", "LINKAJA", "JENIUSPAY", "QRIS"]
+            'payment_methods' => ["OVO", "DANA", "SHOPEEPAY", "LINKAJA", "JENIUSPAY", "QRIS"],
+            'invoice_duration' => 3600,
         ];
         $response = $this->XenditService->createInvoice($options);
         $payment = new Payment();
