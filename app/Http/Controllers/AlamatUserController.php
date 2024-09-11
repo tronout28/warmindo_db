@@ -7,9 +7,9 @@ use App\Models\AlamatUser;
 
 class AlamatUserController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $userId = $request->query('user_id');
+        $userId = auth()->user()->id;
 
         if ($userId) {
             $alamatUser = AlamatUser::where('user_id', $userId)
@@ -22,6 +22,8 @@ class AlamatUserController extends Controller
                         'nama_kost' => $alamatUser->nama_kost,
                         'catatan_alamat' => $alamatUser->catatan_alamat,
                         'detail_alamat' => $alamatUser->detail_alamat,
+                        'latitude' => $alamatUser->latitude,
+                        'longitude' => $alamatUser->longitude,
                         'radius_km' => $alamatUser->radius_km,
                         'user' => [
                             'user_id' => $alamatUser->user_id,
@@ -41,6 +43,8 @@ class AlamatUserController extends Controller
                         'nama_kost' => $alamatUser->nama_kost,
                         'catatan_alamat' => $alamatUser->catatan_alamat,
                         'detail_alamat' => $alamatUser->detail_alamat,
+                        'latitude' => $alamatUser->latitude,
+                        'longitude' => $alamatUser->longitude,
                         'radius_km' => $alamatUser->radius_km,
                         'user' => [
                             'user_id' => $alamatUser->user_id,
