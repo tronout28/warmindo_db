@@ -16,6 +16,7 @@ class AlamatUser extends Model
         'nama_alamat', 
         'nama_kost', 
         'detail_alamat',
+        'catatan_alamat',
         'longitude',
         'latitude',
         'radius_km',

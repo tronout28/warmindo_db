@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('nama_alamat');
             $table->string('nama_kost')->nullable();
             $table->string('detail_alamat');
+            $table->string('catatan_alamat');
             $table->boolean('is_selected')->default(false);
             $table->decimal('latitude', 10, 8)->nullable();
             $table->decimal('longitude', 11, 8)->nullable();
