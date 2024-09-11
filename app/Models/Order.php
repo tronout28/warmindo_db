@@ -53,4 +53,10 @@ class Order extends Model
     {
         return $this->hasOne(Transaction::class);
     }
+
+    public function alamatUser()
+    {
+        return $this->belongsTo(AlamatUser::class, 'alamat_users_id');
+    }
+
 }

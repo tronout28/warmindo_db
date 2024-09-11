@@ -186,5 +186,18 @@ Route::group(['prefix' => 'ratings', 'middleware' => 'auth:sanctum'], function (
     Route::post('/rate', [RatingController::class, 'rateMenuItem']);
 });
 
+use App\Http\Controllers\AlamatUserController;
+
+
+Route::group(['prefix'=>'alamat-user','middleware' => 'auth:sanctum'], function(){
+    Route::get('/', [AlamatUserController::class, 'index']);
+    Route::post('/store', [AlamatUserController::class, 'store']);
+    Route::get('/detail/{id}', [AlamatUserController::class, 'show']);
+    Route::put('/{id}', [AlamatUserController::class, 'update']);
+    Route::delete('/{id}', [AlamatUserController::class, 'destroy']);
+    Route::put('/disable/{id}', [AlamatUserController::class, 'disableisSelected']);
+    Route::put('/enable/{id}', [AlamatUserController::class, 'enableisSelected']);
+});
+
 
 

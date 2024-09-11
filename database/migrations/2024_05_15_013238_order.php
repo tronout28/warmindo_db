@@ -15,19 +15,22 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->integer('price_order')->nullable();
-            $table->enum('status', ['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu pembayaran','menunggu pengembalian dana','konfirmasi pesanan'])->default('menunggu pembayaran');
+            $table->enum('status', ['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu pembayaran','menunggu pengembalian dana','konfirmasi pesanan','sedang diantar'])->default('menunggu pembayaran');
             $table->text('note')->nullable();
             $table->enum('payment_method', ['tunai', 'ovo', 'gopay', 'dana', 'linkaja', 'shopeepay', 'transfer'])->nullable(); // Use enum here
             $table->enum('order_method', ['dine-in', 'take-away', 'delivery'])->nullable(); // Use enum here
+            $table->unsignedBigInteger('alamat_users_id')->nullable();
             
             // Add the cancelation-related fields
             $table->text('reason_cancel')->nullable();
             $table->enum('cancel_method',['tunai','BCA','BNI','BRI','BSI','Mandiri'])->nullable();
             $table->bigInteger('no_rekening')->nullable();
             $table->decimal('admin_fee', 8, 3)->nullable();
+            $table->decimal('driver_fee', 8, 3)->nullable();
 
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('alamat_users_id')->references('id')->on('alamat_users')->onDelete('cascade');
         });
     }
 

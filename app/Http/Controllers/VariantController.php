@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Variant;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+
 
 class VariantController extends Controller
 {
@@ -18,15 +20,22 @@ class VariantController extends Controller
 
     public function store(Request $request)
     {
+
+        $existingCategories = Variant::pluck('category')->toArray();
+        
         $validator = Validator::make($request->all(), [
             'name_varian' => 'required|string|max:255',
-            'category' => 'required|string|max:255',
+            'category' => ['required', 'string', 'max:255', Rule::in($existingCategories)],
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'stock_varian' => 'required|integer',
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
+        }
+
+        if (!in_array($request->category, $existingCategories)) {
+            $existingCategories[] = $request->category; // Tambahkan kategori baru ke daftar
         }
 
         $data = $request->all();

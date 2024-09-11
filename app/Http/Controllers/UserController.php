@@ -9,6 +9,7 @@ use App\Models\Otp;
 use App\Http\Resources\OrderDetailResource;
 use App\Http\Resources\ToppingResource;
 use App\Models\OrderDetailTopping;
+use App\Models\AlamatUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -361,32 +362,47 @@ class UserController extends Controller
     {
         $user = auth()->user();
 
-        $query = Order::with(['orderDetails.menu'])
+        // Define the query
+        $query = Order::with(['orderDetails.menu', 'alamatUser']) // Ensure the alamatUser relationship is loaded
             ->where('user_id', $user->id)
             ->leftJoin('transactions', 'orders.id', '=', 'transactions.order_id')
             ->select('orders.*', 'transactions.payment_channel as transaction_payment_method');
 
+        // Execute the query
         $orders = $query->get();
 
         return response([
             'status' => 'success',
             'message' => 'Orders fetched successfully',
             'orders' => $orders->map(function ($order) use ($user) {
+                // Determine the payment method to return
                 $paymentMethod = $order->transaction_payment_method ?? $order->payment_method;
 
                 // Filter order details to include only the user's rating
                 $orderDetails = $order->orderDetails->map(function ($detail) use ($user) {
-                    $userRating = $detail->menu->ratings()->where('user_id', $user->id)->where('order_detail_id', $detail->id) ->first();
+                    $userRating = $detail->menu->ratings()
+                        ->where('user_id', $user->id)
+                        ->where('order_detail_id', $detail->id)
+                        ->first();
+
                     return [
                         'id' => $detail->id,
-                        'quantity'=> $detail->quantity,
+                        'quantity' => $detail->quantity,
                         'user_rating' => $userRating ? $userRating->rating : null,
                         'variant_id' => $detail->variant_id,
                         'variant' => Variant::find($detail->variant_id),
                         'toppings' => ToppingResource::collection(OrderDetailTopping::where('order_detail_id', $detail->id)->get()),
-                        'menu'=> $detail->menu,
+                        'menu' => $detail->menu,
                     ];
                 });
+
+                // Add logic to get the active alamat user if order_method is delivery
+                $alamatAktif = null;
+                if ($order->order_method === 'delivery') {
+                    $alamatAktif = AlamatUser::where('user_id', $order->user_id)
+                        ->where('is_selected', true)
+                        ->first();
+                }
 
                 return [
                     'id' => $order->id,
@@ -403,9 +419,18 @@ class UserController extends Controller
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
                     'orderDetails' => $orderDetails,
+                    'alamat' => $alamatAktif ? [
+                        'id' => $alamatAktif->id,
+                        'nama_alamat' => $alamatAktif->nama_alamat,
+                        'nama_kost' => $alamatAktif->nama_kost,
+                        'detail_alamat' => $alamatAktif->detail_alamat,
+                        'latitude' => $alamatAktif->latitude,
+                        'longitude' => $alamatAktif->longitude,
+                    ] : null, // Include active alamat only if order method is delivery
                 ];
             }),
         ], 200);
     }
+
     
 }
