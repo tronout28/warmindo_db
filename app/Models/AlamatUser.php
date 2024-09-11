@@ -9,7 +9,7 @@ class AlamatUser extends Model
 {
     use HasFactory;
 
-    protected $table = 'alamat_user';
+    protected $table = 'alamat_users';
 
     protected $fillable = [
         'user_id', 
