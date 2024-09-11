@@ -518,6 +518,7 @@ class AdminController extends Controller
                         'id' => $alamatAktif->id,
                         'nama_alamat' => $alamatAktif->nama_alamat,
                         'nama_kost' => $alamatAktif->nama_kost,
+                        'catatan_alamat' => $alamatAktif->catatan_alamat,
                         'detail_alamat' => $alamatAktif->detail_alamat,
                         'latitude' => $alamatAktif->latitude,
                         'longitude' => $alamatAktif->longitude,

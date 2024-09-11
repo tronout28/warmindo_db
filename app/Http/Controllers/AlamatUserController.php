@@ -20,6 +20,7 @@ class AlamatUserController extends Controller
                         'id' => $alamatUser->id,
                         'nama_alamat' => $alamatUser->nama_alamat,
                         'nama_kost' => $alamatUser->nama_kost,
+                        'catatan_alamat' => $alamatUser->catatan_alamat,
                         'detail_alamat' => $alamatUser->detail_alamat,
                         'radius_km' => $alamatUser->radius_km,
                         'user' => [
@@ -38,6 +39,7 @@ class AlamatUserController extends Controller
                         'id' => $alamatUser->id,
                         'nama_alamat' => $alamatUser->nama_alamat,
                         'nama_kost' => $alamatUser->nama_kost,
+                        'catatan_alamat' => $alamatUser->catatan_alamat,
                         'detail_alamat' => $alamatUser->detail_alamat,
                         'radius_km' => $alamatUser->radius_km,
                         'user' => [
@@ -61,6 +63,7 @@ class AlamatUserController extends Controller
             'nama_alamat' => 'required|string|max:255',
             'nama_kost' => 'nullable|string|max:255',
             'detail_alamat' => 'required|string',
+            'catatan_alamat' => 'required|string',
             'longitude' => 'nullable|numeric',
             'latitude' => 'nullable|numeric',
             'radius_km' => 'nullable|numeric',
@@ -72,6 +75,7 @@ class AlamatUserController extends Controller
             'nama_alamat' => $request->nama_alamat,
             'nama_kost' => $request->nama_kost,
             'detail_alamat' => $request->detail_alamat,
+            'catatan_alamat' => $request->catatan_alamat,
             'longitude' => $request->longitude,
             'latitude' => $request->latitude,
             'radius_km' => $request->radius_km,
@@ -98,9 +102,10 @@ class AlamatUserController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'nama_alamat' => 'sometimes|required|string|max:255',
+            'nama_alamat' => 'sometimes|nullable|string|max:255',
             'nama_kost' => 'sometimes|nullable|string|max:255',
-            'detail_alamat' => 'sometimes|required|string',
+            'detail_alamat' => 'sometimes|nullable|string',
+            'catatan_alamat' => 'sometimes|nullable|string',
         ]);
 
         $alamatUser = AlamatUser::findOrFail($id);
