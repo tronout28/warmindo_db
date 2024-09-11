@@ -23,6 +23,10 @@ class VariantController extends Controller
 
         $existingCategories = Variant::pluck('category')->toArray();
         
+        if (!in_array($request->category, $existingCategories)) {
+            $existingCategories[] = $request->category; // Tambahkan kategori baru ke daftar
+        }
+        
         $validator = Validator::make($request->all(), [
             'name_varian' => 'required|string|max:255',
             'category' => ['required', 'string', 'max:255', Rule::in($existingCategories)],
@@ -32,10 +36,6 @@ class VariantController extends Controller
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
-        }
-
-        if (!in_array($request->category, $existingCategories)) {
-            $existingCategories[] = $request->category; // Tambahkan kategori baru ke daftar
         }
 
         $data = $request->all();
