@@ -6,6 +6,7 @@ use App\Models\OrderDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Admin;
+use App\Models\AlamatUser;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use App\Services\FirebaseService;
@@ -45,6 +46,8 @@ class OrderController extends Controller
         ]);
 
         $user = auth()->user();
+
+        
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
@@ -219,9 +222,6 @@ class OrderController extends Controller
         $order = Order::where('id', $id)->first();
         $transaction = Transaction::where('order_id', $order->id)->first(); // Ambil transaction terkait dengan order
 
-        if (!$order || !$transaction) {
-            return response()->json(['message' => 'Order or transaction not found'], 404);
-        }
 
         if ($order->payment_method == 'tunai') {
             $validator = Validator::make($request->all(), [
@@ -426,6 +426,8 @@ class OrderController extends Controller
             $this->firebaseService->sendNotification($userNotificationToken, 'Permintaan pengembalian dana', 'Permintaan pengembalian dana anda dengan Order ID ' . $order->id . ' sedang diproses', '');
         }elseif ($request->status == 'konfirmasi pesanan') {
             $this->firebaseService->sendNotification($userNotificationToken, 'Tolong untuk senantiasa mengecek pesanan anda ', 'Pesanan anda dengan Order ID ' . $order->id . ' telah dikonfirmasi', '');
+        }elseif ($request->status == 'sedang diantar') {
+            $this->firebaseService->sendNotification($userNotificationToken, 'Pesanan anda sedang diantar', 'Pesanan anda dengan Order ID ' . $order->id . ' sedang diantar ke alamat tujuan', '');
         }
 
         // Update the order status in the database
@@ -441,18 +443,32 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        $order = Order::with(['orderDetails.menu', 'history.user'])->find($id);
+        $order = Order::with(['orderDetails.menu', 'history.user'])
+            ->where('id', $id)
+            ->first();
 
         if (is_null($order)) {
             return response()->json(['message' => 'Order not found'], 404);
         }
 
+        // Jika metode order adalah 'delivery', tambahkan alamat yang aktif
+        $alamatAktif = null;
+        if ($order->order_method === 'delivery') {
+            $alamatAktif = AlamatUser::where('user_id', $order->user_id)
+                ->where('is_selected', true) // Ambil hanya alamat yang aktif
+                ->first();
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Order details retrieved successfully',
-            'data' => $order,
+            'data' => [
+                'order' => $order,
+                'alamat' => $alamatAktif // Tambahkan alamat yang aktif
+            ],
         ], 200);
     }
+
 
     public function tohistory($id)
     {

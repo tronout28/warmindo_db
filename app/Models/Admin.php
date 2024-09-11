@@ -19,6 +19,8 @@ class Admin extends Model
         'user_verified',
         'email',
         'password',
+        'latitude',
+        'longitude',
     ];
 
     protected $hidden = [
@@ -38,5 +40,10 @@ class Admin extends Model
     public function getProfilePictureUrlAttribute()
     {
         return url('storage/profile_pictures/' . $this->profile_picture);
+    }
+
+    public function alamatUser()
+    {
+        return $this->belongsTo(AlamatUser::class, 'alamat_users_id');
     }
 }

@@ -24,6 +24,8 @@ return new class extends Migration
             $table->string('password');
             $table->timestamp('phone_verified_at')->nullable();
             $table->string('notification_token')->nullable();
+            $table->decimal('latitude', 10, 8)->nullable()->default(-6.75241);
+            $table->decimal('longitude', 11, 8)->nullable()->default(110.84299);
             $table->rememberToken();
             $table->timestamps();
         });

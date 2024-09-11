@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Transaction;
 use App\Models\Admin;
 use App\Models\Order;
+use App\Models\AlamatUser;
 use App\Models\OrderDetail;
 use App\Http\Resources\OrderDetailResource;
 use Illuminate\Support\Facades\Cache; // Import Cache facade
@@ -454,7 +455,7 @@ class AdminController extends Controller
     public function getOrders()
     {
         // Define the query
-        $query = Order::with(['orderDetails.menu', 'user']) // Ensure the user relationship is loaded
+        $query = Order::with(['orderDetails.menu', 'user', 'alamatUser']) // Ensure the user relationship and alamatUser are loaded
             ->leftJoin('transactions', 'orders.id', '=', 'transactions.order_id')
             ->select('orders.*', 'transactions.payment_channel as transaction_payment_method')
             ->orderByRaw(
@@ -479,15 +480,25 @@ class AdminController extends Controller
 
         // Log the raw data
         Log::info('Orders Data:', ['orders' => $orders]);
-        
+
         return response([
             'status' => 'success',
             'message' => 'Orders fetched successfully',
             'orders' => $orders->map(function($order) {
                 // Determine the payment method to return
                 $paymentMethod = $order->transaction_payment_method ?? $order->payment_method;
+                
                 // Map the order details to the OrderDetailResource
                 $orderDetails = OrderDetailResource::collection($order->orderDetails);
+                
+                // Add logic to get the active alamat user if order_method is delivery
+                $alamatAktif = null;
+                if ($order->order_method === 'delivery') {
+                    $alamatAktif = AlamatUser::where('user_id', $order->user_id)
+                        ->where('is_selected', true)
+                        ->first();
+                }
+
                 return [
                     'id' => $order->id,
                     'user_id' => $order->user_id,
@@ -503,10 +514,19 @@ class AdminController extends Controller
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
                     'orderDetails' => $orderDetails,
+                    'alamat' => $alamatAktif ? [
+                        'id' => $alamatAktif->id,
+                        'nama_alamat' => $alamatAktif->nama_alamat,
+                        'nama_kost' => $alamatAktif->nama_kost,
+                        'detail_alamat' => $alamatAktif->detail_alamat,
+                        'latitude' => $alamatAktif->latitude,
+                        'longitude' => $alamatAktif->longitude,
+                    ] : null, // Include active alamat only if order method is delivery
                 ];
             }),
         ], 200);
     }
+
 
 
 
