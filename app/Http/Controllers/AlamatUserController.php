@@ -22,6 +22,7 @@ class AlamatUserController extends Controller
                         'nama_kost' => $alamatUser->nama_kost,
                         'catatan_alamat' => $alamatUser->catatan_alamat,
                         'detail_alamat' => $alamatUser->detail_alamat,
+                        'is_selected' => $alamatUser->is_selected,
                         'latitude' => $alamatUser->latitude,
                         'longitude' => $alamatUser->longitude,
                         'radius_km' => $alamatUser->radius_km,
@@ -43,6 +44,7 @@ class AlamatUserController extends Controller
                         'nama_kost' => $alamatUser->nama_kost,
                         'catatan_alamat' => $alamatUser->catatan_alamat,
                         'detail_alamat' => $alamatUser->detail_alamat,
+                        'is_selected' => $alamatUser->is_selected,
                         'latitude' => $alamatUser->latitude,
                         'longitude' => $alamatUser->longitude,
                         'radius_km' => $alamatUser->radius_km,
@@ -110,6 +112,8 @@ class AlamatUserController extends Controller
             'nama_kost' => 'sometimes|nullable|string|max:255',
             'detail_alamat' => 'sometimes|nullable|string',
             'catatan_alamat' => 'sometimes|nullable|string',
+            'latitude' => 'sometimes|nullable|numeric',
+            'longitude' => 'sometimes|nullable|numeric',
         ]);
 
         $alamatUser = AlamatUser::findOrFail($id);
