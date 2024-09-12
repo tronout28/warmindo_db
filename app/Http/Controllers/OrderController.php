@@ -76,8 +76,8 @@ class OrderController extends Controller
             'payment_method' => $request->payment_method,
             'order_method' => $request->order_method,
             'note' => $request->note,
-            'alamat_users_id' => $request->alamat_users_id ?? null,
-            'driver_fee' => $request->driver_fee ?? null, // Hanya terisi jika delivery
+            'alamat_users_id' => $request->alamat_users_id,
+            'driver_fee' => $request->driver_fee 
         ]);
 
         if ($request->payment_method == 'tunai') {

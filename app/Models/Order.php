@@ -18,6 +18,8 @@ class Order extends Model
         'payment_method',
         'order_method',
         'note',
+        'alamat_users_id',
+        'driver_fee',
         'admin_fee',  
     ];
 

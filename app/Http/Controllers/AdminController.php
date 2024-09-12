@@ -494,7 +494,8 @@ class AdminController extends Controller
                 // Add logic to get the active alamat user if order_method is delivery
                 $alamatAktif = null;
                 if ($order->order_method === 'delivery') {
-                    $alamatAktif = AlamatUser::where('id', $order->alamat_user_id)->first();
+                    $alamatAktif = AlamatUser::find($order->alamat_users_id);
+
                 }
 
                 return [
