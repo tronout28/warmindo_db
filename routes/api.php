@@ -197,6 +197,8 @@ Route::group(['prefix'=>'alamat-user','middleware' => 'auth:sanctum'], function(
     Route::delete('/{id}', [AlamatUserController::class, 'destroy']);
     Route::put('/disable/{id}', [AlamatUserController::class, 'disableisSelected']);
     Route::put('/enable/{id}', [AlamatUserController::class, 'enableisSelected']);
+    Route::put('/enable-status/{id}', [AlamatUserController::class, 'enableStatus']);
+    Route::put('/disable-status/{id}', [AlamatUserController::class, 'disableStatus']);
 });
 
 

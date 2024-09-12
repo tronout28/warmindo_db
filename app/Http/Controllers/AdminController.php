@@ -494,9 +494,7 @@ class AdminController extends Controller
                 // Add logic to get the active alamat user if order_method is delivery
                 $alamatAktif = null;
                 if ($order->order_method === 'delivery') {
-                    $alamatAktif = AlamatUser::where('user_id', $order->user_id)
-                        ->where('is_selected', true)
-                        ->first();
+                    $alamatAktif = AlamatUser::where('user_id', $order->user_id)->first();
                 }
 
                 return [
@@ -511,6 +509,7 @@ class AdminController extends Controller
                     'reason_cancel' => $order->reason_cancel,
                     'no_rekening' => $order->no_rekening,
                     'admin_fee' => $order->admin_fee,
+                    'driver_fee' => $order->driver_fee,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
                     'orderDetails' => $orderDetails,

@@ -33,49 +33,112 @@ class OrderController extends Controller
             'message' => 'List of orders',
             'data' => $orders
         ], 200);
-    }
+        }
 
     public function store(Request $request)
     {
-
         $validator = Validator::make($request->all(), [
             'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap', 'menunggu pembayaran','menunggu pengembalian dana','konfirmasi pesanan'])],
             'note' => 'nullable|string',
-            'payment_method' => ['nullable', Rule::in(['tunai','ovo', 'gopay', 'dana', 'linkaja', 'shopeepay', 'gopay', 'transfer'])],
+            'payment_method' => ['nullable', Rule::in(['tunai','ovo', 'gopay', 'dana', 'linkaja', 'shopeepay', 'transfer'])],
             'order_method' => ['nullable', Rule::in(['dine-in', 'take-away', 'delivery'])],
+            'alamat_users_id' => 'required_if:order_method,delivery|exists:alamat_users,id', // Jika delivery, alamat harus ada
         ]);
 
-        $user = auth()->user();
 
-        
+        $user = auth()->user();
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        if ($request->refund && is_null($request->note)) {
-            return response()->json(['note' => 'Note is required when refund is true'], 422);
+        // Jika order_method adalah delivery, hitung jarak antara admin dan alamat user
+        if ($request->order_method == 'delivery') {
+            // Ambil alamat user berdasarkan ID yang diberikan
+            $alamatUser = AlamatUser::findOrFail($request->alamat_users_id);
+            // Ambil posisi admin pertama (anggap admin pertama sebagai acuan)
+
+            // Hitung jarak antara admin dan user menggunakan metode Haversine
+            $distance = $this->calculateDistance(-6.7525374, 110.842826, $alamatUser->latitude, $alamatUser->longitude);
+
+            // Periksa apakah jarak lebih dari 12km
+            if ($distance >= 12) {
+                return response()->json(['error' => 'Jarak melebihi 12km, tidak dapat menggunakan metode delivery'], 422);
+            }
+            $driverFee = $this->calculateDeliveryFee($distance);
+
+            // Isi driver_fee ke request untuk disimpan nanti
+            $request->merge(['driver_fee' => $driverFee]);
         }
-  
+
+        // Buat order
         $order = Order::create([
             'user_id' => $user->id,
             'status' => $request->status,
             'payment_method' => $request->payment_method,
             'order_method' => $request->order_method,
             'note' => $request->note,
+            'alamat_users_id' => $request->alamat_users_id ?? null,
+            'driver_fee' => $request->driver_fee ?? null, // Hanya terisi jika delivery
         ]);
-        if ($request->payment_method == 'tunai'){
+
+        if ($request->payment_method == 'tunai') {
+            // Kirim notifikasi jika pembayaran tunai
             $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
             foreach ($adminTokens as $adminToken) {
                 $this->firebaseService->sendToAdmin($adminToken, 'Ada pesanan baru!', 'Pesanan dari ' . $order->user->username . ' telah diterima. Silahkan cek aplikasi Anda. Terima kasih! 🎉', '');
             }
             $this->firebaseService->sendNotification($user->notification_token, 'Pembayaran Berhasil', 'Pembayaran tunai untuk Order ID ' .$order->id. '. Telah terbayarkan', '');
         }
+
         return response()->json([
             'success' => true,
             'message' => 'Order created successfully',
             'data' => $order,
         ], 201);
+    }
+
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371; // Radius bumi dalam kilometer
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($dLon / 2) * sin($dLon / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        $distance = $earthRadius * $c; // Jarak dalam kilometer
+
+        return $distance;
+    }
+    
+    private function calculateDeliveryFee($distance)
+    {
+        // Convert distance to meters
+        $distanceInMeters = $distance * 1000;
+
+        // Initialize delivery fee
+        $deliveryFee = 0;
+
+        // Check if distance is within 1.5 km
+        if ($distanceInMeters <= 1500) {
+            $deliveryFee = 3000; // Flat rate for up to 1.5 km
+        } else {
+            // Calculate additional fee for distances over 1.5 km
+            $extraDistanceInMeters = $distanceInMeters - 1500;
+
+            // Calculate the number of 500-meter segments in the extra distance
+            $extraSegments = ceil($extraDistanceInMeters / 500);
+
+            // Add 1000 for each 500-meter segment
+            $deliveryFee = 3000 + ($extraSegments * 1000);
+        }
+
+        return $deliveryFee;
     }
 
     public function getChartOrder(Request $request)
@@ -380,7 +443,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap','menunggu pengembalian dana','pesanan diterima'])],
+            'status' => ['required', Rule::in(['selesai', 'sedang diproses', 'batal', 'pesanan siap','menunggu pengembalian dana','pesanan diterima','sedang diantar'])],
         ]);
 
         if ($validator->fails()) {

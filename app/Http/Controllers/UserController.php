@@ -399,9 +399,7 @@ class UserController extends Controller
                 // Add logic to get the active alamat user if order_method is delivery
                 $alamatAktif = null;
                 if ($order->order_method === 'delivery') {
-                    $alamatAktif = AlamatUser::where('user_id', $order->user_id)
-                        ->where('is_selected', true)
-                        ->first();
+                    $alamatAktif = AlamatUser::where('user_id', $order->user_id)->first();
                 }
 
                 return [
@@ -417,6 +415,7 @@ class UserController extends Controller
                     'admin_fee' => $order->admin_fee,
                     'order_method' => $order->order_method,
                     'created_at' => $order->created_at,
+                    'driver_fee' => $order->driver_fee,
                     'updated_at' => $order->updated_at,
                     'orderDetails' => $orderDetails,
                     'alamat' => $alamatAktif ? [
