@@ -54,10 +54,7 @@ class OrderController extends Controller
 
         // Jika order_method adalah delivery, hitung jarak antara admin dan alamat user
         if ($request->order_method == 'delivery') {
-            // Ambil alamat user berdasarkan ID yang diberikan
             $alamatUser = AlamatUser::findOrFail($request->alamat_users_id);
-            // Ambil posisi admin pertama (anggap admin pertama sebagai acuan)
-
             // Hitung jarak antara admin dan user menggunakan metode Haversine
             $distance = $this->calculateDistance(-6.7525374, 110.842826, $alamatUser->latitude, $alamatUser->longitude);
 
