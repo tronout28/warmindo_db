@@ -19,6 +19,7 @@ class AlamatUser extends Model
         'catatan_alamat',
         'longitude',
         'latitude',
+        'status_alamat',
         'radius_km',
         'is_selected'
     ];

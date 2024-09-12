@@ -38,7 +38,12 @@ class PaymentController extends Controller
                 'message' => 'Harga belum ditentukan',
             ], 400);
         }
-        $amount = $order->price_order;
+
+        if ($order->order_method == 'delivery'){
+            $amount = $order->price_order + $order->driver_fee;
+        } else {
+            $amount = $order->price_order;
+        }
 
         $transaction = Payment::where('order_id', $order->id)->first();
         if ($transaction != null && $transaction->status == 'pending') {

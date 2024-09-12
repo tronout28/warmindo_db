@@ -13,7 +13,8 @@ class AlamatUserController extends Controller
 
         if ($userId) {
             $alamatUser = AlamatUser::where('user_id', $userId)
-                ->orderBy('created_at', 'desc') // Urutkan alamat_user berdasarkan created_at
+                ->orderBy('is_selected', 'desc') // Prioritaskan yang is_selected
+                ->orderBy('created_at', 'asc') // Urutkan alamat_user berdasarkan created_at (asc untuk menaruh data baru di bawah)
                 ->get()
                 ->map(function ($alamatUser) {
                     return [
@@ -22,6 +23,7 @@ class AlamatUserController extends Controller
                         'nama_kost' => $alamatUser->nama_kost,
                         'catatan_alamat' => $alamatUser->catatan_alamat,
                         'detail_alamat' => $alamatUser->detail_alamat,
+                        'status_alamat' => $alamatUser->status_alamat,
                         'is_selected' => $alamatUser->is_selected,
                         'latitude' => $alamatUser->latitude,
                         'longitude' => $alamatUser->longitude,
@@ -30,12 +32,12 @@ class AlamatUserController extends Controller
                             'user_id' => $alamatUser->user_id,
                             'name' => $alamatUser->user->name,
                         ],
-                        // tambahkan properti lain yang dibutuhkan
                     ];
                 });
         } else {
             $alamatUser = AlamatUser::with(['user'])
-                ->orderBy('created_at', 'desc') // Urutkan alamat_user berdasarkan created_at
+                ->orderBy('is_selected', 'desc') // Prioritaskan yang is_selected
+                ->orderBy('created_at', 'asc') // Urutkan alamat_user berdasarkan created_at
                 ->get()
                 ->map(function ($alamatUser) {
                     return [
@@ -44,6 +46,7 @@ class AlamatUserController extends Controller
                         'nama_kost' => $alamatUser->nama_kost,
                         'catatan_alamat' => $alamatUser->catatan_alamat,
                         'detail_alamat' => $alamatUser->detail_alamat,
+                        'status_alamat' => $alamatUser->status_alamat,
                         'is_selected' => $alamatUser->is_selected,
                         'latitude' => $alamatUser->latitude,
                         'longitude' => $alamatUser->longitude,
@@ -52,7 +55,6 @@ class AlamatUserController extends Controller
                             'user_id' => $alamatUser->user_id,
                             'name' => $alamatUser->user->name,
                         ],
-                        // tambahkan properti lain yang dibutuhkan
                     ];
                 });
         }
@@ -62,6 +64,7 @@ class AlamatUserController extends Controller
             'data' => $alamatUser
         ]);
     }
+
 
     public function store(Request $request)
     {
@@ -161,6 +164,28 @@ class AlamatUserController extends Controller
     public function disableisSelected($id){
         $alamatUser = AlamatUser::findOrFail($id);
         $alamatUser->is_selected = false;
+        $alamatUser->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Alamat user disabled successfully'
+        ]);
+    }
+
+    public function enableStatus($id){
+        $alamatUser = AlamatUser::findOrFail($id);
+        $alamatUser->status_alamat = true;
+        $alamatUser->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Alamat user enabled successfully'
+        ]);
+    }
+
+    public function disableStatus($id){
+        $alamatUser = AlamatUser::findOrFail($id);
+        $alamatUser->status_alamat = false;
         $alamatUser->save();
 
         return response()->json([
