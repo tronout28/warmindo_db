@@ -322,12 +322,8 @@ class AdminController extends Controller
         }
     
         // Ambil transaksi terkait dengan order
-        $transaction = Transaction::where('order_id', $order->id)->first();
-    
-        if (!$transaction) {
-            return response()->json(['message' => 'Transaction not found for this order'], 404);
-        }
-    
+   
+        
         $adminTokens = Admin::whereNotNull('notification_token')->pluck('notification_token');
         foreach ($adminTokens as $adminToken) {
             $this->firebaseService->sendToAdmin(
@@ -342,6 +338,7 @@ class AdminController extends Controller
         if ($order->payment_method == 'tunai') {
             $order->status = 'batal';
         } else {
+            $transaction = Transaction::where('order_id', $order->id)->first();
             $order->status = 'menunggu pengembalian dana';
     
             // Tentukan admin_fee berdasarkan payment_channel dari transaksi
