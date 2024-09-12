@@ -65,6 +65,7 @@ class OrderController extends Controller
             $driverFee = $this->calculateDeliveryFee($distance);
 
             // Isi driver_fee ke request untuk disimpan nanti
+            $request->merge(['alamat_users_id' => $request->alamat_users_id]);
             $request->merge(['driver_fee' => $driverFee]);
         }
 
