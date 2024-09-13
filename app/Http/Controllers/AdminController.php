@@ -338,37 +338,7 @@ class AdminController extends Controller
         if ($order->payment_method == 'tunai') {
             $order->status = 'batal';
         } else {
-            $transaction = Transaction::where('order_id', $order->id)->first();
             $order->status = 'menunggu pengembalian dana';
-    
-            // Tentukan admin_fee berdasarkan payment_channel dari transaksi
-            $paymentChannel = $transaction->payment_channel;
-            $adminFeePercentage = 0;
-    
-            switch ($paymentChannel) {
-                case 'OVO':
-                case 'DANA':
-                case 'LINKAJA':
-                    $adminFeePercentage = 1.5; // 1.5% untuk OVO, DANA, LINKAJA
-                    break;
-                case 'SHOPEEPAY':
-                    $adminFeePercentage = 1.8; // 1.8% untuk SHOPEEPAY
-                    break;
-                case 'JENIUSPAY':
-                    $adminFeePercentage = 2.0; // 2.0% untuk JENIUSPAY
-                    break;
-                case 'QRIS':
-                    $adminFeePercentage = 0.63; // 0.63% untuk QRIS
-                    break; 
-                default:
-                    $adminFeePercentage = 0; // Tidak ada potongan jika payment_channel tidak sesuai
-                    break;
-            }
-    
-            // Hitung admin_fee dan update price_order
-            $adminFeeAmount = $order->price_order * ($adminFeePercentage / 100);
-            $order->admin_fee = $adminFeeAmount; // Simpan persentase fee di kolom admin_fee
-            $order->price_order = $order->price_order - $adminFeeAmount;
         }
     
         $order->save();
