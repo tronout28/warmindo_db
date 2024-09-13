@@ -354,9 +354,9 @@ class OrderController extends Controller
             }
 
             // Calculate admin fee and adjust price_order
-            $order->price_order += $order->driver_fee;
-            $adminFeeAmount = $order->price_order * ($feePercent / 100);
-            $order->admin_fee = $adminFeeAmount; // Store the admin fee
+            $priceOrder = $order->price_order + $order->driver_fee;
+            $adminFeeAmount = $priceOrder * ($feePercent / 100);
+            $order->admin_fee = $adminFeeAmount;
 
             // Update status dan informasi pembatalan
             $order->status = 'menunggu pengembalian dana';
