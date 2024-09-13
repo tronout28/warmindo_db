@@ -355,7 +355,6 @@ class OrderController extends Controller
 
             // Calculate admin fee and adjust price_order
             $adminFeeAmount = $order->price_order * ($feePercent / 100);
-            $order->price_order = $order->price_order - $adminFeeAmount; // Subtract the admin fee from price_order
             $order->admin_fee = $adminFeeAmount; // Store the admin fee
 
             // Update status dan informasi pembatalan
