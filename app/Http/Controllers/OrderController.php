@@ -354,7 +354,7 @@ class OrderController extends Controller
             }
 
             // Calculate admin fee and adjust price_order
-            $order->price_order += $order->delivery_fee;
+            $order->price_order += $order->driver_fee;
             $adminFeeAmount = $order->price_order * ($feePercent / 100);
             $order->admin_fee = $adminFeeAmount; // Store the admin fee
 

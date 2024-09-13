@@ -366,7 +366,7 @@ class AdminController extends Controller
             }
     
             // Hitung admin_fee dan update price_order
-            $order->price_order += $order->delivery_fee;
+            $order->price_order += $order->driver_fee;
             $adminFeeAmount = $order->price_order * ($adminFeePercentage / 100);
             $order->admin_fee = $adminFeeAmount; // Simpan persentase fee di kolom admin_fee
             $order->price_order = $order->price_order - $adminFeeAmount;
