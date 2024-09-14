@@ -100,6 +100,7 @@ class VariantController extends Controller
         ], 200);
     }
 
+
     public function disableVariant($id)
      {
         $post = Variant::find($id);

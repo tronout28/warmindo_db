@@ -10,6 +10,7 @@ Route::group(['prefix' => 'menus'], function() {
     Route::post('/store', [MenuController::class, 'store']);
     Route::get('/search', [MenuController::class, 'search']); // Letakkan search di sini
     Route::get('/filter/{category}', [MenuController::class, 'filterByCategory']);
+    Route::get('/all-name', [MenuController::class, 'allMenuName']);
     Route::get('/Sfilter/{second_category}', [MenuController::class, 'filterBySecondCategory']);
     Route::get('/{id}', [MenuController::class, 'show']);
     Route::put('/disable/{id}', [MenuController::class, 'disableMenu']);

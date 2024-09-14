@@ -61,6 +61,12 @@ class MenuController extends Controller
      }
 
      
+     public function allMenuName()
+     {
+         $menuNames = Menu::orderBy('created_at', 'desc')->pluck('name_menu'); // Use pluck to get an array of name_menu values
+         return response()->json(['menu_name' => $menuNames], 200);
+     }
+     
  
         public function show($id, Request $request)
         {
