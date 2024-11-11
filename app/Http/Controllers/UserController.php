@@ -142,32 +142,32 @@ class UserController extends Controller
 
     public function login(Request $request)
     {
-        $request->validate([
-            'login' => 'required|string',
-            'password' => 'required|string',
-        ]);
+            $request->validate([
+                'login' => 'required|string',
+                'password' => 'required|string',
+            ]);
 
-        $user = User::where('email', $request->login)
-            ->orWhere('username', $request->login)
-            ->first();
+            $user = User::where('email', $request->login)
+                ->orWhere('username', $request->login)
+                ->first();
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+            if (! $user || ! Hash::check($request->password, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The provided credentials are incorrect.',
+                ], 401);
+            }
+
+            $token = $user->createToken('warmindo')->plainTextToken;
+            $user->notification_token = $request->notification_token;
+            $user->save();
+
             return response()->json([
-                'success' => false,
-                'message' => 'The provided credentials are incorrect.',
-            ], 401);
-        }
-
-        $token = $user->createToken('warmindo')->plainTextToken;
-        $user->notification_token = $request->notification_token;
-        $user->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User login successfully',
-            'user' => $user,
-            'token' => $token,
-        ], 200);
+                'success' => true,
+                'message' => 'User login successfully',
+                'user' => $user,
+                'token' => $token,
+            ], 200);
     }
 
     
